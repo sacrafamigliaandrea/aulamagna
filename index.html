@@ -3080,7 +3080,7 @@ function buchi(set){if(!set.size)return false;const b=bbox(set),s=K(b.c0-1,b.r0-
     if(x<b.c0-1||x>b.c1+1||y<b.r0-1||y>b.r1+1||set.has(k)||seen.has(k))return;seen.add(k);st.push(k);});}
   return(b.w+2)*(b.h+2)-seen.size-set.size>0;}
 const rettangolo=set=>{const b=bbox(set);return set.size>0&&set.size===b.w*b.h;};
-const minPer=n=>2*Math.ceil(2*Math.sqrt(n));          // perimetro minimo di una figura di n quadrati
+const minPer=n=>2*Math.ceil(2*Math.sqrt(n));          // perimetro minimo di una figura di n quadretti
 function sposta(set,dc,dr){return new Set([...set].map(k=>{const [c,r]=P(k);return K(c+dc,r+dr);}));}
 function poliomino(r,n,w,h,vuoi){             // vuoi: 'compatta' | 'allungata' | undefined
   for(let t=0;t<400;t++){const set=new Set([K(ri(r,0,w-1),ri(r,0,h-1))]);let g=0;
@@ -3093,46 +3093,46 @@ function poliomino(r,n,w,h,vuoi){             // vuoi: 'compatta' | 'allungata' 
 function rett(w,h){const s=new Set();for(let c=0;c<w;c++)for(let r=0;r<h;r++)s.add(K(c,r));return s;}
 function coppie(A){const o=[];for(let w=1;w<=A;w++)if(A%w===0){const h=A/w;if(w<=COLS&&h<=ROWS)o.push([w,h]);}return o;}
 // ---------- controlli comuni per le figure costruite ----------
-function base(set){if(!set.size)return'Non hai ancora posato piastrelle: fai clic sui quadrati del cantiere.';
-  if(!connessa(set))return'La figura non è tutta attaccata: ogni quadrato deve toccarne un altro con un lato intero.';
+function base(set){if(!set.size)return'Non hai ancora colorato quadretti: fai clic sui quadretti del cantiere.';
+  if(!connessa(set))return'La figura non è tutta attaccata: ogni quadretto deve toccarne un altro con un lato intero.';
   if(buchi(set))return'La figura ha un buco dentro: riempilo, oppure cambia forma.';return null;}
-const descr=set=>`La tua figura: area ${set.size} quadrati, perimetro ${perimetro(set)} lati.`;
+const descr=set=>`La tua figura: area ${set.size} quadretti, perimetro ${perimetro(set)} lati.`;
 // ---------- i tipi di consegna ----------
 const TIPI={
   misuraArea:(r,lv)=>{const n=lv===1?ri(r,5,8):ri(r,8,13),f=poliomino(r,n,5,5);
-    return{tipo:'misuraArea',titolo:'Misura l\'area',testo:'Quanti quadrati del pavimento occupa la figura blu? Questa è la sua area.',input:'numero',unita:'quadrati',figura:f,risposta:n,regola:'area',
-      aiuti:['L\'area è quanto spazio occupa la figura: si contano i quadrati che copre.','Fai clic sui quadrati blu mentre li conti: si segnano con un pallino e non li conti due volte.','Mostra i numeri sui quadrati.'],aiutoFinale:'numeriArea'};},
+    return{tipo:'misuraArea',titolo:'Misura l\'area',testo:'Quanti quadretti occupa la figura blu? Questa è la sua area.',input:'numero',unita:'quadretti',figura:f,risposta:n,regola:'area',
+      aiuti:['L\'area è quanto spazio occupa la figura: si contano i quadretti che copre.','Fai clic sui quadretti blu mentre li conti: si segnano con un pallino e non li conti due volte.','Mostra i numeri sui quadretti.'],aiutoFinale:'numeriArea'};},
   misuraPerimetro:(r,lv)=>{const n=lv===1?ri(r,4,7):ri(r,7,11),f=poliomino(r,n,5,5);
-    return{tipo:'misuraPerimetro',titolo:'Misura il perimetro',testo:'Quanti lati di quadrato misura il contorno della figura blu? Questo è il suo perimetro.',input:'numero',unita:'lati',figura:f,risposta:perimetro(f),regola:'perimetro',
-      aiuti:['Il perimetro è la lunghezza del contorno: si contano i lati dei quadrati che stanno sul bordo.','Attento agli angoli: un quadrato nell\'angolo ha due lati sul bordo, e vanno contati tutti e due.','Mostra i lati del contorno numerati.'],aiutoFinale:'numeriPerimetro'};},
+    return{tipo:'misuraPerimetro',titolo:'Misura il perimetro',testo:'Quanti lati di quadretto misura il contorno della figura blu? Questo è il suo perimetro.',input:'numero',unita:'lati',figura:f,risposta:perimetro(f),regola:'perimetro',
+      aiuti:['Il perimetro è la lunghezza del contorno: si contano i lati dei quadretti che stanno sul bordo.','Attento agli angoli: un quadretto nell\'angolo ha due lati sul bordo, e vanno contati tutti e due.','Mostra i lati del contorno numerati.'],aiutoFinale:'numeriPerimetro'};},
   costruisciArea:(r)=>{const A=ri(r,6,11);
-    return{tipo:'costruisciArea',titolo:'Costruisci',testo:`Costruisci una figura tutta attaccata, senza buchi, di area ${A} quadrati. La forma la scegli tu.`,input:'costruisci',regola:'area',
-      aiuti:['Fai clic sui quadrati del cantiere per posare le piastrelle. Un altro clic le toglie.',`Conta le piastrelle che hai posato: devono essere ${A}.`,'Ripassa la regola dell\'area.'],
-      verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(s.size!==A)return{ok:false,msg:`${descr(s)} Servono ${A} quadrati: ${s.size<A?'aggiungine':'togline'} ${Math.abs(A-s.size)}.`};return{ok:true,msg:`${descr(s)} Hai costruito una figura di area ${A}.`};}};},
+    return{tipo:'costruisciArea',titolo:'Costruisci',testo:`Costruisci una figura tutta attaccata, senza buchi, di area ${A} quadretti. La forma la scegli tu.`,input:'costruisci',regola:'area',
+      aiuti:['Fai clic sui quadretti del cantiere per colorarli. Un altro clic li cancella.',`Conta i quadretti che hai colorato: devono essere ${A}.`,'Ripassa la regola dell\'area.'],
+      verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(s.size!==A)return{ok:false,msg:`${descr(s)} Servono ${A} quadretti: ${s.size<A?'aggiungine':'togline'} ${Math.abs(A-s.size)}.`};return{ok:true,msg:`${descr(s)} Hai costruito una figura di area ${A}.`};}};},
   rettangoloArea:(r,lv)=>{const A=pick(r,lv===1?[6,8,9,10,12]:[12,15,16,18,20,24]);
-    return{tipo:'rettangoloArea',titolo:'Costruisci un rettangolo',testo:`Costruisci un rettangolo di area ${A} quadrati.`,input:'costruisci',regola:'rettangolo',
-      aiuti:['Un rettangolo ha 4 angoli retti: nessun quadrato deve sporgere.',`L'area del rettangolo è base × altezza: cerca due numeri che moltiplicati fanno ${A}.`,'Ripassa la regola del rettangolo.'],
-      verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(!rettangolo(s))return{ok:false,msg:`${descr(s)} Non è ancora un rettangolo: completa gli angoli o togli i quadrati che sporgono.`};
+    return{tipo:'rettangoloArea',titolo:'Costruisci un rettangolo',testo:`Costruisci un rettangolo di area ${A} quadretti.`,input:'costruisci',regola:'rettangolo',
+      aiuti:['Un rettangolo ha 4 angoli retti: nessun quadretto deve sporgere.',`L'area del rettangolo è base × altezza: cerca due numeri che moltiplicati fanno ${A}.`,'Ripassa la regola del rettangolo.'],
+      verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(!rettangolo(s))return{ok:false,msg:`${descr(s)} Non è ancora un rettangolo: completa gli angoli o cancella i quadretti che sporgono.`};
         const bb=bbox(s);if(s.size!==A)return{ok:false,msg:`È un rettangolo ${bb.w} × ${bb.h}: la sua area è ${s.size}. Ne serve uno di area ${A}.`};
-        return{ok:true,msg:`Giusto: base ${bb.w} × altezza ${bb.h} = ${A} quadrati. Il suo perimetro è ${perimetro(s)} lati.`};}};},
+        return{ok:true,msg:`Giusto: base ${bb.w} × altezza ${bb.h} = ${A} quadretti. Il suo perimetro è ${perimetro(s)} lati.`};}};},
   rettangoloPerimetro:(r)=>{const Pp=pick(r,[10,12,14,16,18]);
     return{tipo:'rettangoloPerimetro',titolo:'Costruisci un rettangolo',testo:`Costruisci un rettangolo con il perimetro di ${Pp} lati.`,input:'costruisci',regola:'rettangolo',
       aiuti:['Il perimetro del rettangolo è (base + altezza) × 2.',`Allora base + altezza deve fare ${Pp/2}.`,'Ripassa la regola del rettangolo.'],
       verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(!rettangolo(s))return{ok:false,msg:`${descr(s)} Non è ancora un rettangolo.`};const bb=bbox(s),p=perimetro(s);
         if(p!==Pp)return{ok:false,msg:`È un rettangolo ${bb.w} × ${bb.h}: il perimetro è (${bb.w} + ${bb.h}) × 2 = ${p}. Ne serve uno con perimetro ${Pp}.`};
-        return{ok:true,msg:`Giusto: (${bb.w} + ${bb.h}) × 2 = ${Pp}. La sua area è ${s.size} quadrati.`};}};},
+        return{ok:true,msg:`Giusto: (${bb.w} + ${bb.h}) × 2 = ${Pp}. La sua area è ${s.size} quadretti.`};}};},
   stessaArea:(r,lv,verso)=>{verso=verso||pick(r,['lungo','corto']);const n=ri(r,6,9);
     let f=verso==='lungo'?(()=>{const c=coppie(n).sort((a,b)=>Math.abs(a[0]-a[1])-Math.abs(b[0]-b[1]))[0];return c&&perimetro(rett(c[0],c[1]))===minPer(n)?rett(c[0],c[1]):poliomino(r,n,4,4,'compatta');})()
       :poliomino(r,n,6,6,'allungata');
     if(!f||(verso==='corto'&&perimetro(f)<=minPer(n))||(verso==='lungo'&&perimetro(f)>=2*n+2))f=verso==='lungo'?poliomino(r,n,4,4,'compatta'):rett(n,1);
     const pf=perimetro(f);
     return{tipo:'stessaArea',titolo:'Stessa area, perimetro diverso',testo:`La figura blu ha area ${n} e perimetro ${pf}. Costruisci una figura con la stessa area ma con il perimetro più ${verso}.`,input:'costruisci',figura:f,regola:'equiestese',verso,
-      aiuti:['Stessa area vuol dire stesso numero di quadrati. Il perimetro invece cambia con la forma.',verso==='lungo'?'Le figure allungate e piene di sporgenze hanno il contorno più lungo.':'Le figure raccolte, simili a un quadrato, hanno il contorno più corto.','Ripassa: figure equiestese.'],
-      verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(s.size!==n)return{ok:false,msg:`${descr(s)} Per avere la stessa area servono ${n} quadrati.`};const p=perimetro(s);
+      aiuti:['Stessa area vuol dire stesso numero di quadretti. Il perimetro invece cambia con la forma.',verso==='lungo'?'Le figure allungate e piene di sporgenze hanno il contorno più lungo.':'Le figure raccolte, simili a un quadrato, hanno il contorno più corto.','Ripassa: figure equiestese.'],
+      verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(s.size!==n)return{ok:false,msg:`${descr(s)} Per avere la stessa area servono ${n} quadretti.`};const p=perimetro(s);
         if(verso==='lungo'?p<=pf:p>=pf)return{ok:false,msg:`${descr(s)} L'area è giusta, ma il perimetro deve essere più ${verso} di ${pf}.`};
         return{ok:true,msg:`${descr(s)} Stessa area della figura blu, perimetro ${p} invece di ${pf}: la forma cambia il perimetro!`};}};},
   perimetroMinimo:(r)=>{const A=pick(r,[12,16,18,20,24]),best=Math.min(...coppie(A).map(([w,h])=>2*(w+h)));
-    return{tipo:'perimetroMinimo',titolo:'Il contorno più corto',testo:`Costruisci il rettangolo di area ${A} quadrati che ha il perimetro più corto possibile.`,input:'costruisci',regola:'rettangolo',
+    return{tipo:'perimetroMinimo',titolo:'Il contorno più corto',testo:`Costruisci il rettangolo di area ${A} quadretti che ha il perimetro più corto possibile.`,input:'costruisci',regola:'rettangolo',
       aiuti:[`Ci sono più rettangoli di area ${A}: prova a costruirne due diversi e confronta i perimetri.`,'Più il rettangolo somiglia a un quadrato, più il suo contorno è corto.','Ripassa la regola del rettangolo.'],
       verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(!rettangolo(s))return{ok:false,msg:`${descr(s)} Deve essere un rettangolo.`};const bb=bbox(s),p=perimetro(s);
         if(s.size!==A)return{ok:false,msg:`È un rettangolo ${bb.w} × ${bb.h} di area ${s.size}: serve area ${A}.`};
@@ -3140,17 +3140,17 @@ const TIPI={
         return{ok:true,msg:`Giusto: ${bb.w} × ${bb.h}, perimetro ${p}. Tra i rettangoli di area ${A} è quello con il contorno più corto.`};}};},
   areaMassima:(r)=>{const Pp=pick(r,[12,14,16,18,20]),half=Pp/2,best=Math.floor(half/2)*Math.ceil(half/2);
     return{tipo:'areaMassima',titolo:'Il recinto più grande',testo:`Hai un nastro lungo ${Pp} lati. Costruisci il rettangolo con perimetro ${Pp} che ha l'area più grande.`,input:'costruisci',regola:'rettangolo',
-      aiuti:[`Base + altezza deve fare ${half}. Prova coppie diverse e conta l'area.`,'Confronta un rettangolo lungo e stretto con uno più "cicciotto": quale contiene più quadrati?','Ripassa la regola del rettangolo.'],
+      aiuti:[`Base + altezza deve fare ${half}. Prova coppie diverse e conta l'area.`,'Confronta un rettangolo lungo e stretto con uno più "cicciotto": quale contiene più quadretti?','Ripassa la regola del rettangolo.'],
       verifica:s=>{const b=base(s);if(b)return{ok:false,msg:b};if(!rettangolo(s))return{ok:false,msg:`${descr(s)} Deve essere un rettangolo.`};const bb=bbox(s),p=perimetro(s);
         if(p!==Pp)return{ok:false,msg:`È un rettangolo ${bb.w} × ${bb.h} con perimetro ${p}: il nastro è lungo ${Pp}.`};
         if(s.size<best)return{ok:false,parziale:true,msg:`Il perimetro è ${Pp} e l'area è ${s.size}. Con lo stesso nastro puoi recintare un'area più grande.`};
-        return{ok:true,msg:`Giusto: ${bb.w} × ${bb.h} = ${s.size} quadrati, il recinto più grande con un nastro di ${Pp} lati.`};}};},
+        return{ok:true,msg:`Giusto: ${bb.w} × ${bb.h} = ${s.size} quadretti, il recinto più grande con un nastro di ${Pp} lati.`};}};},
   triangoloArea:(r)=>{let b,h;do{b=ri(r,2,7);h=ri(r,2,6);}while((b*h)%2);const verso=ri(r,0,3);
-    return{tipo:'triangoloArea',titolo:'L\'area del triangolo',testo:`Quanti quadrati misura l'area del triangolo blu? Ha la base di ${b} lati e l'altezza di ${h} lati.`,input:'numero',unita:'quadrati',tri:{b,h,verso},risposta:b*h/2,regola:'triangolo',
-      aiuti:['Prova a contare i quadrati interi e a unire a due a due i mezzi quadrati.',`Il triangolo è metà di un rettangolo ${b} × ${h}.`,'Mostra il rettangolo intorno al triangolo.'],aiutoFinale:'rettangoloTri'};},
+    return{tipo:'triangoloArea',titolo:'L\'area del triangolo',testo:`Quanti quadretti misura l'area del triangolo blu? Ha la base di ${b} lati e l'altezza di ${h} lati.`,input:'numero',unita:'quadretti',tri:{b,h,verso},risposta:b*h/2,regola:'triangolo',
+      aiuti:['Prova a contare i quadretti interi e a unire a due a due i mezzi quadretti.',`Il triangolo è metà di un rettangolo ${b} × ${h}.`,'Mostra il rettangolo intorno al triangolo.'],aiutoFinale:'rettangoloTri'};},
   unitaMisura:(r)=>{const w=ri(r,2,5),h=ri(r,2,4),p=2*(w+h),m=+(p*LATO_CM/100).toFixed(2);
-    return{tipo:'unitaMisura',titolo:'Dai quadrati ai metri',testo:`Ogni quadrato del pavimento ha il lato di 60 cm. Quanti metri di nastro servono per fare il contorno del rettangolo blu?`,input:'numero',unita:'metri',figura:rett(w,h),risposta:m,regola:'unita',
-      aiuti:['Prima conta il perimetro in lati di quadrato.',`Il perimetro è ${p} lati. Ogni lato misura 60 cm.`,`${p} × 60 cm = ${p*60} cm. Quanti metri sono? (100 cm = 1 m)`]};}};
+    return{tipo:'unitaMisura',titolo:'Dai quadretti ai metri',testo:`Ogni quadretto del foglio ha il lato di 60 cm, come i quadrati del pavimento. Quanti metri di nastro servono per fare il contorno del rettangolo blu?`,input:'numero',unita:'metri',figura:rett(w,h),risposta:m,regola:'unita',
+      aiuti:['Prima conta il perimetro in lati di quadretto.',`Il perimetro è ${p} lati. Ogni lato misura 60 cm.`,`${p} × 60 cm = ${p*60} cm. Quanti metri sono? (100 cm = 1 m)`]};}};
 const SEQ={1:['misuraArea','misuraArea','misuraPerimetro','costruisciArea','misuraPerimetro','costruisciArea','rettangoloArea','misuraArea'],
   2:['misuraArea','misuraPerimetro','rettangoloArea','rettangoloPerimetro',['stessaArea','lungo'],['stessaArea','corto'],'perimetroMinimo','areaMassima'],
   3:['misuraPerimetro','rettangoloPerimetro',['stessaArea','corto'],'perimetroMinimo','areaMassima','triangoloArea','triangoloArea','unitaMisura']};
@@ -3164,8 +3164,8 @@ return{COLS,ROWS,LATO_CM,K,P,perimetro,connessa,buchi,rettangolo,bbox,minPer,gen
 
 /* =====================================================================
    MONDO "GEOMETRIA" — poligoni, perimetro e area (solo figure piane)
-   Il pavimento è un foglio a quadretti: ogni quadrato di un solo colore misura 60 cm.
-   Meccanica: IL CANTIERE DELLE PIASTRELLE (costruzione con vincoli, tile placement).
+   Il pavimento si trasforma in un foglio a quadretti: un quadretto = un quadrato del pavimento (60 cm).
+   Meccanica: IL CANTIERE DEI QUADRETTI (costruzione con vincoli, tile placement).
    Nuove Indicazioni 2025, matematica — fine terza: «misurare… superfici… usando unità
    di misura standardizzate e non»; fine quinta: «calcolare il perimetro… con le formule o
    altri procedimenti», «l'area di rettangoli, triangoli… per scomposizione», «passare da
@@ -3176,7 +3176,7 @@ return{COLS,ROWS,LATO_CM,K,P,perimetro,connessa,buchi,rettangolo,bbox,minPer,gen
    ===================================================================== */
 const ICON_GEOMETRIA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" opacity=".45"/><path d="M5 19L12 6l7 13z" stroke-width="2.2"/></svg>';
 const GEOMETRIA=(()=>{
-const G=GEOMETRIA_LOGICA,COLS=G.COLS,ROWS=G.ROWS,CELL=0.6,GX0=-3.585,GZ0=-2.691,K=G.K;   // il cantiere coincide con i quadrati veri del pavimento
+const G=GEOMETRIA_LOGICA,COLS=G.COLS,ROWS=G.ROWS,CELL=0.6,GX0=-3.585,GZ0=-2.691,K=G.K;   // il cantiere coincide con i quadrati veri del pavimento e con i quadretti del foglio
 const QP=new URLSearchParams(location.search);
 const root=new THREE.Group();root.name='mondo-geometria';
 const W={id:'geometria',order:4,root,footprint:{x:GX0+COLS*CELL/2,z:GZ0+ROWS*CELL/2,w:COLS*CELL+0.4,d:ROWS*CELL+0.4},
@@ -3186,25 +3186,25 @@ const cx=c=>GX0+c*CELL+CELL/2,cz=r=>GZ0+r*CELL+CELL/2;
 let S=null,top=true;
 // ---------- oggetti del cantiere ----------
 let tilesBlu,tilesVerdi,segni,bordi,hoverQ,triMesh,triLine,rectHint,pick;const numeri=[];const TEXN={};
-const box=new THREE.BoxGeometry(CELL-0.04,0.03,CELL-0.04);
+const box=new THREE.BoxGeometry(CELL-0.05,0.004,CELL-0.05);   // quadretto colorato: piatto sul foglio
 function buildCantiere(){
   const gold=new THREE.MeshBasicMaterial({color:col('#D4A017'),toneMapped:false}),W0=COLS*CELL,H0=ROWS*CELL;
   [[W0+0.08,0.04,GX0+W0/2,GZ0-0.02],[W0+0.08,0.04,GX0+W0/2,GZ0+H0+0.02]].forEach(b=>{const m=new THREE.Mesh(new THREE.BoxGeometry(b[0],0.012,b[1]),gold);m.position.set(b[2],0.006,b[3]);root.add(m);});
   [[GX0-0.02],[GX0+W0+0.02]].forEach(b=>{const m=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.012,H0+0.08),gold);m.position.set(b[0],0.006,GZ0+H0/2);root.add(m);});
   // cartello del cantiere, leggibile dalla vista dall'alto (nord in alto)
   const c=mkCanvas(1280,128),g=c.getContext('2d');g.fillStyle='rgba(255,255,255,.92)';g.fillRect(0,0,1280,128);g.fillStyle='#1B6D3F';g.font='700 54px Lexend, sans-serif';
-  g.fillText('CANTIERE',24,82);g.font='500 40px Atkinson Hyperlegible, sans-serif';g.fillStyle='#4A6B4A';g.fillText('1 quadrato del pavimento = 60 cm di lato',330,80);
+  g.fillText('CANTIERE',24,82);g.font='500 40px Atkinson Hyperlegible, sans-serif';g.fillStyle='#4A6B4A';g.fillText('1 quadretto = 60 cm di lato',330,80);
   const sign=new THREE.Mesh(new THREE.PlaneGeometry(5.25,0.525),new THREE.MeshBasicMaterial({map:texOf(c),transparent:true}));sign.rotation.x=-Math.PI/2;sign.position.set(GX0+2.625,0.008,GZ0-0.42);root.add(sign);
   const im=(mat,n,geo)=>{const m=new THREE.InstancedMesh(geo||box,mat,n);m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.count=0;root.add(m);return m;};
-  tilesBlu=im(new THREE.MeshLambertMaterial({color:col('#4C78C8')}),COLS*ROWS);
-  tilesVerdi=im(new THREE.MeshLambertMaterial({color:col('#22804A')}),COLS*ROWS);
+  const mat=texMatita();tilesBlu=im(new THREE.MeshLambertMaterial({color:col('#4C78C8'),map:mat}),COLS*ROWS);   // tratti di matita colorata
+  tilesVerdi=im(new THREE.MeshLambertMaterial({color:col('#2E9A58'),map:mat}),COLS*ROWS);
   segni=im(new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}),COLS*ROWS,new THREE.CylinderGeometry(0.07,0.07,0.012,14));
   bordi=im(new THREE.MeshBasicMaterial({color:col('#E8B321'),toneMapped:false}),COLS*ROWS*4,new THREE.BoxGeometry(CELL,0.02,0.06));
-  hoverQ=new THREE.Mesh(new THREE.PlaneGeometry(CELL-0.02,CELL-0.02),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.35,depthWrite:false}));
+  hoverQ=new THREE.Mesh(new THREE.PlaneGeometry(CELL-0.02,CELL-0.02),new THREE.MeshBasicMaterial({color:col('#E8B321'),transparent:true,opacity:0.35,depthWrite:false,toneMapped:false}));
   hoverQ.rotation.x=-Math.PI/2;hoverQ.visible=false;root.add(hoverQ);
   pick=new THREE.Mesh(new THREE.PlaneGeometry(W0,H0),new THREE.MeshBasicMaterial({visible:false}));pick.rotation.x=-Math.PI/2;pick.position.set(GX0+W0/2,0.02,GZ0+H0/2);root.add(pick);}
 const _m=new THREE.Matrix4();
-function setTiles(mesh,set,y){let i=0;set.forEach(k=>{const [c,r]=G.P(k);_m.makeTranslation(cx(c),y||0.016,cz(r));mesh.setMatrixAt(i++,_m);});mesh.count=i;mesh.instanceMatrix.needsUpdate=true;}
+function setTiles(mesh,set,y){let i=0;set.forEach(k=>{const [c,r]=G.P(k);_m.makeTranslation(cx(c),y||0.008,cz(r));mesh.setMatrixAt(i++,_m);});mesh.count=i;mesh.instanceMatrix.needsUpdate=true;}
 function setBordi(set){let i=0;set.forEach(k=>{const [c,r]=G.P(k);[[0,-1],[0,1],[-1,0],[1,0]].forEach(([a,b])=>{if(set.has(K(c+a,r+b)))return;
   const x=cx(c)+a*CELL/2,z=cz(r)+b*CELL/2;_m.compose(new THREE.Vector3(x,0.04,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,a?Math.PI/2:0,0)),new THREE.Vector3(1,1,1));bordi.setMatrixAt(i++,_m);});});
   bordi.count=i;bordi.instanceMatrix.needsUpdate=true;return i;}
@@ -3234,6 +3234,45 @@ function showRectHint(){if(!S.triRect||rectHint)return;const [x0,z0,x1,z1]=S.tri
   [[x1-x0+0.05,0.05,(x0+x1)/2,z0],[x1-x0+0.05,0.05,(x0+x1)/2,z1],[0.05,z1-z0,x0,(z0+z1)/2],[0.05,z1-z0,x1,(z0+z1)/2]].forEach(b=>{const m=new THREE.Mesh(new THREE.BoxGeometry(b[0],0.015,b[1]),gm);m.position.set(b[2],0.04,b[3]);rectHint.add(m);});
   root.add(rectHint);}
 
+// ---------- il foglio a quadretti: entrando nel mondo il pavimento si trasforma ----------
+// Un foglio di quaderno grande quasi quanto l'aula. Un quadretto = un quadrato del pavimento (60 cm) e le righe
+// coincidono con quelle del cantiere. Le righe stanno in una texture di un solo quadretto ripetuta (nitida da
+// vicino, pochi kB); offset ricalcolato mentre il foglio si srotola, così le righe restano ferme sul pavimento.
+// Il foglio si srotola da nord a sud dietro a un rotolo; spirale e margine richiamano i quaderni di scuola.
+const PX0=ROOM.x0+0.14,PX1=ROOM.x1-0.14,PZ0=ROOM.z0+0.14,PZ1=ROOM.z1-0.14,PW=PX1-PX0,PH=PZ1-PZ0,ROT_R=0.16,SROTOLA=2.4;
+const fr1=v=>((v%1)+1)%1;
+let foglio,fTex,ombra,rotolo,rTex,margine,anelli,fori,fT=1;const ZANELLI=[];
+// il foglio sta fuori da root: root viene schiacciato (scale.y) durante la comparsa del mondo e il foglio sparirebbe nel pavimento
+const FG=new THREE.Group();FG.name='foglio-a-quadretti';FG.visible=false;
+function texQuadretto(seed){const N=256,c=mkCanvas(N,N),g=c.getContext('2d'),R=rng(seed||11);g.fillStyle='#FBFAF5';g.fillRect(0,0,N,N);
+  for(let i=0;i<900;i++){g.fillStyle=R()<0.5?`rgba(120,110,90,${0.03+R()*0.04})`:`rgba(255,255,255,${0.05+R()*0.06})`;g.fillRect(R()*N,R()*N,1+R()*3,1);}   // fibre della carta
+  g.fillStyle='#A3B7CE';g.fillRect(0,0,2,N);g.fillRect(N-2,0,2,N);g.fillRect(0,0,N,2);g.fillRect(0,N-2,N,2);   // riga a cavallo del bordo: centrata sul confine
+  return texOf(c,true);}
+function texMatita(){const N=128,c=mkCanvas(N,N),g=c.getContext('2d'),R=rng(5);g.fillStyle='#FFFFFF';g.fillRect(0,0,N,N);g.lineCap='round';
+  for(let i=0;i<80;i++){const y=R()*N*1.7-N*0.35;g.strokeStyle=`rgba(0,0,0,${0.05+R()*0.13})`;g.lineWidth=2+R()*3;g.beginPath();g.moveTo(-10,y);g.lineTo(N+10,y-N*0.55);g.stroke();}
+  return texOf(c);}
+function buildFoglio(){
+  fTex=texQuadretto(11);fTex.repeat.set(PW/CELL,1);fTex.offset.x=fr1((PX0-GX0)/CELL);
+  foglio=new THREE.Mesh(new THREE.PlaneGeometry(PW,1),new THREE.MeshLambertMaterial({map:fTex}));foglio.rotation.x=-Math.PI/2;foglio.position.set((PX0+PX1)/2,0.003,0);FG.add(foglio);
+  ombra=new THREE.Mesh(new THREE.PlaneGeometry(PW+0.06,1),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.12,depthWrite:false}));ombra.rotation.x=-Math.PI/2;ombra.position.set((PX0+PX1)/2+0.02,0.0018,0);FG.add(ombra);
+  // margine: una riga rosa a due quadretti dal bordo con la spirale, come nei quaderni con il margine
+  const xm=GX0-2*CELL;margine=new THREE.Mesh(new THREE.PlaneGeometry(0.028,1),new THREE.MeshBasicMaterial({color:col('#E7A1AC'),toneMapped:false}));margine.rotation.x=-Math.PI/2;margine.position.set(xm,0.0036,0);FG.add(margine);
+  // spirale: un anello ogni 40 cm lungo il bordo ovest, con il suo foro nella carta
+  for(let z=PZ0+0.25;z<PZ1-0.1;z+=0.4)ZANELLI.push(z);
+  const tg=new THREE.TorusGeometry(0.11,0.013,6,14,Math.PI);anelli=new THREE.InstancedMesh(tg,new THREE.MeshLambertMaterial({color:col('#9DA3A8')}),ZANELLI.length);
+  fori=new THREE.InstancedMesh(new THREE.CircleGeometry(0.03,12),new THREE.MeshBasicMaterial({color:col('#56514A')}),ZANELLI.length);
+  ZANELLI.forEach((z,i)=>{_m.makeTranslation(PX0+0.09,0.003,z);anelli.setMatrixAt(i,_m);_m.compose(new THREE.Vector3(PX0+0.2,0.0035,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)),new THREE.Vector3(1,1,1));fori.setMatrixAt(i,_m);});
+  FG.add(anelli);FG.add(fori);
+  rTex=texQuadretto(12);rTex.repeat.set(2*Math.PI*ROT_R/CELL,PW/CELL);   // u gira attorno al rotolo, v corre lungo l'asse
+  rotolo=new THREE.Mesh(new THREE.CylinderGeometry(ROT_R,ROT_R,PW,28,1),new THREE.MeshLambertMaterial({map:rTex}));rotolo.rotation.z=Math.PI/2;FG.add(rotolo);
+  scene.add(FG);setFoglio(PH);}
+// L = lunghezza già srotolata (da nord verso sud)
+function setFoglio(L){const on=L>0.002;[foglio,ombra,margine].forEach(m=>{m.visible=on;m.scale.y=Math.max(L,0.001);m.position.z=PZ0+L/2;});
+  fTex.repeat.y=Math.max(L,0.001)/CELL;fTex.offset.y=fr1(-(PZ0+L-GZ0)/CELL);
+  let n=0;ZANELLI.forEach(z=>{if(z<PZ0+L-0.05)n++;});anelli.count=fori.count=n;
+  const rol=L<PH-0.001;rotolo.visible=rol&&on;rotolo.position.set((PX0+PX1)/2,ROT_R+0.003,PZ0+L);rotolo.rotation.set(L/ROT_R,0,Math.PI/2);}   // rotola in avanti senza strisciare
+function aggiornaFoglio(dt){if(fT>=1)return;fT=Math.min(1,fT+dt/SROTOLA);setFoglio(PH*smooth(fT));}
+
 // ---------- stato e consegne ----------
 const LIVELLI={1:'Terza',2:'Quarta',3:'Quinta'};
 function nuovoSeme(){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0].toString(36).slice(0,5);}
@@ -3249,14 +3288,14 @@ function fb(html,cls){const e=$g('geoFb');e.innerHTML=html;e.className='geo-fb'+
 function esito(){return S.aiuti?`con ${S.aiuti} ${S.aiuti===1?'aiuto':'aiuti'}`:S.tentativi?`al ${S.tentativi+1}° tentativo`:'al primo tentativo';}
 function controlla(){if(!S||S.fase!=='gioco'||S.risolta)return;const t=S.consegne[S.i];
   if(t.input==='numero'){const ok=G.confronta($g('geoIn').value,t.risposta);if(ok===null){fb('Scrivi un numero nella casella, poi premi «Controlla».','warn');return;}
-    if(!ok){S.tentativi++;fb(`Non ancora: hai scritto ${esc($g('geoIn').value)}. ${t.tipo==='misuraArea'?'Riconta i quadrati: puoi segnarli con un clic.':t.tipo==='misuraPerimetro'?'Riconta i lati del contorno, anche negli angoli.':'Ricontrolla il calcolo, oppure chiedi un aiuto.'}`,'warn');return;}
+    if(!ok){S.tentativi++;fb(`Non ancora: hai scritto ${esc($g('geoIn').value)}. ${t.tipo==='misuraArea'?'Riconta i quadretti: puoi segnarli con un clic.':t.tipo==='misuraPerimetro'?'Riconta i lati del contorno, anche negli angoli.':'Ricontrolla il calcolo, oppure chiedi un aiuto.'}`,'warn');return;}
     risolta(spiegazione(t));}
   else{const v=t.verifica(S.costruita);if(!v.ok){S.tentativi++;fb(esc(v.msg),v.parziale?'warn soft':'warn');setBordi(S.costruita.size&&G.connessa(S.costruita)?S.costruita:new Set());return;}
     setBordi(S.costruita);risolta(esc(v.msg));}}
 function spiegazione(t){const F=t.figura;switch(t.tipo){
-  case'misuraArea':numeraArea(F);return`Giusto: la figura occupa ${t.risposta} quadrati, quindi la sua area è ${t.risposta} quadrati.`;
-  case'misuraPerimetro':numeraPerimetro(F);return`Giusto: il contorno misura ${t.risposta} lati di quadrato. Questo è il perimetro.`;
-  case'triangoloArea':showRectHint();return`Giusto: il rettangolo ${t.tri.b} × ${t.tri.h} ha area ${t.tri.b*t.tri.h}; il triangolo ne è la metà: ${t.tri.b*t.tri.h} : 2 = ${t.risposta} quadrati.`;
+  case'misuraArea':numeraArea(F);return`Giusto: la figura occupa ${t.risposta} quadretti, quindi la sua area è ${t.risposta} quadretti.`;
+  case'misuraPerimetro':numeraPerimetro(F);return`Giusto: il contorno misura ${t.risposta} lati di quadretto. Questo è il perimetro.`;
+  case'triangoloArea':showRectHint();return`Giusto: il rettangolo ${t.tri.b} × ${t.tri.h} ha area ${t.tri.b*t.tri.h}; il triangolo ne è la metà: ${t.tri.b*t.tri.h} : 2 = ${t.risposta} quadretti.`;
   case'unitaMisura':{const p=G.perimetro(F);setBordi(F);return`Giusto: ${p} lati × 60 cm = ${p*60} cm, cioè ${fmtIt(t.risposta,t.risposta%1?1:0)} metri.`;}}return'Giusto.';}
 function risolta(msg){S.risolta=true;S.esiti[S.i]={titolo:S.consegne[S.i].titolo,testo:S.consegne[S.i].testo,esito:esito()};fb(msg,'ok');
   $g('geoCheck').style.display='none';$g('geoAvanti').style.display='';$g('geoAvanti').textContent=S.i===S.consegne.length-1?'Concludi':'Avanti';$g('geoAvanti').focus();}
@@ -3271,11 +3310,11 @@ function fine(){S.fase='fine';const m=$g('geoDeb');
   const primo=S.esiti.filter(e=>e&&e.esito==='al primo tentativo').length,salt=S.esiti.filter(e=>e&&e.esito==='saltata').length;
   m.querySelector('.deb-body').innerHTML=`<h2>Consegne completate</h2><p class="deb-sub">Livello ${LIVELLI[S.livello]} · ${S.consegne.length} consegne${salt?` (${salt} saltate)`:''}.</p>
     <ol class="deb-err">${S.esiti.map((e,i)=>`<li><b>${esc(e?e.titolo:S.consegne[i].titolo)}</b> — ${esc(e?e.esito:'saltata')}</li>`).join('')}</ol>
-    <h3>Pensaci (e parlane con la classe)</h3><ol class="deb-q"><li>Che differenza c'è tra perimetro e area? Spiegalo con parole tue, usando il pavimento come esempio.</li>
-    ${S.livello>1?'<li>Due figure con la stessa area hanno sempre lo stesso perimetro? Quale consegna te l\'ha mostrato?</li><li>Tra i rettangoli con la stessa area, quale ha il contorno più corto? Perché secondo te?</li>':'<li>Come hai fatto a non contare due volte lo stesso quadrato o lo stesso lato?</li>'}
+    <h3>Pensaci (e parlane con la classe)</h3><ol class="deb-q"><li>Che differenza c'è tra perimetro e area? Spiegalo con parole tue, usando i quadretti del foglio come esempio.</li>
+    ${S.livello>1?'<li>Due figure con la stessa area hanno sempre lo stesso perimetro? Quale consegna te l\'ha mostrato?</li><li>Tra i rettangoli con la stessa area, quale ha il contorno più corto? Perché secondo te?</li>':'<li>Come hai fatto a non contare due volte lo stesso quadretto o lo stesso lato?</li>'}
     <li>Quale consegna ti ha fatto pensare di più? Che cosa ti ha aiutato?</li></ol>`;m.classList.add('open');}
 
-// ---------- posa delle piastrelle (il mondo gestisce il trascinamento sul cantiere) ----------
+// ---------- quadretti da colorare (il mondo gestisce il trascinamento sul cantiere) ----------
 let posa=null;
 function cellaDa(e){setRay(e);const h=ray.intersectObject(pick)[0];if(!h)return null;const c=Math.floor((h.point.x-GX0)/CELL),r=Math.floor((h.point.z-GZ0)/CELL);
   if(c<0||r<0||c>=COLS||r>=ROWS)return null;return{c,r,k:K(c,r)};}
@@ -3300,7 +3339,7 @@ dock.innerHTML=`<div class="geo-head"><span class="geo-n" id="geoN"></span><span
   <span class="geo-tools"><button class="btn ghost" id="geoRegole">Regole di geometria</button><button class="btn ghost" id="geoVista"></button></span></div>
   <p class="geo-testo" id="geoTesto"></p>
   <div class="geo-row"><span id="geoInWrap"><input id="geoIn" type="text" inputmode="decimal" autocomplete="off" aria-label="Risposta"><span id="geoUnita"></span></span>
-  <button class="btn gold" id="geoCheck">Controlla</button><button class="btn ghost" id="geoSvuota">Togli tutte le piastrelle</button>
+  <button class="btn gold" id="geoCheck">Controlla</button><button class="btn ghost" id="geoSvuota">Cancella tutto</button>
   <button class="btn ghost" id="geoAiuto">Aiuto</button><button class="btn ghost" id="geoSalta">Salta</button><button class="btn" id="geoAvanti">Avanti</button>
   <span class="rac-seed">consegne <code id="geoSeed"></code></span></div>
   <ul class="geo-aiuti" id="geoAiuti"></ul><div class="geo-fb" id="geoFb"></div>`;
@@ -3322,11 +3361,11 @@ const SEZ=[
      ['Rombo','4 lati uguali',[[2,3],[4,1.5],[2,0],[0,1.5]]],['Parallelogramma','lati opposti paralleli e uguali',[[0,3],[3,3],[4,0],[1,0]]],['Trapezio','due lati paralleli: le basi',[[0,3],[4,3],[3,0],[1,0]]]]
      .map(([n,d,p])=>`<figure>${svg(4,3,poly(p),n)}<figcaption><b>${n}</b> ${d}</figcaption></figure>`).join('')}</div>
    <p>Un poligono è <b>regolare</b> se ha tutti i lati e tutti gli angoli uguali, come il quadrato o il triangolo equilatero.</p>`},
- {id:'perimetro',t:'Perimetro',html:()=>`<p>Il <b>perimetro</b> è la lunghezza del <b>contorno</b> di una figura: si sommano tutti i lati. Nel cantiere si misura in <b>lati di quadrato</b>.</p>
+ {id:'perimetro',t:'Perimetro',html:()=>`<p>Il <b>perimetro</b> è la lunghezza del <b>contorno</b> di una figura: si sommano tutti i lati. Nel cantiere si misura in <b>lati di quadretto</b>.</p>
    <table class="geo-f"><tr><td>Quadrato</td><td>P = lato × 4</td></tr><tr><td>Rettangolo</td><td>P = (base + altezza) × 2</td></tr><tr><td>Triangolo</td><td>P = lato + lato + lato</td></tr><tr><td>Poligono regolare</td><td>P = lato × numero dei lati</td></tr></table>
    <figure class="geo-wide">${svg(5,3,(u,o)=>poly([[0,3],[4,3],[4,1],[0,1]])(u,o)+`<polyline class="per" points="${[[0,1],[4,1],[4,3],[0,3],[0,1]].map(p=>(o+p[0]*u)+','+(o+p[1]*u)).join(' ')}"/>`,'Rettangolo 4 per 2')}
    <figcaption>Rettangolo 4 × 2: P = (4 + 2) × 2 = 12 lati</figcaption></figure>`},
- {id:'area',t:'Area',html:()=>`<p>L'<b>area</b> è la misura della <b>superficie</b>: quanto spazio occupa una figura. Nel cantiere si misura in <b>quadrati</b>. L'<b>altezza</b> è sempre perpendicolare alla base.</p>
+ {id:'area',t:'Area',html:()=>`<p>L'<b>area</b> è la misura della <b>superficie</b>: quanto spazio occupa una figura. Nel cantiere si misura in <b>quadretti</b>. L'<b>altezza</b> è sempre perpendicolare alla base.</p>
    <table class="geo-f"><tr><td>Rettangolo</td><td>A = base × altezza</td></tr><tr><td>Quadrato</td><td>A = lato × lato</td></tr><tr><td>Triangolo</td><td>A = base × altezza : 2</td></tr>
    <tr><td>Parallelogramma</td><td>A = base × altezza</td></tr><tr><td>Rombo</td><td>A = diagonale maggiore × diagonale minore : 2</td></tr><tr><td>Trapezio</td><td>A = (base maggiore + base minore) × altezza : 2</td></tr></table>
    <div class="geo-cards"><figure>${svg(4,3,(u,o)=>poly([[0,3],[4,3],[4,0],[0,0]],'ghost')(u,o)+poly([[0,3],[4,3],[0,0]])(u,o),'Triangolo metà rettangolo')}<figcaption>Il triangolo è <b>metà</b> del rettangolo: 4 × 3 : 2 = 6</figcaption></figure>
@@ -3337,7 +3376,7 @@ const SEZ=[
    <p class="geo-key">Attenzione: due figure con la stessa area possono avere perimetri diversi! Tra i rettangoli con la stessa area, quello più simile a un quadrato ha il perimetro più corto. Con lo stesso perimetro, il rettangolo con l'area più grande è quello più simile a un quadrato.</p>`},
  {id:'unita',t:'Unità di misura',html:()=>`<table class="geo-f"><tr><td>Lunghezze</td><td>1 m = 10 dm = 100 cm = 1000 mm</td></tr><tr><td>Aree</td><td>1 m² = 100 dm² = 10 000 cm²</td></tr></table>
    <p>Il <b>perimetro</b> si misura con le unità di lunghezza (m, cm…); l'<b>area</b> con le unità quadrate (m², cm²…).</p>
-   <p class="geo-key">Il nostro pavimento: un quadrato colorato ha il lato di 60 cm, cioè 0,6 m. Il suo perimetro è 2,4 m; la sua area è 3600 cm², cioè 0,36 m².</p>`}];
+   <p class="geo-key">Il nostro foglio: un quadretto ha il lato di 60 cm (come un quadrato del pavimento), cioè 0,6 m. Il suo perimetro è 2,4 m; la sua area è 3600 cm², cioè 0,36 m².</p>`}];
 SEZ.find(s=>s.id==='rettangolo')||SEZ.push({id:'rettangolo',alias:'area'});SEZ.push({id:'triangolo',alias:'area'});
 const reg=document.createElement('div');reg.className='rmodal';reg.id='geoReg';
 reg.innerHTML=`<div class="rcard geo-reg"><div class="geo-reg-head"><h2>Regole di geometria</h2><button class="x" id="geoRegX" title="Chiudi">${ICON_X}</button></div>
@@ -3350,14 +3389,14 @@ $g('geoRegX').onclick=()=>reg.classList.remove('open');reg.addEventListener('cli
 
 // ---------- introduzione (4 momenti) con scelta del livello, riflessione finale ----------
 const intro=document.createElement('div');intro.className='rmodal';intro.id='geoIntro';document.body.appendChild(intro);
-const PASSI=[['Un foglio a quadretti gigante','Il pavimento dell\'aula magna è fatto di quadrati colorati. Ogni quadrato di un solo colore ha il lato di 60 cm: sarà la nostra unità di misura.'],
-  ['Il tuo obiettivo','Risolvi le consegne: misura il perimetro e l\'area delle figure blu, e costruisci figure nuove posando piastrelle verdi nel cantiere.'],
-  ['Come si fa','Fai clic sui quadrati del cantiere per posare o togliere una piastrella (puoi anche trascinare). Per le misure scrivi il numero e premi «Controlla». Se serve, chiedi un aiuto o apri le «Regole di geometria».'],
+const PASSI=[['Un foglio a quadretti gigante','Il pavimento dell\'aula magna si è trasformato in un enorme foglio a quadretti, come quelli dei quaderni. Ogni quadretto è grande come un quadrato del pavimento: ha il lato di 60 cm. Sarà la nostra unità di misura.'],
+  ['Il tuo obiettivo','Risolvi le consegne: misura il perimetro e l\'area delle figure blu, e costruisci figure nuove colorando di verde i quadretti del cantiere.'],
+  ['Come si fa','Fai clic sui quadretti del cantiere per colorarli o cancellarli (puoi anche trascinare). Per le misure scrivi il numero e premi «Controlla». Se serve, chiedi un aiuto o apri le «Regole di geometria».'],
   ['Scegli il livello','Le consegne cambiano a ogni partita.']];
 let passo=0,livScelto=[1,2,3].includes(+QP.get('livello'))?+QP.get('livello'):2;
 function renderIntro(){const p=PASSI[passo],last=passo===PASSI.length-1;
   intro.innerHTML=`<div class="rcard"><div class="rstep">${passo+1} di ${PASSI.length}</div><h2>${esc(p[0])}</h2><p>${esc(p[1])}</p>
-  ${last?`<div class="geo-liv">${[1,2,3].map(l=>`<button class="btn ${l===livScelto?'':'ghost'}" data-l="${l}"><b>${LIVELLI[l]}</b><span>${['misurare con i quadrati','costruire rettangoli e figure','ottimizzare, triangoli, metri'][l-1]}</span></button>`).join('')}</div>`:''}
+  ${last?`<div class="geo-liv">${[1,2,3].map(l=>`<button class="btn ${l===livScelto?'':'ghost'}" data-l="${l}"><b>${LIVELLI[l]}</b><span>${['misurare con i quadretti','costruire rettangoli e figure','ottimizzare, triangoli, metri'][l-1]}</span></button>`).join('')}</div>`:''}
   <div class="racts">${passo?'<button class="btn ghost" data-k="-1">Indietro</button>':''}<button class="btn ${last?'gold':''}" data-k="1">${last?'Inizia':'Avanti'}</button></div></div>`;
   intro.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{livScelto=+b.dataset.l;renderIntro();});
   intro.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{passo+=+b.dataset.k;if(passo>=PASSI.length){intro.classList.remove('open');passo=0;avvia(QP.get('seed')||nuovoSeme(),livScelto);return;}renderIntro();});}
@@ -3369,11 +3408,11 @@ $g('geoDebNuove').onclick=()=>{deb.classList.remove('open');avvia(nuovoSeme(),S.
 $g('geoDebLiv').onclick=()=>{deb.classList.remove('open');passo=PASSI.length-1;renderIntro();intro.classList.add('open');};
 
 // ---------- ciclo del mondo ----------
-W.build=()=>{buildCantiere();avvia(QP.get('seed')||nuovoSeme(),livScelto);};
-W.enter=()=>{setTopView(true);top=true;$g('geoVista').textContent='Vista nell\'aula';};
+W.build=()=>{buildFoglio();buildCantiere();avvia(QP.get('seed')||nuovoSeme(),livScelto);};
+W.enter=()=>{setTopView(true);top=true;$g('geoVista').textContent='Vista nell\'aula';fT=0;setFoglio(0);FG.visible=true;};   // a ogni ingresso il foglio si srotola di nuovo
 W.entered=()=>{if(S&&S.i===0&&!S.risolta&&!S.costruita.size&&!S.esiti.length){passo=0;renderIntro();intro.classList.add('open');}};
-W.exit=()=>{setTopView(false);intro.classList.remove('open');deb.classList.remove('open');reg.classList.remove('open');hoverQ.visible=false;};
-W.pickables=()=>[];W.update=()=>{};
+W.exit=()=>{setTopView(false);FG.visible=false;intro.classList.remove('open');deb.classList.remove('open');reg.classList.remove('open');hoverQ.visible=false;};
+W.pickables=()=>[];W.update=dt=>{aggiornaFoglio(dt);};
 W.state=()=>S;W.avvia=avvia;W.controlla=controlla;W.aiuto=aiuto;W.openRegole=openRegole;W.posa=(cells)=>{cells.forEach(k=>S.costruita.add(k));setTiles(tilesVerdi,S.costruita);};
 registerWorld(W);return W;})();
 
