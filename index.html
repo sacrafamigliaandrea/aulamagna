@@ -1,0 +1,1670 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aula Magna 3D — Mondi sul pavimento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Palette Wimbledon (portale acerio) — ambra al posto del rosso, oro come accento */
+:root{
+  --green:#1B6D3F; --green2:#22804A; --greenD:#0E4423; --greenL:rgba(27,109,63,.08);
+  --gold:#B8860B;  --gold2:#D4A017; --goldL:rgba(184,134,11,.10);
+  --cream:#F5F9F5; --card:#FFFFFF;  --text:#1A2E1A; --muted:#4A6B4A; --light:#8BA88B;
+  --brd:#C8DCC8;   --brd2:#A8C4A8;  --warn:#B8860B;
+  --shadow:0 6px 24px rgba(14,68,35,.16);
+  --body:'Atkinson Hyperlegible',Helvetica,Arial,sans-serif;
+  --head:'Lexend',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#dfe6e9;color:var(--text);font-family:var(--body);font-size:18px;line-height:1.5}
+button{font-family:var(--head);cursor:pointer}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;cursor:grab}
+#c.drag{cursor:grabbing}
+
+/* ---------- barra superiore ---------- */
+.top{position:fixed;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:18px;padding:0 18px;
+  background:rgba(255,255,255,.94);border-bottom:1px solid var(--brd);box-shadow:0 2px 12px rgba(27,109,63,.06);z-index:20}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--head);font-weight:700;font-size:20px;color:var(--greenD);white-space:nowrap}
+.brand svg{width:30px;height:30px}
+.brand small{display:block;font-weight:400;font-size:13px;color:var(--muted);letter-spacing:.02em}
+.tabs{display:flex;gap:8px;margin:0 auto}
+.tab{display:flex;align-items:center;gap:9px;border:1.5px solid var(--brd);background:#fff;color:var(--text);
+  border-radius:999px;padding:7px 16px 7px 10px;font-size:16px;font-weight:500;transition:background .15s,border-color .15s}
+.tab svg{width:24px;height:24px;flex:none}
+.tab .sub{display:block;font-family:var(--body);font-size:12.5px;font-weight:400;color:var(--muted);line-height:1.1}
+.tab span{text-align:left;line-height:1.15}
+.tab:hover{border-color:var(--green2)}
+.tab.on{background:var(--green);border-color:var(--green);color:#fff}
+.tab.on .sub{color:rgba(255,255,255,.85)}
+.tools{display:flex;gap:8px}
+.ibtn{display:flex;align-items:center;gap:7px;border:1.5px solid var(--brd);background:#fff;border-radius:10px;padding:7px 12px;font-size:15px;color:var(--greenD)}
+.ibtn svg{width:20px;height:20px}
+.ibtn:hover{border-color:var(--green2)}
+
+/* ---------- etichette nel mondo ---------- */
+#labels{position:fixed;inset:0;pointer-events:none;z-index:8;overflow:hidden}
+.tag{position:absolute;left:0;top:0;pointer-events:auto;transform:translate(-9999px,-9999px);
+  display:flex;align-items:center;gap:6px;white-space:nowrap;padding:4px 11px 4px 8px;border-radius:999px;
+  background:rgba(255,255,255,.95);border:1.5px solid var(--green);color:var(--greenD);
+  font-family:var(--head);font-size:14px;font-weight:500;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);
+  transition:opacity .25s, background .15s}
+.tag i{width:9px;height:9px;border-radius:50%;background:var(--green);flex:none}
+.tag:hover,.tag.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.tag:hover i,.tag.on i{background:#fff}
+.tag.small{font-size:12.5px;padding:2px 9px 2px 6px}
+.tag.hide{opacity:0;pointer-events:none}
+
+/* ---------- pannello informativo ---------- */
+#lead{position:fixed;inset:0;pointer-events:none;z-index:9}
+#lead line{stroke:var(--gold);stroke-width:2}
+#lead circle{fill:var(--gold)}
+.info{position:fixed;left:0;top:0;width:340px;max-height:calc(100vh - 170px);overflow:auto;z-index:10;
+  background:var(--card);border-radius:14px;border-left:6px solid var(--green);box-shadow:var(--shadow);
+  padding:16px 18px 16px 18px;display:none}
+.info.open{display:block;animation:pop .22s ease-out}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.info h2{margin:0 34px 4px 0;font-family:var(--head);font-size:22px;line-height:1.2;color:var(--greenD)}
+.info .sci{font-style:italic;color:var(--muted);font-size:16px;margin:0 0 6px}
+.info .badges{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.badge{display:inline-block;font-family:var(--head);font-size:13px;font-weight:500;padding:2px 10px;border-radius:999px;background:var(--greenL);color:var(--greenD);border:1px solid var(--brd)}
+.badge.gold{background:var(--goldL);color:#7a5a07;border-color:#e3cf9a}
+.info dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 10px;font-size:16px}
+.info dt{color:var(--muted)}
+.info dd{margin:0;font-weight:700}
+.info p{margin:0 0 8px}
+.info .x{position:absolute;right:10px;top:10px;width:32px;height:32px;border:none;background:transparent;border-radius:8px;color:var(--muted)}
+.info .x:hover{background:var(--greenL)}
+.info .x svg{width:20px;height:20px}
+.info .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.btn{border:none;border-radius:10px;padding:8px 14px;font-size:15px;font-weight:600;background:var(--green);color:#fff}
+.btn:hover{background:var(--green2)}
+.btn.gold{background:var(--gold)}
+.btn.ghost{background:#fff;color:var(--greenD);border:1.5px solid var(--brd)}
+.info .note{font-size:14px;color:var(--muted);border-top:1px solid var(--brd);padding-top:8px;margin-top:6px}
+.info details.doc{margin-top:10px;font-size:14px;color:var(--muted);border-top:1px solid var(--brd);padding-top:6px}
+.info details.doc summary{cursor:pointer;font-family:var(--head);color:var(--greenD)}
+.info details.doc a{color:var(--green);word-break:break-all}
+.info details.doc ul{margin:4px 0 0;padding-left:18px}
+.info .fig{display:block;width:100%;height:auto;margin:4px 0 10px;border-radius:8px;background:var(--cream)}
+
+/* ---------- dock in basso (strumenti del mondo) ---------- */
+.dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:12;background:rgba(255,255,255,.96);
+  border:1px solid var(--brd);border-radius:16px;box-shadow:var(--shadow);padding:12px 18px;display:none}
+.dock.open{display:block}
+
+/* ---------- aiuto navigazione ---------- */
+.help{position:fixed;left:16px;bottom:16px;z-index:11;background:rgba(255,255,255,.94);border:1px solid var(--brd);
+  border-radius:14px;padding:10px 14px;font-size:15px;box-shadow:var(--shadow);max-width:290px}
+.help h3{margin:0 0 6px;font-family:var(--head);font-size:15px;color:var(--greenD);display:flex;justify-content:space-between;align-items:center}
+.help h3 button{border:none;background:none;color:var(--muted);font-size:13px;padding:0}
+.help ul{list-style:none;margin:0;padding:0}
+.help li{display:flex;gap:9px;align-items:center;margin:4px 0}
+.help li svg{width:22px;height:22px;flex:none;color:var(--green)}
+.help.min ul{display:none}
+
+/* ---------- velo di transizione e caricamento ---------- */
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:15;transition:opacity .25s}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--cream);z-index:30;
+  font-family:var(--head);font-size:20px;color:var(--greenD);transition:opacity .5s}
+#loading.done{opacity:0;pointer-events:none}
+.toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);z-index:14;background:var(--greenD);color:#fff;
+  font-family:var(--head);font-size:16px;padding:9px 18px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.on{opacity:1}
+
+/* ---------- dock linea del tempo ---------- */
+.tl{width:min(940px,calc(100vw - 360px))}
+.tl-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tl-read{font-family:var(--head);color:var(--greenD);font-size:18px;min-width:290px}
+.tl-read b{font-size:30px;font-weight:700;margin-right:4px}
+.tl-btns{margin-left:auto;display:flex;gap:6px}
+.tl-btns button{display:flex;align-items:center;gap:6px;border:1.5px solid var(--brd);background:#fff;border-radius:10px;padding:6px 12px;font-size:15px;color:var(--greenD)}
+.tl-btns button svg{width:18px;height:18px}
+.tl-btns button.play{background:var(--gold);border-color:var(--gold);color:#fff}
+.tl-btns button:hover{border-color:var(--green2)}
+.tl-track{position:relative;margin:30px 0 4px;height:40px}
+.tl-bands{position:absolute;left:0;right:0;top:12px;height:16px;display:flex;border-radius:8px;overflow:hidden}
+.tl-bands div{height:100%;font-family:var(--head);font-size:11px;font-weight:600;color:#fff;text-align:center;line-height:16px;letter-spacing:.04em;overflow:hidden;white-space:nowrap}
+.tl-range{position:absolute;left:0;right:0;top:4px;width:100%;margin:0;height:32px;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
+.tl-range::-webkit-slider-runnable-track{height:32px;background:transparent}
+.tl-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:32px;border-radius:5px;background:var(--greenD);border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+.tl-range::-moz-range-thumb{width:14px;height:32px;border-radius:5px;background:var(--greenD);border:2px solid #fff}
+.tl-stops{position:absolute;left:0;right:0;top:-24px;height:22px}
+.tl-stops button{position:absolute;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;border:2px solid var(--green);background:#fff;padding:0}
+.tl-stops button.on{background:var(--gold);border-color:var(--gold)}
+.tl-stops button.ast{border-color:#7a5a07;border-style:dashed}
+.tl-stops button:hover{background:var(--goldL)}
+.tl-ticks{position:absolute;left:0;right:0;top:30px;height:12px;font-size:12px;color:var(--muted)}
+.tl-ticks span{position:absolute;transform:translateX(-50%)}
+.tl-note{font-size:14px;color:var(--muted);margin-top:8px}
+.tl-stopname{font-family:var(--head);font-size:15px;color:#7a5a07;font-weight:600}
+.reveal{margin-top:4px;padding:8px 10px;border-radius:10px;background:var(--goldL);border:1px solid #e3cf9a;display:none}
+.reveal.on{display:block}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="Aula magna in 3D"></canvas>
+
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="9" width="26" height="18" rx="3" fill="none" stroke="#1B6D3F" stroke-width="2.4"/><path d="M3 15h26M11 9v18M21 9v18" stroke="#1B6D3F" stroke-width="1.6" opacity=".55"/><path d="M16 3l5 6H11z" fill="#B8860B"/></svg>
+    <div>Aula Magna 3D<small>i mondi sul pavimento</small></div>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+  <div class="tools">
+    <button class="ibtn" id="btnHome" title="Torna alla vista iniziale (tasto H)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Vista iniziale</button>
+  </div>
+</header>
+
+<div id="labels"></div>
+<svg id="lead"><line id="leadLine" x1="0" y1="0" x2="0" y2="0" style="display:none"/><circle id="leadDot" r="5" cx="-20" cy="-20"/></svg>
+<div class="info" id="info" role="dialog" aria-live="polite"></div>
+
+<div class="help" id="help">
+  <h3>Come muoversi <button id="helpMin">nascondi</button></h3>
+  <ul>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 2v7" /><path d="M6 9h6" stroke-width="3"/></svg>Trascina con il tasto sinistro per girare</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 5v4" stroke-width="3"/></svg>Rotellina per avvicinarti</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 2v7"/><path d="M12 9h6" stroke-width="3"/></svg>Tasto destro (o frecce) per spostarti</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/></svg>Doppio clic per volare in un punto</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="10" rx="5"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/></svg>Clic sulle etichette per leggere</li>
+  </ul>
+</div>
+
+<div id="flash"></div>
+<div class="toast" id="toast"></div>
+<div id="loading">Sto preparando l'aula magna…</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+/* =====================================================================
+   AULA MAGNA 3D — Scuola Sacra Famiglia, Orzinuovi
+   Single file, Three.js r128, vanilla JS. Pubblicazione: acerio.app
+
+   FOGLIO COORDINATE (ricavato dalla scansione RoomPlan Room/room.usdz;
+   origine = centro scansione, y = 0 sul pavimento; scansione y-1.512)
+   Stanza  x[-5.385, 5.300] (10.69 m)   z[-10.509, 10.509] (21.02 m)   h 3.02
+   x = -5.385  PARETE CORRIDOIO, bianca, pilastri e trave alta blu.
+       pilastri z  -6.64 · -3.15 · 0.55 · 3.97 · 7.57
+       finestre interne (tende veneziane)  z[-2.675,0.075] [0.92,3.47] [4.40,7.11]
+         y 0.95 → 2.65
+       porta  z[8.32, 9.33]  h 2.18
+   x = +5.300  PARETE ESTERNA, davanzale crema, vetrate su campi e alberi
+       pilastri z  -6.62 · -3.12 · 0.34 · 3.79 · 7.33
+       vetrate  z[-9.90,-6.96] [-6.28,-3.46] [-2.78,0.02] [0.66,3.42] [4.16,6.94] [7.715,8.445]
+         y 0.85 → 2.72, tapparelle a quote diverse
+   z = -10.509 PARETE CORTA bianca: 7 pile di sedie  x -1.64 … 3.74 (z -10.05)
+   z = +10.509 PARETE CORTA bianca con trave blu; armadio x 4.88 z 8.98;
+       tavolo x 2.22 z 9.77 (1.57×1.28); mensola x -1.66 z 9.59 (0.91×0.38)
+   Pavimento: blocchi da 60 cm in diagonale — grigio 2×2 (30 cm),
+       crema 3×3 (20 cm), rosa 2×2; colore = (riga+colonna) mod 3
+   ===================================================================== */
+
+// ---------- costanti stanza ----------
+const ROOM={x0:-5.385,x1:5.300,z0:-10.509,z1:10.509,h:3.02};
+const COR={x:-5.385,pil:[-6.64,-3.15,0.55,3.97,7.57],
+  win:[[-2.675,0.075],[0.92,3.47],[4.40,7.11]],wy:[0.95,2.65],door:[8.32,9.33],dh:2.18};
+const EXT={x:5.300,pil:[-6.62,-3.12,0.34,3.79,7.33],
+  win:[[-9.90,-6.96],[-6.28,-3.46],[-2.78,0.02],[0.66,3.42],[4.16,6.94],[7.715,8.445]],wy:[0.85,2.72]};
+const PIL={w:0.45,d:0.28};
+
+// ---------- renderer ----------
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+let pixelRatio=Math.min(window.devicePixelRatio||1,1.25);   // iMac 2015: mai oltre 1.25
+renderer.setPixelRatio(pixelRatio);
+renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color('#dfe6e9');
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,0.02,90);
+const MAXANISO=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+
+// colore sRGB → lineare (con outputEncoding sRGB i colori dei materiali vanno convertiti)
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function texOf(c,rep){const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=MAXANISO;
+  if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;}return t;}
+// rumore deterministico (stesse tapparelle a ogni caricamento)
+function rng(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return((s>>>0)%100000)/100000;};}
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const smooth=t=>t*t*(3-2*t);
+
+// ---------- luci ----------
+const hemi=new THREE.HemisphereLight(0xffffff,0xd8cfbf,0.62);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xfff6e8,0.42);sun.position.set(9,7,3);scene.add(sun);
+const fill=new THREE.DirectionalLight(0xffffff,0.16);fill.position.set(-6,5,-8);scene.add(fill);
+scene.add(new THREE.AmbientLight(0xffffff,0.20));
+
+// ---------- unione geometrie (r128 non ha BufferGeometryUtils nel core) ----------
+const _m4=new THREE.Matrix4();
+function mergeParts(parts){ // parts: [{g, m (Matrix4), c (Color lineare)}] → BufferGeometry con colori
+  let n=0;const gs=parts.map(p=>{const g=(p.g.index?p.g.toNonIndexed():p.g.clone());if(p.m)g.applyMatrix4(p.m);n+=g.attributes.position.count;return g;});
+  const pos=new Float32Array(n*3),nor=new Float32Array(n*3),cl=new Float32Array(n*3);let o=0;
+  gs.forEach((g,i)=>{const cnt=g.attributes.position.count;pos.set(g.attributes.position.array,o*3);
+    if(!g.attributes.normal)g.computeVertexNormals();nor.set(g.attributes.normal.array,o*3);
+    const c=parts[i].c||new THREE.Color(1,1,1);for(let k=0;k<cnt;k++){cl[(o+k)*3]=c.r;cl[(o+k)*3+1]=c.g;cl[(o+k)*3+2]=c.b;}
+    o+=cnt;g.dispose();});
+  const out=new THREE.BufferGeometry();out.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  out.setAttribute('normal',new THREE.BufferAttribute(nor,3));out.setAttribute('color',new THREE.BufferAttribute(cl,3));return out;}
+function M(x,y,z,rx,ry,rz,sx,sy,sz){const m=new THREE.Matrix4();m.compose(new THREE.Vector3(x||0,y||0,z||0),
+  new THREE.Quaternion().setFromEuler(new THREE.Euler(rx||0,ry||0,rz||0)),new THREE.Vector3(sx??1,sy??sx??1,sz??sx??1));return m;}
+
+/* =====================================================================
+   1. L'AULA MAGNA
+   ===================================================================== */
+const room=new THREE.Group();scene.add(room);
+const C={white:col('#EEF0EF'),whiteShort:col('#F1F2F1'),cream:col('#DDD6C6'),blue:col('#4A729C'),
+  skirt:col('#B39C80'),frameExt:col('#6B6862'),frameInt:col('#C4C6C6'),ceil:col('#F2F1EC')};
+const matWall=new THREE.MeshLambertMaterial({color:C.white});
+const matShort=new THREE.MeshLambertMaterial({color:C.whiteShort});
+const matCream=new THREE.MeshLambertMaterial({color:C.cream});
+const matBlue=new THREE.MeshLambertMaterial({color:C.blue});
+const matSkirt=new THREE.MeshLambertMaterial({color:C.skirt});
+const matFrameE=new THREE.MeshLambertMaterial({color:C.frameExt});
+const matFrameI=new THREE.MeshLambertMaterial({color:C.frameInt});
+function box(w,h,d,mat,x,y,z,parent){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);(parent||room).add(m);return m;}
+
+// --- pavimento: texture procedurale del gres a blocchi diagonali ---
+function floorTexture(){
+  const PX=6;                       // pixel per cm → periodo 180 cm = 1080 px
+  const S=180*PX,c=mkCanvas(S,S),g=c.getContext('2d'),r=rng(7);
+  const COLS=[['#6F7275','#5f6265','#82858a'],['#E3D8BD','#d2c7ab','#efe6cf'],['#B98C82','#a77b71','#c99e94']];
+  g.fillStyle='#7d7b76';g.fillRect(0,0,S,S);          // fuga
+  function tile(x,y,s,set){const v=(r()-.5)*0.06;g.fillStyle=set[0];g.fillRect(x+1,y+1,s-2,s-2);
+    g.globalAlpha=0.10+v;g.fillStyle=v>0?'#fff':'#000';g.fillRect(x+1,y+1,s-2,s-2);g.globalAlpha=1;
+    // granigliatura
+    const n=Math.floor(s*s/55);for(let i=0;i<n;i++){g.fillStyle=r()<.5?set[1]:set[2];g.globalAlpha=.55;
+      g.fillRect(x+1+r()*(s-3),y+1+r()*(s-3),1.6,1.6);}g.globalAlpha=1;}
+  for(let br=0;br<3;br++)for(let bc=0;bc<3;bc++){
+    const k=(br+bc)%3,X=bc*60*PX,Y=br*60*PX;
+    if(k===1){for(let i=0;i<3;i++)for(let j=0;j<3;j++)tile(X+j*20*PX,Y+i*20*PX,20*PX,COLS[1]);}
+    else{for(let i=0;i<2;i++)for(let j=0;j<2;j++)tile(X+j*30*PX,Y+i*30*PX,30*PX,COLS[k]);}}
+  const t=texOf(c,true);t.repeat.set((ROOM.x1-ROOM.x0)/1.8,(ROOM.z1-ROOM.z0)/1.8);return t;}
+const floorMat=new THREE.MeshPhongMaterial({map:floorTexture(),shininess:38,specular:0x1c1c1c});
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(ROOM.x1-ROOM.x0,ROOM.z1-ROOM.z0),floorMat);
+floor.rotation.x=-Math.PI/2;floor.position.set((ROOM.x0+ROOM.x1)/2,0,(ROOM.z0+ROOM.z1)/2);floor.name='pavimento';room.add(floor);
+
+// --- controsoffitto 60×60 con plafoniere a lamelle ---
+function ceilingTexture(){const c=mkCanvas(256,256),g=c.getContext('2d');g.fillStyle='#F3F2EE';g.fillRect(0,0,256,256);
+  const r=rng(3);for(let i=0;i<1400;i++){g.fillStyle=r()<.5?'#e6e4de':'#fbfaf7';g.fillRect(r()*256,r()*256,1.4,1.4);}
+  g.fillStyle='#d3d1ca';g.fillRect(0,0,256,3);g.fillRect(0,0,3,256);const t=texOf(c,true);
+  t.repeat.set((ROOM.x1-ROOM.x0)/0.6,(ROOM.z1-ROOM.z0)/0.6);return t;}
+const ceil=new THREE.Mesh(new THREE.PlaneGeometry(ROOM.x1-ROOM.x0,ROOM.z1-ROOM.z0),
+  new THREE.MeshLambertMaterial({map:ceilingTexture(),side:THREE.DoubleSide}));
+ceil.rotation.x=Math.PI/2;ceil.position.set((ROOM.x0+ROOM.x1)/2,ROOM.h,(ROOM.z0+ROOM.z1)/2);room.add(ceil);
+(function lights(){const c=mkCanvas(128,128),g=c.getContext('2d');g.fillStyle='#f4f6f8';g.fillRect(0,0,128,128);
+  g.fillStyle='#ffffff';g.fillRect(8,8,112,112);g.strokeStyle='#c9ced3';g.lineWidth=2;
+  for(let i=1;i<10;i++){g.beginPath();g.moveTo(8,8+i*11.2);g.lineTo(120,8+i*11.2);g.stroke();}
+  g.fillStyle='#b8bec4';g.fillRect(60,8,8,112);
+  const mat=new THREE.MeshBasicMaterial({map:texOf(c),toneMapped:false});
+  const geo=new THREE.PlaneGeometry(0.58,0.58);
+  const xs=[-2.9,0,2.9],zs=[-8.4,-5.4,-2.4,0.6,3.6,6.6,9.3];
+  const im=new THREE.InstancedMesh(geo,mat,xs.length*zs.length);let k=0;
+  xs.forEach(x=>zs.forEach(z=>{im.setMatrixAt(k++,M(x,ROOM.h-0.004,z,Math.PI/2,0,0));}));room.add(im);})();
+// fasce perimetrali lisce del controsoffitto (velette)
+box(ROOM.x1-ROOM.x0,0.06,0.40,matShort,(ROOM.x0+ROOM.x1)/2,ROOM.h-0.03,ROOM.z0+0.20);
+box(ROOM.x1-ROOM.x0,0.06,0.40,matShort,(ROOM.x0+ROOM.x1)/2,ROOM.h-0.03,ROOM.z1-0.20);
+box(0.42,0.10,ROOM.z1-ROOM.z0,matShort,EXT.x-0.21,ROOM.h-0.05,0);
+box(0.30,0.06,ROOM.z1-ROOM.z0,matShort,COR.x+0.45,ROOM.h-0.03,0);
+
+// --- parete con aperture: pieni sopra/sotto le aperture, pieni fra le aperture ---
+// lungo z (pareti lunghe). side=+1 se la parete sta a x crescente rispetto alla stanza
+function wallZ(x,side,openings,matLow,matHigh){
+  const T=0.20,cx=x+side*T/2,H=ROOM.h;const ops=openings.slice().sort((a,b)=>a.a-b.a);let z=ROOM.z0;
+  ops.forEach(o=>{if(o.a>z+0.001)box(T,H,o.a-z,matLow,cx,H/2,(z+o.a)/2);
+    if(o.y0>0.001)box(T,o.y0,o.b-o.a,matLow,cx,o.y0/2,(o.a+o.b)/2);
+    box(T,H-o.y1,o.b-o.a,matHigh||matLow,cx,(o.y1+H)/2,(o.a+o.b)/2);z=o.b;});
+  if(z<ROOM.z1)box(T,H,ROOM.z1-z,matLow,cx,H/2,(z+ROOM.z1)/2);}
+wallZ(COR.x,-1,[...COR.win.map(w=>({a:w[0],b:w[1],y0:COR.wy[0],y1:COR.wy[1]})),{a:COR.door[0],b:COR.door[1],y0:0,y1:COR.dh}],matWall);
+wallZ(EXT.x,+1,EXT.win.map(w=>({a:w[0],b:w[1],y0:EXT.wy[0],y1:EXT.wy[1]})),matCream,matShort);
+// pareti corte
+box(ROOM.x1-ROOM.x0+0.4,ROOM.h,0.2,matShort,(ROOM.x0+ROOM.x1)/2,ROOM.h/2,ROOM.z0-0.1);
+box(ROOM.x1-ROOM.x0+0.4,ROOM.h,0.2,matShort,(ROOM.x0+ROOM.x1)/2,ROOM.h/2,ROOM.z1+0.1);
+
+// --- pilastri blu, trave alta blu (lato corridoio e parete corta z+), battiscopa ---
+COR.pil.forEach(z=>box(PIL.d,ROOM.h,PIL.w,matBlue,COR.x+PIL.d/2,ROOM.h/2,z));
+EXT.pil.forEach(z=>box(PIL.d,ROOM.h,PIL.w,matBlue,EXT.x-PIL.d/2,ROOM.h/2,z));
+box(PIL.d,0.34,ROOM.z1-ROOM.z0,matBlue,COR.x+PIL.d/2,ROOM.h-0.17,0);           // trave corridoio
+box(ROOM.x1-ROOM.x0,0.30,0.22,matBlue,(ROOM.x0+ROOM.x1)/2,ROOM.h-0.15,ROOM.z1-0.11); // trave parete corta
+[[COR.x+0.14,ROOM.z1-0.16],[EXT.x-0.14,ROOM.z1-0.16]].forEach(p=>box(0.30,ROOM.h,0.34,matBlue,p[0],ROOM.h/2,p[1]));
+box(0.20,ROOM.h,0.20,matBlue,EXT.x-0.10,ROOM.h/2,ROOM.z0+0.10);                 // colonnina nell'angolo
+box(0.24,ROOM.h,0.30,matBlue,COR.x+0.12,ROOM.h/2,ROOM.z0+0.15);
+// battiscopa in gres
+function skirtZ(x,side){const ops=[];box(0.012,0.08,ROOM.z1-ROOM.z0,matSkirt,x-side*0.006,0.04,0);}
+skirtZ(COR.x,-1);skirtZ(EXT.x,+1);
+box(ROOM.x1-ROOM.x0,0.08,0.012,matSkirt,(ROOM.x0+ROOM.x1)/2,0.04,ROOM.z0+0.006);
+box(ROOM.x1-ROOM.x0,0.08,0.012,matSkirt,(ROOM.x0+ROOM.x1)/2,0.04,ROOM.z1-0.006);
+// diffusori sonori dorati sui pilastri
+const matSpk=new THREE.MeshLambertMaterial({color:col('#B79A63')});
+COR.pil.forEach(z=>box(0.012,0.20,0.13,matSpk,COR.x+PIL.d+0.006,2.30,z+0.06));
+EXT.pil.forEach(z=>box(0.012,0.20,0.13,matSpk,EXT.x-PIL.d-0.006,2.30,z-0.06));
+// prese elettriche
+const matPlug=new THREE.MeshLambertMaterial({color:col('#8a7a55')});
+EXT.pil.forEach(z=>box(0.012,0.07,0.12,matPlug,EXT.x-0.006,0.32,z+0.62));
+
+// --- vetrate esterne: telaio antracite, 3 ante sopra, 2 specchiature sotto, tapparelle ---
+const matGlass=new THREE.MeshBasicMaterial({color:col('#cfdde6'),transparent:true,opacity:0.16,depthWrite:false});
+const matShutter=new THREE.MeshLambertMaterial({color:col('#8d8f8c')});
+function windowFrame(x,side,a,b,y0,y1,mat,upper,lower,transom,shutter){
+  const w=b-a,zc=(a+b)/2,fx=x-side*0.035,F=0.06;     // telaio poco dentro il filo parete
+  box(0.07,F,w,mat,fx,y0+F/2,zc);box(0.07,F,w,mat,fx,y1-F/2,zc);
+  box(0.07,y1-y0,F,mat,fx,(y0+y1)/2,a+F/2);box(0.07,y1-y0,F,mat,fx,(y0+y1)/2,b-F/2);
+  const ty=y0+transom;box(0.07,0.07,w,mat,fx,ty,zc);
+  for(let i=1;i<upper;i++){const z=a+w*i/upper;box(0.07,y1-ty,0.07,mat,fx,(ty+y1)/2,z);}
+  for(let i=1;i<lower;i++){const z=a+w*i/lower;box(0.07,ty-y0,0.06,mat,fx,(y0+ty)/2,z);}
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(w,y1-y0),matGlass);g.rotation.y=-side*Math.PI/2;
+  g.position.set(x-side*0.03,(y0+y1)/2,zc);room.add(g);
+  if(shutter>0){box(0.02,shutter,w-0.1,matShutter,x+side*0.02,y1-0.06-shutter/2,zc);}}
+{const r=rng(11);EXT.win.forEach(w=>windowFrame(EXT.x,+1,w[0],w[1],EXT.wy[0],EXT.wy[1],matFrameE,
+  (w[1]-w[0])>1.2?3:1,(w[1]-w[0])>1.2?2:1,0.62,0.10+r()*0.30));}
+// davanzali
+EXT.win.forEach(w=>box(0.10,0.03,w[1]-w[0],matShort,EXT.x-0.05,EXT.wy[0]-0.015,(w[0]+w[1])/2));
+COR.win.forEach(w=>box(0.06,0.03,w[1]-w[0],matFrameI,COR.x+0.03,COR.wy[0]-0.015,(w[0]+w[1])/2));
+
+// --- finestre verso il corridoio: telaio argento + veneziane abbassate ---
+function blindTexture(){const c=mkCanvas(64,256),g=c.getContext('2d');
+  for(let y=0;y<256;y+=8){g.fillStyle='#e9ebeb';g.fillRect(0,y,64,6);g.fillStyle='#b9bdbf';g.fillRect(0,y+6,64,2);}
+  const t=texOf(c,true);return t;}
+const matBlind=new THREE.MeshLambertMaterial({map:blindTexture(),transparent:true,opacity:0.88});
+COR.win.forEach(w=>{windowFrame(COR.x,-1,w[0],w[1],COR.wy[0],COR.wy[1],matFrameI,3,2,0.30,0);
+  const bl=new THREE.Mesh(new THREE.PlaneGeometry(w[1]-w[0]-0.1,COR.wy[1]-COR.wy[0]-0.1),matBlind);
+  bl.material=matBlind.clone();bl.material.map=matBlind.map.clone();bl.material.map.needsUpdate=true;
+  bl.material.map.repeat.set(1,(COR.wy[1]-COR.wy[0])/0.32);
+  bl.rotation.y=Math.PI/2;bl.position.set(COR.x-0.07,(COR.wy[0]+COR.wy[1])/2,(w[0]+w[1])/2);room.add(bl);});
+// porta: stipite metallico e corridoio giallo oltre la soglia
+box(0.22,0.05,COR.door[1]-COR.door[0]+0.1,matFrameI,COR.x-0.06,COR.dh+0.025,(COR.door[0]+COR.door[1])/2);
+[COR.door[0],COR.door[1]].forEach(z=>box(0.22,COR.dh,0.05,matFrameI,COR.x-0.06,COR.dh/2,z));
+
+// --- fuori: campagna (lato esterno) e corridoio (lato interno), dipinti su tela ---
+function landscapeTexture(){const W=2048,H=640,c=mkCanvas(W,H),g=c.getContext('2d'),r=rng(21);
+  const sky=g.createLinearGradient(0,0,0,H*0.55);sky.addColorStop(0,'#c7d5df');sky.addColorStop(1,'#e8eef0');
+  g.fillStyle=sky;g.fillRect(0,0,W,H);
+  // campi lontani
+  g.fillStyle='#a9b59a';g.fillRect(0,H*0.50,W,H*0.04);g.fillStyle='#8fa36f';g.fillRect(0,H*0.54,W,H*0.10);
+  g.fillStyle='#7f9659';g.fillRect(0,H*0.64,W,H*0.36);
+  for(let i=0;i<14;i++){g.fillStyle=r()<.5?'#97a86c':'#b9b47a';g.fillRect(r()*W,H*0.55+r()*H*0.1,120+r()*300,8+r()*14);}
+  // filari e alberi lontani
+  for(let i=0;i<160;i++){const x=r()*W,h=8+r()*22;g.fillStyle=r()<.5?'#5d6e4c':'#6c7d57';
+    g.beginPath();g.ellipse(x,H*0.535,6+r()*14,h,0,0,Math.PI*2);g.fill();}
+  // cipressi e cedri vicini
+  for(let i=0;i<22;i++){const x=r()*W,h=120+r()*170,base=H*0.70+r()*H*0.2;
+    if(r()<.55){g.fillStyle='#2f4a2c';g.beginPath();g.moveTo(x,base-h);g.quadraticCurveTo(x+22,base-h*0.5,x+12,base);
+      g.lineTo(x-12,base);g.quadraticCurveTo(x-22,base-h*0.5,x,base-h);g.fill();}
+    else{g.fillStyle='#3e5338';for(let k=0;k<5;k++){g.beginPath();g.ellipse(x+(r()-.5)*60,base-h*0.25-k*h*0.15,70-k*9,22,0,0,Math.PI*2);g.fill();}
+      g.fillStyle='#4a3a2c';g.fillRect(x-4,base-h*0.2,8,h*0.2);}}
+  // casa bianca col tetto grigio
+  g.fillStyle='#efeee9';g.fillRect(W*0.62,H*0.30,300,H*0.32);g.fillStyle='#8f9294';
+  g.beginPath();g.moveTo(W*0.62-30,H*0.31);g.lineTo(W*0.62+150,H*0.22);g.lineTo(W*0.62+330,H*0.31);g.fill();
+  g.fillStyle='#cfd8de';g.fillRect(W*0.62+60,H*0.38,60,34);g.fillRect(W*0.62+170,H*0.38,60,34);
+  return texOf(c);}
+const outside=new THREE.Mesh(new THREE.PlaneGeometry(46,12),new THREE.MeshBasicMaterial({map:landscapeTexture(),toneMapped:false}));
+outside.rotation.y=-Math.PI/2;outside.position.set(EXT.x+9,1.6,0);room.add(outside);
+const corridor=new THREE.Mesh(new THREE.PlaneGeometry(26,3.2),new THREE.MeshLambertMaterial({color:col('#E3B04B')}));
+corridor.rotation.y=Math.PI/2;corridor.position.set(COR.x-2.4,1.6,0);room.add(corridor);
+const corFloor=new THREE.Mesh(new THREE.PlaneGeometry(2.4,26),new THREE.MeshLambertMaterial({color:col('#b7aa95')}));
+corFloor.rotation.x=-Math.PI/2;corFloor.position.set(COR.x-1.2,0.0,0);room.add(corFloor);
+
+// --- ombre di contatto ---
+const texBlob=(()=>{const c=mkCanvas(128,128),g=c.getContext('2d');const gr=g.createRadialGradient(64,64,4,64,64,62);
+  gr.addColorStop(0,'rgba(0,0,0,.62)');gr.addColorStop(.55,'rgba(0,0,0,.30)');gr.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=gr;g.fillRect(0,0,128,128);const t=new THREE.CanvasTexture(c);return t;})();
+const matBlob=new THREE.MeshBasicMaterial({map:texBlob,transparent:true,depthWrite:false});
+function contatto(x,z,w,d,forza,parent,y){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),matBlob.clone());
+  m.material.opacity=forza??0.8;m.rotation.x=-Math.PI/2;m.position.set(x,y??0.006,z);m.renderOrder=1;(parent||room).add(m);return m;}
+COR.pil.forEach(z=>contatto(COR.x+0.2,z,0.55,0.75,0.55));EXT.pil.forEach(z=>contatto(EXT.x-0.2,z,0.55,0.75,0.55));
+
+// --- sedie impilate (parete corta z-), scocca grigia e gambe metalliche ---
+(function chairs(){const shell=col('#A9A8A3'),leg=col('#8a8c8e');
+  const parts=[];const seat=new THREE.BoxGeometry(0.46,0.025,0.44),back=new THREE.BoxGeometry(0.46,0.40,0.022),
+    lg=new THREE.CylinderGeometry(0.009,0.009,0.45,5);
+  const N=9,STEP=0.072;
+  for(let i=0;i<N;i++){const y=0.45+i*STEP,dz=i*0.012;
+    parts.push({g:seat,m:M(0,y,dz,-0.03,0,0),c:shell});parts.push({g:back,m:M(0,y+0.22,-0.235+dz,-0.12,0,0),c:shell});
+    [[-0.21,0.19],[0.21,0.19],[-0.21,-0.2],[0.21,-0.2]].forEach(p=>parts.push({g:lg,m:M(p[0],y-0.225,p[1],p[1]>0?0.08:-0.08,0,0),c:leg}));}
+  const geo=mergeParts(parts),mat=new THREE.MeshLambertMaterial({vertexColors:true});
+  // la scansione riconosce 7 "sedie" fra x -1.64 e 3.74; nella foto (IMG_0421) le pile sono
+  // affiancate senza spazi: 10 pile contigue sullo stesso tratto
+  const xs=[];for(let i=0;i<10;i++)xs.push(-1.66+i*0.598);
+  xs.forEach(x=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,0,ROOM.z0+0.45);room.add(m);contatto(x,ROOM.z0+0.45,0.62,0.62,0.7);});})();
+
+// --- armadio, tavoli, sedia singola (lato z+) ---
+(function furniture(){const wood=new THREE.MeshLambertMaterial({color:col('#C9B79A')}),grey=new THREE.MeshLambertMaterial({color:col('#9a9c9e')});
+  box(0.975,2.22,0.60,new THREE.MeshLambertMaterial({color:col('#D9D6CE')}),4.88,1.11,8.98).rotation.y=Math.PI/2;
+  box(0.004,2.1,0.002,grey,4.58,1.11,8.98);contatto(4.88,8.98,0.8,1.2,0.7);
+  // tavolo 1.57×1.28
+  const t=new THREE.Group();t.position.set(2.22,0,9.77);room.add(t);
+  box(1.57,0.035,1.28,wood,0,0.80,0,t);[[-0.72,-0.58],[0.72,-0.58],[-0.72,0.58],[0.72,0.58]].forEach(p=>box(0.04,0.78,0.04,grey,p[0],0.39,p[1],t));
+  contatto(2.22,9.77,1.8,1.5,0.55);
+  const t2=new THREE.Group();t2.position.set(-1.66,0,9.59);room.add(t2);
+  box(0.91,0.035,0.38,wood,0,0.80,0,t2);[[-0.42,-0.15],[0.42,-0.15],[-0.42,0.15],[0.42,0.15]].forEach(p=>box(0.035,0.78,0.035,grey,p[0],0.39,p[1],t2));
+  contatto(-1.66,9.59,1.1,0.6,0.5);})();
+
+// Unione statica: tutti i box opachi dell'aula diventano una mesh per materiale.
+(function mergeStatic(){room.updateMatrixWorld(true);const groups=new Map(),drop=[];
+  room.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||o===floor||o===ceil)return;const m=o.material;
+    if(m.transparent||m.map||!(o.geometry instanceof THREE.BoxGeometry))return;
+    if(!groups.has(m))groups.set(m,[]);groups.get(m).push({g:o.geometry,m:o.matrixWorld.clone()});drop.push(o);});
+  drop.forEach(o=>o.parent.remove(o));
+  groups.forEach((parts,mat)=>{const g=mergeParts(parts);g.deleteAttribute('color');room.add(new THREE.Mesh(g,mat));});})();
+
+/* =====================================================================
+   2. TELECAMERA ORBITALE (scritta a mano: niente dipendenze extra)
+   Trascina = ruota · rotellina = zoom · destro/frecce = sposta · doppio clic = vola
+   La telecamera non esce mai dall'aula: se serve, si accorcia la distanza.
+   ===================================================================== */
+const VIEW={target:new THREE.Vector3(0.4,0.3,-1.2),r:12.2,theta:-0.43,phi:1.38};   // dall'angolo della porta sul corridoio
+const view={target:VIEW.target.clone(),r:VIEW.r,theta:VIEW.theta,phi:VIEW.phi};
+const goal={target:view.target.clone(),r:view.r,theta:view.theta,phi:view.phi};
+const LIM={rMin:0.25,rMax:16,phiMin:0.12,phiMax:1.50};
+const IN={x0:ROOM.x0+0.35,x1:ROOM.x1-0.35,z0:ROOM.z0+0.3,z1:ROOM.z1-0.3,y0:0.10,y1:ROOM.h-0.12};
+const _v=new THREE.Vector3(),_dir=new THREE.Vector3();
+function camPos(t,r,th,ph,out){return out.set(t.x+r*Math.sin(ph)*Math.sin(th),t.y+r*Math.cos(ph),t.z+r*Math.sin(ph)*Math.cos(th));}
+function inside(p){return p.x>IN.x0&&p.x<IN.x1&&p.z>IN.z0&&p.z<IN.z1&&p.y>IN.y0&&p.y<IN.y1;}
+function fitRadius(t,r,th,ph){let lo=0,hi=r;camPos(t,r,th,ph,_v);if(inside(_v))return r;
+  for(let i=0;i<18;i++){const m=(lo+hi)/2;camPos(t,m,th,ph,_v);if(inside(_v))lo=m;else hi=m;}return Math.max(lo,0.05);}
+function clampTarget(t){t.x=clamp(t.x,IN.x0,IN.x1);t.z=clamp(t.z,IN.z0,IN.z1);t.y=clamp(t.y,0,2.6);}
+function flyTo(target,r,theta,phi){goal.target.copy(target);clampTarget(goal.target);if(r!=null)goal.r=r;if(theta!=null)goal.theta=theta;if(phi!=null)goal.phi=phi;}
+function updateCamera(dt){const k=1-Math.pow(0.0009,dt);           // smorzamento indipendente dal frame-rate
+  view.target.lerp(goal.target,k);view.r=lerp(view.r,goal.r,k);
+  let dth=goal.theta-view.theta;view.theta+=dth*k;view.phi=lerp(view.phi,goal.phi,k);
+  const r=fitRadius(view.target,view.r,view.theta,view.phi);camPos(view.target,r,view.theta,view.phi,camera.position);
+  camera.lookAt(view.target);}
+let drag=null,downAt=null;
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointerdown',e=>{canvas.focus();drag={b:e.button,x:e.clientX,y:e.clientY,shift:e.shiftKey};downAt={x:e.clientX,y:e.clientY,t:performance.now()};
+  canvas.setPointerCapture(e.pointerId);canvas.classList.add('drag');});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;
+  if(drag.b===2||drag.b===1||drag.shift){pan(dx,dy);}
+  else{goal.theta-=dx*0.0055;goal.phi=clamp(goal.phi-dy*0.0045,LIM.phiMin,LIM.phiMax);}});
+canvas.addEventListener('pointerup',e=>{canvas.classList.remove('drag');const d=downAt;drag=null;
+  if(d&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<5&&performance.now()-d.t<500&&e.button===0)onClick(e);});
+function pan(dx,dy){const s=Math.max(view.r,0.6)*0.0016;_dir.set(Math.sin(view.theta),0,Math.cos(view.theta));
+  const right=new THREE.Vector3(_dir.z,0,-_dir.x);goal.target.addScaledVector(right,-dx*s).addScaledVector(_dir,-dy*s);clampTarget(goal.target);}
+canvas.addEventListener('wheel',e=>{e.preventDefault();const f=Math.exp(e.deltaY*0.0012);goal.r=clamp(goal.r*f,LIM.rMin,LIM.rMax);
+  if(goal.r>view.r*0.999){/* allontanandosi non si supera l'aula */goal.r=Math.min(goal.r,fitRadius(goal.target,goal.r,goal.theta,goal.phi)+0.5);}},{passive:false});
+canvas.addEventListener('dblclick',e=>{const hit=pickWorld(e);if(hit){flyTo(hit.point,Math.min(goal.r,1.6));}});
+const keys={};addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.key]=true;
+  if(e.key==='h'||e.key==='H'||e.key==='Home')resetView();
+  if(e.key==='+'||e.key==='=')goal.r=clamp(goal.r*0.85,LIM.rMin,LIM.rMax);
+  if(e.key==='-')goal.r=clamp(goal.r*1.15,LIM.rMin,LIM.rMax);
+  if(e.key==='Escape')closePanel();});
+addEventListener('keyup',e=>{keys[e.key]=false;});
+function keyPan(dt){const s=220*dt;if(keys.ArrowLeft)pan(s,0);if(keys.ArrowRight)pan(-s,0);if(keys.ArrowUp)pan(0,s);if(keys.ArrowDown)pan(0,-s);}
+function resetView(){const w=current&&current.view;const v=w||VIEW;flyTo(v.target,v.r,v.theta,v.phi);}
+document.getElementById('btnHome').onclick=resetView;
+
+// ---------- raycast ----------
+const ray=new THREE.Raycaster(),_ndc=new THREE.Vector2();
+function setRay(e){_ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(_ndc,camera);}
+function pickWorld(e){setRay(e);const objs=[floor];if(current&&current.surfaces)objs.push(...current.surfaces);
+  const h=ray.intersectObjects(objs,true);return h[0]||null;}
+function onClick(e){if(!current||!current.pickables)return;setRay(e);
+  const h=ray.intersectObjects(current.pickables(),true);if(!h.length)return;
+  let o=h[0].object;while(o&&!o.userData.pick)o=o.parent;if(o&&o.userData.pick)o.userData.pick(h[0]);}
+
+/* =====================================================================
+   3. ETICHETTE E PANNELLI
+   Le etichette sono elementi HTML proiettati ogni frame sul punto 3D.
+   Il pannello segue il suo punto d'aggancio (se il dinosauro cammina, lo segue).
+   ===================================================================== */
+const labelBox=document.getElementById('labels');const LABELS=[];const _p=new THREE.Vector3();
+function addLabel(o){ // o: {text, anchor:()=>Vector3, world, onClick, small, maxDist, visible:()=>bool}
+  const el=document.createElement('button');el.className='tag'+(o.small?' small':'');el.innerHTML='<i></i><span></span>';
+  el.querySelector('span').textContent=o.text;el.onclick=ev=>{ev.stopPropagation();o.onClick&&o.onClick();};
+  labelBox.appendChild(el);const L={...o,el,on:true};LABELS.push(L);return L;}
+function updateLabels(){const W=innerWidth,H=innerHeight;
+  for(const L of LABELS){const show=L.world===(current&&current.id)&&(!L.visible||L.visible());
+    if(!show){if(L.on){L.el.style.transform='translate(-9999px,-9999px)';L.on=false;}continue;}
+    const a=L.anchor();_p.copy(a).project(camera);const d=camera.position.distanceTo(a);
+    if(_p.z>1||_p.z<-1||(L.maxDist&&d>L.maxDist)){L.el.style.transform='translate(-9999px,-9999px)';L.on=false;continue;}
+    const x=(_p.x*0.5+0.5)*W,y=(-_p.y*0.5+0.5)*H;
+    L.el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-100%)`;L.on=true;
+    L.el.classList.toggle('on',panelState&&panelState.label===L);}}
+
+const info=document.getElementById('info'),leadLine=document.getElementById('leadLine'),leadDot=document.getElementById('leadDot');
+let panelState=null;
+const ICON_X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function openPanel(d,anchor,label){ // d: {title, sci, badges:[[txt,cls]], facts:[[k,v]], text:[...], fig, note, actions:[{label,cls,fn}]}
+  let h=`<button class="x" title="Chiudi (Esc)">${ICON_X}</button><h2>${esc(d.title)}</h2>`;
+  if(d.sci)h+=`<p class="sci">${esc(d.sci)}</p>`;
+  if(d.badges&&d.badges.length)h+=`<div class="badges">${d.badges.map(b=>`<span class="badge ${b[1]||''}">${esc(b[0])}</span>`).join('')}</div>`;
+  if(d.fig)h+=d.fig;
+  if(d.facts&&d.facts.length)h+=`<dl>${d.facts.map(f=>`<dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd>`).join('')}</dl>`;
+  (d.text||[]).forEach(t=>h+=`<p>${esc(t)}</p>`);
+  if(d.note)h+=`<p class="note">${esc(d.note)}</p>`;
+  if(d.doc&&(d.doc.nota||(d.doc.fonti&&d.doc.fonti.length)))h+=`<details class="doc"><summary>Per il docente: fonti e incertezze</summary>${d.doc.nota?`<p>${esc(d.doc.nota)}</p>`:''}${(d.doc.fonti||[]).length?`<ul>${d.doc.fonti.map(f=>`<li><a href="${esc(f)}" target="_blank" rel="noopener">${esc(f.replace(/^https?:\/\//,'').slice(0,60))}</a></li>`).join('')}</ul>`:''}</details>`;
+  if(d.actions&&d.actions.length)h+=`<div class="acts">${d.actions.map((a,i)=>`<button class="btn ${a.cls||''}" data-a="${i}">${esc(a.label)}</button>`).join('')}</div>`;
+  info.innerHTML=h;info.classList.remove('open');void info.offsetWidth;info.classList.add('open');
+  info.querySelector('.x').onclick=closePanel;
+  info.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>d.actions[+b.dataset.a].fn());
+  panelState={anchor,label,d};}
+function closePanel(){info.classList.remove('open');panelState=null;leadLine.style.display='none';leadDot.setAttribute('cx',-20);}
+function updatePanel(){if(!panelState)return;const a=panelState.anchor();_p.copy(a).project(camera);
+  const W=innerWidth,H=innerHeight,pw=info.offsetWidth,ph=info.offsetHeight;
+  let x=(_p.x*0.5+0.5)*W,y=(-_p.y*0.5+0.5)*H;const behind=_p.z>1;
+  const dk=document.querySelector('.dock.open'),bottom=H-(dk?dk.offsetHeight+34:20);info.style.maxHeight=(bottom-84)+'px';
+  let px=x+60;if(px+pw>W-16)px=x-60-pw;if(px<16)px=16;let py=clamp(y-ph/2,80,Math.max(80,bottom-ph));
+  info.style.transform=`translate(${px.toFixed(0)}px,${py.toFixed(0)}px)`;
+  if(behind){leadLine.style.display='none';leadDot.setAttribute('cx',-20);return;}
+  const ex=px>x?px:px+pw,ey=clamp(y,py+20,py+ph-20);
+  leadLine.style.display='';leadLine.setAttribute('x1',x);leadLine.setAttribute('y1',y);leadLine.setAttribute('x2',ex);leadLine.setAttribute('y2',ey);
+  leadDot.setAttribute('cx',x);leadDot.setAttribute('cy',y);}
+const toastEl=document.getElementById('toast');let toastT=0;
+function toast(msg,ms){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('on'),ms||2600);}
+
+/* =====================================================================
+   4. I MONDI — ogni mondo è un modulo che si "carica" sul pavimento
+   { id, tab:{title,sub,icon}, view, build(), enter(), exit(), update(dt,t),
+     pickables(), surfaces, root (Group), dock (elemento HTML) }
+   Per aggiungere una disciplina: scrivere un modulo e chiamare registerWorld().
+   ===================================================================== */
+const WORLDS=[];let current=null,switching=false;
+const tweens=[];
+function tween(dur,fn,done){return new Promise(res=>tweens.push({t:0,dur,fn,done:()=>{done&&done();res();}}));}
+function runTweens(dt){for(let i=tweens.length-1;i>=0;i--){const w=tweens[i];w.t+=dt;const u=Math.min(1,w.t/w.dur);w.fn(u);
+  if(u>=1){tweens.splice(i,1);w.done();}}}
+function registerWorld(w){WORLDS.push(w);}
+// "portale" a pavimento: un rettangolo luminoso che si allarga prima che il mondo emerga
+const portal=(()=>{const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-.5,0,-.5),new THREE.Vector3(.5,0,-.5),
+  new THREE.Vector3(.5,0,.5),new THREE.Vector3(-.5,0,.5),new THREE.Vector3(-.5,0,-.5)]);
+  const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:0xD4A017,transparent:true,opacity:0,toneMapped:false}));l.position.y=0.012;scene.add(l);return l;})();
+async function switchWorld(id){if(switching)return;const next=WORLDS.find(w=>w.id===id)||null;if(next===current)return;switching=true;closePanel();
+  if(current){const w=current;w.dock&&w.dock.classList.remove('open');
+    await tween(0.55,u=>{w.root.scale.y=Math.max(0.001,1-smooth(u));});w.root.visible=false;w.exit&&w.exit();}
+  current=next;renderTabs();
+  if(next){if(!next.built){next.build();next.built=true;scene.add(next.root);}
+    next.root.visible=true;next.root.scale.y=0.001;next.enter&&next.enter();
+    const fp=next.footprint;portal.position.set(fp.x,0.012,fp.z);portal.visible=true;
+    flyTo(next.view.target,next.view.r,next.view.theta,next.view.phi);
+    await tween(0.6,u=>{const s=smooth(u);portal.scale.set(fp.w*s+0.01,1,fp.d*s+0.01);portal.material.opacity=s;});
+    await tween(1.1,u=>{next.root.scale.y=Math.max(0.001,smooth(u));portal.material.opacity=1-u;});
+    portal.visible=false;next.dock&&next.dock.classList.add('open');{const h=document.getElementById('help');h.classList.add('min');document.getElementById('helpMin').textContent='mostra';}next.entered&&next.entered();}
+  else{flyTo(VIEW.target,VIEW.r,VIEW.theta,VIEW.phi);}
+  switching=false;}
+const tabsEl=document.getElementById('tabs');
+const ICON_AULA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 9l9-5 9 5v11H3z"/><path d="M8 20v-6h8v6"/></svg>';
+function renderTabs(){const list=[{id:null,tab:{title:'Aula vuota',sub:'la ricostruzione',icon:ICON_AULA}},...WORLDS];
+  tabsEl.innerHTML='';list.forEach(w=>{const b=document.createElement('button');b.className='tab'+(((current&&current.id)||null)===w.id?' on':'');
+    b.innerHTML=`${w.tab.icon}<span>${esc(w.tab.title)}<span class="sub">${esc(w.tab.sub)}</span></span>`;
+    b.onclick=()=>switchWorld(w.id);tabsEl.appendChild(b);});}
+
+/* ==== MONDI (moduli) ==== */
+
+/* =====================================================================
+   COSTRUTTORE DI ANIMALI LOW-POLY (condiviso dai mondi)
+   Il corpo è un "tubo" lungo una curva nel piano sagittale (x avanti, y su):
+   ogni punto è [x, y, raggio verticale, raggio laterale]. Coda e collo sono
+   gruppi separati per poterli far ondeggiare; le zampe sono catene di giunti.
+   Si progetta in METRI REALI; il mondo poi scala (es. 1:10).
+   ===================================================================== */
+function tube(pts,sides,sub){sides=sides||8;sub=sub||4;
+  const curve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p[0],p[1],0)),false,'catmullrom',0.5);
+  const n=(pts.length-1)*sub+1,pos=[],idx=[],side=new THREE.Vector3(0,0,1),nr=new THREE.Vector3(),c=new THREE.Vector3(),tg=new THREE.Vector3();
+  for(let i=0;i<n;i++){const t=i/(n-1);curve.getPoint(t,c);curve.getTangent(t,tg);
+    const f=t*(pts.length-1),k=Math.min(Math.floor(f),pts.length-2),u=f-k;
+    const ry=lerp(pts[k][2],pts[k+1][2],u),rz=lerp(pts[k][3]??pts[k][2],pts[k+1][3]??pts[k+1][2],u);
+    nr.crossVectors(side,tg).normalize();
+    for(let j=0;j<sides;j++){const a=j/sides*Math.PI*2;pos.push(c.x+nr.x*Math.cos(a)*ry,c.y+nr.y*Math.cos(a)*ry,Math.sin(a)*rz);}}
+  for(let i=0;i<n-1;i++)for(let j=0;j<sides;j++){const a=i*sides+j,b=i*sides+(j+1)%sides,c2=(i+1)*sides+j,d=(i+1)*sides+(j+1)%sides;idx.push(a,b,c2,b,d,c2);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);return g;}
+const _cA=new THREE.Color();
+function shadeGeo(g,cBack,cBelly,stripe,offX){g.computeVertexNormals();const p=g.attributes.position,n=g.attributes.normal,cnt=p.count,arr=new Float32Array(cnt*3);
+  for(let i=0;i<cnt;i++){const ny=n.getY(i);_cA.copy(cBelly).lerp(cBack,smooth(clamp((ny+0.7)/0.95,0,1)));
+    if(stripe&&ny>0.05&&Math.sin((p.getX(i)+(offX||0))*stripe.f)>0.5)_cA.lerp(stripe.c,0.5);
+    arr[i*3]=_cA.r;arr[i*3+1]=_cA.g;arr[i*3+2]=_cA.b;}
+  g.setAttribute('color',new THREE.BufferAttribute(arr,3));return g;}
+function buildRig(sp){
+  const cB=col(sp.col[0]),cL=col(sp.col[1]),stripe=sp.stripe?{c:col(sp.stripe),f:sp.stripeF||6}:null;
+  const mat=new THREE.MeshPhongMaterial({vertexColors:true,flatShading:true,shininess:6,specular:0x0a0a0a});
+  const acc=new THREE.MeshPhongMaterial({color:col(sp.accent||sp.col[0]),flatShading:true,shininess:6,side:THREE.DoubleSide});
+  const root=new THREE.Group(),body=new THREE.Group();root.add(body);
+  const R={root,body,legs:[],arms:[],wings:[],mat,acc,sp};
+  const pc=k=>sp[k]?[col(sp[k][0]),col(sp[k][1])]:null,cHead=pc('headCol'),cLimb=pc('limbCol');
+  const mk=(geo,parent,offX,cc)=>{shadeGeo(geo,cc?cc[0]:cB,cc?cc[1]:cL,cc?null:stripe,offX);const m=new THREE.Mesh(geo,mat);parent.add(m);return m;};
+  R.mk=mk;
+  if(sp.torso)mk(tube(sp.torso,sp.sides),body,0);
+  if(sp.tail){const P=sp.tail.pts,mid=Math.floor(P.length/2);
+    const t1=new THREE.Group();t1.position.set(sp.tail.pivot[0],sp.tail.pivot[1],0);body.add(t1);mk(tube(P.slice(0,mid+1),sp.sides),t1,sp.tail.pivot[0]);
+    const t2=new THREE.Group();t2.position.set(P[mid][0],P[mid][1],0);t1.add(t2);
+    mk(tube(P.slice(mid).map(p=>[p[0]-P[mid][0],p[1]-P[mid][1],p[2],p[3]]),sp.sides),t2,sp.tail.pivot[0]+P[mid][0]);R.tail1=t1;R.tail2=t2;}
+  if(sp.neck){const nk=new THREE.Group();nk.position.set(sp.neck.pivot[0],sp.neck.pivot[1],0);body.add(nk);mk(tube(sp.neck.pts,sp.sides),nk,sp.neck.pivot[0]);R.neck=nk;
+    const last=sp.neck.pts[sp.neck.pts.length-1],h=new THREE.Group();h.position.set(last[0],last[1],0);h.rotation.z=sp.head.tilt||0;nk.add(h);R.head=h;R.headRest=sp.head.tilt||0;
+    mk(tube(sp.head.pts,sp.sides),h,0,cHead);
+    if(sp.head.jaw){const J=sp.head.jaw,j=new THREE.Group();j.position.set(J.pivot[0],J.pivot[1],0);h.add(j);
+      mk(tube(J.pts.map(p=>[p[0]-J.pivot[0],p[1]-J.pivot[1],p[2],p[3]]),Math.max(6,(sp.sides||8)-2)),j,0);R.jaw=j;}
+    if(sp.head.eye){const e=sp.head.eye,eg=new THREE.SphereGeometry(e[3],6,4),em=new THREE.MeshBasicMaterial({color:0x15120e});
+      [-1,1].forEach(s=>{const m=new THREE.Mesh(eg,em);m.position.set(e[0],e[1],s*e[2]);h.add(m);});}}
+  const limb=(L,parent)=>{const hip=new THREE.Group();hip.position.set(L.x,L.y,L.z);parent.add(hip);const joints=[];let cur=hip;
+    L.segs.forEach((s,i)=>{const j=i===0?hip:new THREE.Group();if(i>0){j.position.y=-L.segs[i-1][0];cur.add(j);}
+      j.rotation.z=L.rest[i]||0;const g=new THREE.CylinderGeometry(s[1],s[2],s[0],6,1);g.translate(0,-s[0]/2,0);mk(g,j,0,L.arm?cHead||cLimb:cLimb);joints.push(j);cur=j;});
+    let foot=null;if(L.foot){foot=new THREE.Group();foot.position.y=-L.segs[L.segs.length-1][0];cur.add(foot);
+      const g=new THREE.BoxGeometry(L.foot[0],L.foot[2],L.foot[1]);g.translate(L.foot[0]*0.28,-L.foot[2]/2,0);mk(g,foot,0,sp.footCol?[col(sp.footCol),col(sp.footCol)]:cLimb);}
+    return {hip,joints,foot,rest:L.rest.slice(),phase:L.phase||0,fore:!!L.fore};};
+  (sp.legs||[]).forEach(L=>R.legs.push(limb(L,body)));
+  (sp.arms||[]).forEach(L=>R.arms.push(limb({...L,arm:true},body)));
+  R.legs.forEach(L=>{if(L.foot)L.foot.rotation.z=-L.rest.reduce((a,b)=>a+b,0);});
+  if(sp.extras)sp.extras(R);
+  root.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(root);
+  body.position.y=-bb.min.y;R.bodyY=body.position.y;R.size=bb.getSize(new THREE.Vector3());
+  if(!sp.fly){const sh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),matBlob.clone());sh.material.opacity=0.55;sh.rotation.x=-Math.PI/2;
+    sh.scale.set(R.size.x*0.75,Math.max(R.size.z*1.3,R.size.x*0.28),1);sh.position.set((bb.min.x+bb.max.x)/2,0.04*Math.max(0.3,R.size.y),0);sh.renderOrder=1;root.add(sh);}
+  return R;}
+// animazione: phase = ciclo del passo, amp = 0 fermo … 1 cammina
+function poseRig(R,phase,amp,t,seed,grazing){const sp=R.sp,A=(sp.A??0.36)*amp,K=(sp.K??0.6)*amp;
+  R.legs.forEach(L=>{const ph=phase+L.phase,s=Math.sin(ph),c=Math.max(0,Math.cos(ph)),j=L.joints,sg=L.fore?1:-1;
+    j[0].rotation.z=L.rest[0]+A*s*(L.fore?0.85:1);if(j[1])j[1].rotation.z=L.rest[1]+sg*K*c;if(j[2])j[2].rotation.z=L.rest[2]-sg*K*0.65*c;
+    if(L.foot)L.foot.rotation.z=-(j.reduce((a,q)=>a+q.rotation.z,0))+(L.fore?0:0.25*A*s);});
+  R.arms.forEach((L,i)=>{L.joints[0].rotation.z=L.rest[0]+0.12*Math.sin(t*1.3+i+seed)+(sp.human?-0.5*A*Math.sin(phase+(i?Math.PI:0)):0);});
+  R.body.position.y=R.bodyY+(sp.bob??0.012)*R.size.y*amp*Math.cos(phase*2);
+  if(R.tail1){R.tail1.rotation.y=0.10*Math.sin(t*0.9+seed)+0.06*amp*Math.sin(phase);R.tail2.rotation.y=0.16*Math.sin(t*0.9+seed-0.8);}
+  if(R.neck){const gz=grazing||0;R.neck.rotation.z=lerp(0.04*Math.sin(t*0.6+seed),sp.grazeAng??-0.5,gz);R.neck.rotation.y=0.15*Math.sin(t*0.35+seed*2)*(1-amp*0.6);}
+  if(R.head)R.head.rotation.z=R.headRest+0.05*Math.sin(t*0.8+seed);
+  if(R.jaw){const o=Math.pow(Math.max(0,Math.sin(t*0.55+seed*3)),12);R.jaw.rotation.z=-(sp.jawOpen??0.35)*o;}
+  R.wings.forEach((w,i)=>{w.rotation.x=(i?1:-1)*(0.15+(sp.flap??0.55)*Math.sin(t*(sp.flapF??5)+seed));});}
+
+/* ---------- modelli: famiglie di forme (proporzioni rispetto all'altezza dell'anca H) ---------- */
+function tplTheropod(o){const H=o.H,b=o.bulk||1,X=v=>v*H,R=v=>v*H*b;
+  const sp={col:o.col,stripe:o.stripe,stripeF:Math.PI*2/(0.42*H),accent:o.accent,sides:H<0.4?6:8,A:o.A??0.38,K:o.K??0.65,jawOpen:o.jawOpen,
+    torso:[[X(-.32),X(.04),R(.25),R(.21)],[0,0,R(.34),R(.29)],[X(.30),X(-.07),R(.37),R(.31)],[X(.56),X(-.04),R(.30),R(.25)],[X(.70),X(.05),R(.21),R(.18)]]};
+  const T=o.tail*H;sp.tail={pivot:[X(-.28),X(.03)],pts:[[X(.06),0,R(.23),R(.19)],[-.25*T,X(.02),R(.165),R(.14)],[-.5*T,X(.01),R(.11),R(.09)],[-.75*T,X(-.02),R(.06),R(.05)],[-T,X(-.05),X(.012),X(.012)]]};
+  const N=o.neck*H,a=o.neckAng,nk=o.neckThin||1;
+  sp.neck={pivot:[X(.64),X(.05)],pts:[[X(-.06),0,R(.19),R(.16)],[.5*N*Math.cos(a),.5*N*Math.sin(a),R(.15)*nk,R(.13)*nk],[N*Math.cos(a),N*Math.sin(a),R(.125)*nk,R(.11)*nk]]};
+  const L=o.head*H,h=o.headH*H,w=(o.headW||o.headH*0.7)*H;
+  sp.head=o.croc?{tilt:-0.06,pts:[[-.08*L,0,.45*h,.5*w],[.15*L,.06*h,.52*h,.48*w],[.42*L,-.06*h,.30*h,.30*w],[.85*L,-.12*h,.20*h,.20*w],[.96*L,-.1*h,.24*h,.24*w],[1.0*L,-.12*h,.04*h,.04*w]],
+      jaw:{pivot:[-.04*L,-.14*h],pts:[[0,-.1*h,.2*h,.42*w],[.45*L,-.24*h,.12*h,.26*w],[.92*L,-.24*h,.1*h,.18*w],[.98*L,-.24*h,.02*h,.02*w]]},eye:[.12*L,.28*h,.42*w,.09*h]}
+    :{tilt:o.headTilt??-0.06,pts:[[-.10*L,0,.45*h,.5*w],[.2*L,.06*h,.55*h,.52*w],[.6*L,-.02*h,.42*h,.4*w],[.93*L,-.12*h,.24*h,.26*w],[1.0*L,-.14*h,.05*h,.05*w]],
+      jaw:o.herb?null:{pivot:[-.06*L,-.14*h],pts:[[0,-.08*h,.2*h,.42*w],[.5*L,-.2*h,.17*h,.32*w],[.9*L,-.18*h,.08*h,.18*w],[.96*L,-.18*h,.02*h,.02*w]]},eye:[.22*L,.24*h,.46*w,.09*h]};
+  sp.legs=[-1,1].map(s=>({x:0,y:0,z:s*R(.23),segs:[[X(.42),R(.14),R(.095)],[X(.40),R(.085),R(.055)],[X(.23),R(.05),R(.04)]],rest:[.35,-.9,.8],
+    foot:[X(.21),R(.17),X(.035)],phase:s<0?0:Math.PI}));
+  const Ar=o.arm*H;sp.arms=[-1,1].map(s=>({x:X(.55),y:X(-.12),z:s*R(.27),segs:[[.5*Ar,R(.07),R(.05)],[.45*Ar,R(.05),R(.035)]],rest:[o.armRest??0.55,-1.1]}));
+  sp.extras=G=>{
+    if(o.crest){[-1,1].forEach(s=>{const c=new THREE.Mesh(new THREE.ConeGeometry(.06*h,.28*h,4),G.acc);c.position.set(.25*L,.52*h,s*.22*w);G.head.add(c);});}
+    if(o.sail){const sh=new THREE.Shape(),x0=X(-.34),x1=X(.66),n=10;sh.moveTo(x0,0);
+      for(let i=0;i<=n;i++){const u=i/n;sh.lineTo(lerp(x0,x1,u),o.sail*Math.pow(Math.sin(Math.PI*clamp(u*1.05,0,1)),0.8)+R(.2));}
+      sh.lineTo(x1,0);const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),G.acc);m.position.y=R(.12);G.body.add(m);}
+    if(o.feathers){const fan=(len,wid)=>{const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(-len*0.2,wid*0.6);s.lineTo(-len,wid);s.lineTo(-len*1.05,0);s.lineTo(-len,-wid*0.1);s.lineTo(0,0);return new THREE.ShapeGeometry(s);};
+      G.arms.forEach(A=>{const m=new THREE.Mesh(fan(.5*Ar,.35*Ar),G.acc);m.rotation.z=Math.PI/2;A.joints[1].add(m);});
+      const tf=new THREE.Mesh(fan(.45*T,.18*T),G.acc);tf.rotation.x=Math.PI/2;tf.position.x=-.0*T;G.tail2.add(tf);
+      const cr=new THREE.Mesh(fan(.4*L,.25*L),G.acc);cr.position.set(.1*L,.4*h,0);cr.rotation.z=0.3;G.head.add(cr);}
+    if(o.extras)o.extras(G,{H,X,R:R2=>R2*H*b,L,h,w});};
+  return sp;}
+// quadrupedi (sauropodi, stegosauri, ceratopsidi, adrosauri): H anca, F spalla, BL anca→spalla (m)
+function tplQuad(o){const H=o.H,F=o.F,BL=o.BL,R=o.R,yS=F-H;
+  const sp={col:o.col,stripe:o.stripe,stripeF:Math.PI*2/(0.5*H),accent:o.accent,sides:9,A:o.A??0.26,K:o.K??0.35,bob:0.006,grazeAng:o.grazeAng??-0.45,jawOpen:0.12};
+  const fr=[-0.24,0.12,0.5,0.86,1.07],rr=[0.68,0.95,1.0,0.92,0.66];
+  sp.torso=fr.map((f,i)=>{const u=clamp(f,0,1);return[f*BL,lerp(0,yS,u)+0.14*R*Math.sin(Math.PI*u),rr[i]*R,rr[i]*R*(o.wide??0.82)];});
+  const T=o.T,td=o.tailDrop??0.2;sp.tail={pivot:[-0.2*BL,0.02*R],pts:[[.07*BL,0,.66*R,.55*R],[-.22*T,-td*.4*R,.46*R,.38*R],[-.48*T,-td*R,.27*R,.23*R],[-.75*T,-td*1.1*R,.12*R,.1*R],[-T,-td*1.1*R,.03*R,.03*R]]};
+  const N=o.N,a=o.nAng,a2=a+(o.nCurve??0.1),nr=o.nR??0.5;
+  sp.neck={pivot:[0.97*BL,yS+0.2*R],pts:[[-.06*BL,0,nr*1.1*R,nr*0.9*R],[.35*N*Math.cos(a),.35*N*Math.sin(a),nr*.72*R,nr*.6*R],[.7*N*Math.cos((a+a2)/2),.7*N*Math.sin((a+a2)/2),nr*.5*R,nr*.43*R],[N*Math.cos(a2),N*Math.sin(a2),nr*.4*R,nr*.34*R]]};
+  const L=o.head,h=o.headH??0.45*L,w=o.headW??0.36*L;
+  const heads={
+    small:{pts:[[-.1*L,0,.42*h,.5*w],[.3*L,.1*h,.52*h,.5*w],[.72*L,-.04*h,.34*h,.38*w],[1.0*L,-.12*h,.08*h,.1*w]],eye:[.3*L,.3*h,.42*w,.08*h]},
+    duck:{pts:[[-.1*L,0,.42*h,.48*w],[.3*L,.12*h,.5*h,.45*w],[.65*L,-.05*h,.26*h,.42*w],[.95*L,-.12*h,.16*h,.55*w],[1.02*L,-.12*h,.04*h,.2*w]],eye:[.28*L,.3*h,.4*w,.08*h]},
+    beak:{pts:[[-.15*L,.05*h,.5*h,.5*w],[.2*L,.0,.5*h,.5*w],[.62*L,-.12*h,.38*h,.34*w],[.92*L,-.3*h,.2*h,.18*w],[1.0*L,-.38*h,.04*h,.04*w]],eye:[.35*L,.2*h,.44*w,.07*h]}};
+  sp.head={tilt:o.headTilt??-0.2,...heads[o.headType||'small']};
+  const legR=o.legR??0.28;
+  sp.legs=[[-1,0,false,0],[1,0,false,Math.PI],[-1,1,true,Math.PI*0.5],[1,1,true,Math.PI*1.5]].map(([s,f,fore,ph])=>{
+    const top=fore?F:H,x=fore?BL:0,y=fore?yS:0,r=legR*R*(fore?(o.foreR??0.9):1);
+    return {x,y,z:s*0.55*R*(o.wide??0.82)/0.82,fore,phase:ph,segs:[[0.5*top,r,r*0.8],[0.43*top,r*0.78,r*0.66],[0.07*top,r*0.66,r*0.72]],
+      rest:fore?[-0.06,0.12,-0.06]:[0.10,-0.16,0.06],foot:[r*1.5,r*1.5,0.05*top]};});
+  sp.extras=R=>{if(o.extras)o.extras(R,{H,F,BL,R:o.R,L,h,w,T});};return sp;}
+// pterosauri e uccelli in volo
+function tplFlyer(o){const B=o.B;   // B = lunghezza del corpo (m)
+  const sp={col:o.col,accent:o.accent,sides:6,flap:o.flap??0.6,flapF:o.flapF??4,fly:true,
+    torso:[[-.5*B,0,.12*B,.12*B],[-.1*B,.02*B,.2*B,.17*B],[.3*B,0,.18*B,.15*B],[.55*B,.05*B,.1*B,.09*B]]};
+  if(o.tail)sp.tail={pivot:[-.45*B,0],pts:[[.05*B,0,.1*B,.1*B],[-.3*o.tail,0,.05*B,.05*B],[-.65*o.tail,0,.03*B,.03*B],[-o.tail,0,.01*B,.01*B]]};
+  const N=o.neck,a=o.neckAng??0.35;sp.neck={pivot:[.5*B,.05*B],pts:[[-.05*B,0,.08*B,.07*B],[.5*N*Math.cos(a),.5*N*Math.sin(a),.06*B,.055*B],[N*Math.cos(a),N*Math.sin(a),.055*B,.05*B]]};
+  const L=o.head,h=o.headH;sp.head={tilt:-a*0.9,pts:[[-.08*L,0,.5*h,.45*h],[.15*L,.0,.5*h,.45*h],[.6*L,-.06*h,.22*h,.2*h],[1.0*L,-.1*h,.03*h,.03*h]],eye:[.08*L,.2*h,.38*h,.08*h]};
+  sp.extras=R=>{const span=o.span/2,ch=o.chord;
+    [-1,1].forEach(s=>{const sh=new THREE.Shape();
+      if(o.feather){sh.moveTo(.2*ch,0);sh.lineTo(.35*ch,.5*span);sh.lineTo(.15*ch,span);sh.lineTo(-.45*ch,.92*span);sh.lineTo(-.7*ch,.55*span);sh.lineTo(-.55*ch,0);}
+      else{sh.moveTo(.25*ch,0);sh.lineTo(.4*ch,.35*span);sh.lineTo(.3*ch,.7*span);sh.lineTo(.05*ch,span);sh.lineTo(-.25*ch,.62*span);sh.lineTo(-.55*ch,.25*span);sh.lineTo(-.5*ch,0);}
+      const g=new THREE.ShapeGeometry(sh);g.rotateX(Math.PI/2);if(s<0)g.scale(1,1,-1);
+      const pv=new THREE.Group();pv.position.set(.15*B,.08*B,s*.08*B);R.body.add(pv);pv.add(new THREE.Mesh(g,R.acc));R.wings[s<0?0:1]=pv;});
+    if(o.crest){const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(-o.crest,o.crest*0.35);s.lineTo(-o.crest*0.85,o.crest*0.1);s.lineTo(0,-.05*h);
+      const m=new THREE.Mesh(new THREE.ShapeGeometry(s),R.acc);m.position.set(-.02*L,.2*h,0);R.head.add(m);}
+    if(o.tailFan){const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(-o.tailFan,o.tailFan*0.45);s.lineTo(-o.tailFan*1.1,0);s.lineTo(-o.tailFan,-o.tailFan*0.45);s.lineTo(0,0);
+      const g=new THREE.ShapeGeometry(s);g.rotateX(Math.PI/2);const m=new THREE.Mesh(g,R.acc);(R.tail2||R.body).add(m);if(!R.tail2)m.position.x=-.5*B;}};
+  return sp;}
+// essere umano (Homo sapiens), altezza Hh
+function tplHuman(o){const Hh=o.Hh,X=v=>v*Hh;
+  return {col:o.col,sides:7,human:true,A:0.42,K:0.55,bob:0.01,
+    torso:[[0,X(.0),X(.085),X(.11)],[0,X(.14),X(.09),X(.12)],[X(.01),X(.27),X(.07),X(.10)],[X(.01),X(.31),X(.04),X(.04)]].map(p=>[p[0],p[1],p[2],p[3]]),
+    neck:{pivot:[X(.01),X(.31)],pts:[[0,0,X(.03),X(.03)],[0,X(.03),X(.03),X(.03)]]},
+    head:{tilt:0,pts:[[-X(.05),X(.06),X(.04),X(.055)],[0,X(.075),X(.07),X(.062)],[X(.04),X(.07),X(.055),X(.055)],[X(.06),X(.06),X(.02),X(.02)]],eye:[X(.045),X(.085),X(.03),X(.008)]},
+    legs:[-1,1].map(s=>({x:0,y:X(.01),z:s*X(.055),segs:[[X(.25),X(.05),X(.04)],[X(.25),X(.038),X(.03)]],rest:[0.05,-0.08],foot:[X(.13),X(.05),X(.03)],phase:s<0?0:Math.PI})),
+    arms:[-1,1].map(s=>({x:X(.01),y:X(.29),z:s*X(.13),segs:[[X(.17),X(.03),X(.026)],[X(.16),X(.025),X(.02)]],rest:[0.05,0.25]})),
+    extras:R=>{const hair=new THREE.Mesh(new THREE.SphereGeometry(X(.068),7,5),new THREE.MeshLambertMaterial({color:col(o.hair||'#2b211a')}));
+      hair.position.set(-X(.012),X(.095),0);hair.scale.set(1,0.8,1);R.head.add(hair);}};}
+
+/* =====================================================================
+   MONDO "TEMPO PROFONDO" — Storia e Scienze, classe terza
+   Nuove Indicazioni 2025 (DM 221/2025): la storia di terza parte da «La comparsa
+   dell'uomo sulla terra» e chiede la «consapevolezza della profondità del tempo
+   storico»; scienze di terza chiede di confrontare «scheletri e dentature… per
+   dedurre la loro dieta». I dinosauri servono a MISURARE la profondità del tempo:
+   la linea del tempo corre sul pavimento da 252 milioni di anni fa a oggi e
+   l'uomo compare negli ultimi 2-3 centimetri. Plastico al centro in scala 1:10.
+   ===================================================================== */
+const ICON_TEMPO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2-1 3-4 5-5s4 0 6-2 2-5 4-5"/><path d="M15 5c1.5 0 3 .5 3 2s-1 2-2 2"/><path d="M6 12l-1 5M10 12l1 5"/><path d="M2 21h20"/></svg>';
+// DATI VERIFICATI (ricerca del 2026-10-20: NHM Dino Directory, Wikipedia it/en, studi citati nelle fonti).
+// Generati da facts.json: testi per la primaria, «nota» e «fonti» compaiono nella sezione per il docente.
+const DATI_TEMPO={
+"specie": [
+{
+"id": "eoraptor",
+"nome": "Eoraptor lunensis",
+"soprannome": null,
+"significato": "predatore dell'alba",
+"inizio": 231.4,
+"fine": 228.9,
+"lunghezza_m": 1.2,
+"altezza_m": null,
+"peso_kg": 10,
+"apertura_alare_m": null,
+"dieta": "onnivoro",
+"dentatura": "Denti di due tipi: quelli davanti a forma di foglia, quelli dietro ricurvi e seghettati. Una dentatura mista, adatta a mangiare cose diverse.",
+"dove": "Formazione di Ischigualasto, Valle de la Luna (San Juan, Argentina)",
+"e_dinosauro": true,
+"testo": [
+"Eoraptor è uno dei primi dinosauri conosciuti. Era piccolo: lungo poco più di un metro. Visse in Argentina circa 230 milioni di anni fa. Forse mangiava piccoli animali e anche piante."
+],
+"nota": "Dieta discussa: Sereno et al. (2013) lo considerano probabilmente onnivoro; i primi descrittori (1993) e il Natural History Museum lo indicano come carnivoro. Lunghezza 1,2-1,3 m (en.wiki); NHM 1,7 m. Classificazione incerta (primo sauropodomorfo o primo teropode).",
+"fonti": [
+"https://en.wikipedia.org/wiki/Eoraptor",
+"https://www.nhm.ac.uk/discover/dino-directory/eoraptor.html"
+],
+"denti": "misti",
+"n": 2,
+"etichetta": "Eoraptor"
+},
+{
+"id": "herrerasaurus",
+"nome": "Herrerasaurus ischigualastensis",
+"soprannome": null,
+"significato": "lucertola di Herrera (dal pastore Victorino Herrera, che trovò i fossili)",
+"inizio": 231.4,
+"fine": 228.9,
+"lunghezza_m": 4.5,
+"altezza_m": null,
+"peso_kg": 200,
+"apertura_alare_m": null,
+"dieta": "carnivoro",
+"dentatura": "Denti grandi, ricurvi all'indietro e seghettati: adatti a mordere e tagliare la carne.",
+"dove": "Formazione di Ischigualasto (San Juan, Argentina)",
+"e_dinosauro": true,
+"testo": [
+"Herrerasaurus era un predatore del Triassico. Camminava su due zampe e aveva denti seghettati. Visse in Argentina, nello stesso ambiente di Eoraptor."
+],
+"nota": "Lunghezza e peso: esemplari più piccoli circa 4,5 m e 200 kg; adulti fino a 6 m e 350 kg (en.wiki). NHM indica 3 m.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Herrerasaurus",
+"https://www.nhm.ac.uk/discover/dino-directory/herrerasaurus.html"
+],
+"denti": "lama",
+"etichetta": "Herrerasaurus"
+},
+{
+"id": "coelophysis",
+"nome": "Coelophysis bauri",
+"soprannome": null,
+"significato": "forma cava (per le ossa cave e leggere)",
+"inizio": 215,
+"fine": 201.4,
+"lunghezza_m": 3,
+"altezza_m": 1,
+"peso_kg": 20,
+"apertura_alare_m": null,
+"dieta": "carnivoro",
+"dentatura": "Molti denti piccoli a lama, ricurvi e finemente seghettati sui due bordi: denti da cacciatore.",
+"dove": "Formazione di Chinle, cava di Ghost Ranch (Nuovo Messico, Stati Uniti)",
+"e_dinosauro": true,
+"testo": [
+"Coelophysis era un dinosauro snello e veloce. Aveva ossa leggere e cave. Cacciava piccoli animali. A Ghost Ranch, negli Stati Uniti, ne sono stati trovati più di mille."
+],
+"nota": "Lunghezza fino a 3 m (NHM 2 m); altezza ai fianchi poco più di 1 m. Peso 15-25 kg secondo le stime di G. S. Paul (NHM 27 kg). Intervallo 215-201,4 Ma secondo en.wiki; NHM indica 225-190 Ma (dato più vecchio).",
+"fonti": [
+"https://en.wikipedia.org/wiki/Coelophysis",
+"https://www.nhm.ac.uk/discover/dino-directory/coelophysis.html"
+],
+"denti": "lama",
+"n": 3,
+"etichetta": "Coelophysis"
+},
+{
+"id": "plateosaurus",
+"nome": "Plateosaurus",
+"soprannome": null,
+"significato": "lucertola larga (spesso tradotto 'lucertola piatta')",
+"inizio": 214,
+"fine": 204,
+"lunghezza_m": 7,
+"altezza_m": null,
+"peso_kg": 4000,
+"apertura_alare_m": null,
+"dieta": "erbivoro",
+"dentatura": "Denti piccoli a forma di foglia, con bordi a dentelli smussati: adatti a sminuzzare le piante.",
+"dove": "Europa centrale e settentrionale: Germania (Trossingen, Halberstadt), Svizzera (Frick), Francia",
+"e_dinosauro": true,
+"testo": [
+"Plateosaurus era un grande erbivoro del Triassico. Aveva il collo lungo e camminava su due zampe. I suoi fossili si trovano in Germania, Svizzera e Francia."
+],
+"nota": "Lunghezza degli adulti 4,8-10 m, peso 600-4000 kg secondo la taglia (en.wiki); valori scelti dal Natural History Museum (7 m, 4000 kg): il peso è nella parte alta delle stime. Oggi si ritiene che camminasse solo su due zampe (non poteva ruotare le mani per appoggiarle a terra); NHM scrive ancora 'su 2 o 4 zampe'. Intervallo 214-204 Ma (en.wiki, introduzione); l'infobox dà 227-204. Forse integrava la dieta con piccoli animali.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Plateosaurus",
+"https://www.nhm.ac.uk/discover/dino-directory/plateosaurus.html"
+],
+"denti": "foglia",
+"n": 2,
+"etichetta": "Plateosaurus"
+},
+{
+"id": "saltriovenator",
+"nome": "Saltriovenator zanellai",
+"soprannome": "Saltriosauro",
+"significato": "cacciatore di Saltrio (zanellai in onore dello scopritore Angelo Zanella)",
+"inizio": 199.3,
+"fine": 197.5,
+"lunghezza_m": 7.5,
+"altezza_m": 2.2,
+"peso_kg": 1300,
+"apertura_alare_m": null,
+"dieta": "carnivoro",
+"dentatura": "Si conserva un solo dente. Come gli altri grandi teropodi carnivori aveva denti appuntiti, ricurvi e seghettati.",
+"dove": "Cava Salnova, Saltrio (provincia di Varese, Lombardia)",
+"e_dinosauro": true,
+"testo": [
+"Saltriovenator è stato trovato a Saltrio, in provincia di Varese, in Lombardia. Era un grande carnivoro, lungo circa 7 metri e mezzo. Visse circa 198 milioni di anni fa. Le sue ossa sono al Museo di Storia Naturale di Milano."
+],
+"nota": "Scoperto il 4 agosto 1996 da Angelo Zanella; descritto nel dicembre 2018 (Dal Sasso, Maganuco, Cau). Si conosce circa il 10% dello scheletro (olotipo MSNM V3664). Lunghezza almeno 7-8 m (7,3 m per confronto con Ceratosaurus); altezza ai fianchi circa 2,2 m; peso stimato 1160-1622 kg. La descrizione dei denti è dedotta dai teropodi affini: le fonti consultate citano un dente ma non ne descrivono la forma. Era il più grande teropode conosciuto del suo tempo.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Saltriovenator",
+"https://it.wikipedia.org/wiki/Saltriovenator_zanellai"
+],
+"denti": "lama",
+"etichetta": "Saltriovenator"
+},
+{
+"id": "stegosaurus",
+"nome": "Stegosaurus stenops",
+"soprannome": null,
+"significato": "lucertola con il tetto (per le placche sulla schiena)",
+"inizio": 155,
+"fine": 145,
+"lunghezza_m": 6.5,
+"altezza_m": 2.9,
+"peso_kg": 3500,
+"apertura_alare_m": null,
+"dieta": "erbivoro",
+"dentatura": "Davanti un becco corneo senza denti; ai lati della bocca denti piccoli, triangolari e piatti, consumati dal masticare piante basse.",
+"dove": "Formazione di Morrison (Colorado, Wyoming, Utah, Stati Uniti); forse anche Portogallo",
+"e_dinosauro": true,
+"testo": [
+"Stegosaurus aveva grandi placche ossee sulla schiena e punte sulla coda. Era un erbivoro con la testa piccola. Visse circa 150 milioni di anni fa. Il T. rex arrivò circa 80 milioni di anni dopo."
+],
+"nota": "Valori per S. stenops (6,5 m, 3500 kg); grandi individui fino a 7,5-9 m e 5000-5300 kg (NHM 9 m). Altezza 2,9 m = esemplare 'Sophie' (giovane adulto, Natural History Museum di Londra). Intervallo 155-145 Ma (en.wiki); NHM 152-145 Ma.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Stegosaurus",
+"https://www.nhm.ac.uk/discover/dino-directory/stegosaurus.html"
+],
+"denti": "becco-foglia",
+"etichetta": "Stegosaurus"
+},
+{
+"id": "allosaurus",
+"nome": "Allosaurus fragilis",
+"soprannome": null,
+"significato": "lucertola diversa",
+"inizio": 155,
+"fine": 145,
+"lunghezza_m": 8,
+"altezza_m": null,
+"peso_kg": 2300,
+"apertura_alare_m": null,
+"dieta": "carnivoro",
+"dentatura": "Decine di denti a lama, ricurvi e seghettati come coltelli; verso il fondo della bocca diventano più piccoli e curvi.",
+"dove": "Formazione di Morrison (Stati Uniti occidentali); anche Portogallo",
+"e_dinosauro": true,
+"testo": [
+"Allosaurus era il grande predatore del Giurassico. Camminava su due zampe. Aveva denti seghettati come coltelli. Forse cacciava anche Stegosaurus."
+],
+"nota": "Lunghezza media 7,5-8 m, i più grandi circa 9 m (NHM 9,7 m). Peso 1700-2700 kg (en.wiki), 2300 kg = stima ottimale di uno studio computazionale; NHM 2700 kg. Intervallo 155-145 Ma; en.wiki estende la fine a 143,1 Ma (nuovo limite ICS); NHM 152-145.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Allosaurus",
+"https://www.nhm.ac.uk/discover/dino-directory/allosaurus.html"
+],
+"denti": "lama",
+"etichetta": "Allosaurus"
+},
+{
+"id": "brachiosaurus",
+"nome": "Brachiosaurus altithorax",
+"soprannome": null,
+"significato": "lucertola braccio (per le lunghe zampe anteriori)",
+"inizio": 155.6,
+"fine": 145.5,
+"lunghezza_m": 22,
+"altezza_m": 12,
+"peso_kg": 46900,
+"apertura_alare_m": null,
+"dieta": "erbivoro",
+"dentatura": "Denti robusti a forma di cucchiaio (spatolati), adatti a strappare le foglie dagli alberi alti.",
+"dove": "Formazione di Morrison, vicino a Fruita (Colorado, Stati Uniti)",
+"e_dinosauro": true,
+"testo": [
+"Brachiosaurus era un enorme erbivoro dal collo lungo. Le zampe anteriori erano più lunghe di quelle posteriori. Mangiava le foglie in cima agli alberi, come una giraffa gigante."
+],
+"nota": "Lunghezza 18-22 m (NHM 22). Altezza della testa: stime 9,4 m oppure 12-13 m. Peso: 28 300-46 900 kg (en.wiki); 46 900 kg è il valore usato dal NHM. Il dinosauro africano spesso chiamato Brachiosaurus (Tanzania) oggi si chiama Giraffatitan.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Brachiosaurus",
+"https://www.nhm.ac.uk/discover/dino-directory/brachiosaurus.html"
+],
+"denti": "cucchiaio",
+"etichetta": "Brachiosaurus",
+"lontano": true
+},
+{
+"id": "diplodocus",
+"nome": "Diplodocus carnegii",
+"soprannome": null,
+"significato": "doppia trave (per le ossa a doppia trave sotto la coda)",
+"inizio": 152.1,
+"fine": 149.1,
+"lunghezza_m": 26,
+"altezza_m": null,
+"peso_kg": 15000,
+"apertura_alare_m": null,
+"dieta": "erbivoro",
+"dentatura": "Denti sottili a forma di matita (a piolo), solo nella parte anteriore della bocca, disposti come un pettine: servivano a strappare le foglie dai rami.",
+"dove": "Formazione di Morrison (Colorado, Wyoming, Utah, Montana, Nuovo Messico, Stati Uniti)",
+"e_dinosauro": true,
+"testo": [
+"Diplodocus era lungo più di due autobus messi in fila. Aveva un collo e una coda lunghissimi. I suoi denti a matita erano solo davanti alla bocca. Con quelli strappava le foglie dai rami."
+],
+"nota": "D. carnegii 24-26 m e 12 000-14 800 kg (en.wiki); NHM 26 m e 15 000 kg. D. hallorum era più lungo (29-33 m). Altezza: nessun valore attendibile trovato. Intervallo 152,07-149,1 Ma (en.wiki); NHM 152-145.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Diplodocus",
+"https://www.nhm.ac.uk/discover/dino-directory/diplodocus.html"
+],
+"denti": "piolo",
+"etichetta": "Diplodocus",
+"lontano": true
+},
+{
+"id": "archaeopteryx",
+"nome": "Archaeopteryx lithographica",
+"soprannome": null,
+"significato": "ala antica",
+"inizio": 150.8,
+"fine": 148.5,
+"lunghezza_m": 0.5,
+"altezza_m": null,
+"peso_kg": 0.9,
+"apertura_alare_m": 0.7,
+"dieta": "carnivoro",
+"dentatura": "Molti piccoli denti conici nel becco: gli uccelli di oggi non hanno denti.",
+"dove": "Calcari di Solnhofen (Baviera, Germania)",
+"e_dinosauro": true,
+"testo": [
+"Archaeopteryx era grande come una gazza. Aveva piume e ali, come un uccello. Ma aveva anche denti, artigli sulle ali e una lunga coda d'osso. Gli uccelli sono dinosauri: Archaeopteryx è uno dei più antichi uccelli conosciuti."
+],
+"nota": "È un dinosauro teropode piumato, alla base degli Avialae (il gruppo degli uccelli): per questo e_dinosauro=true. Non è più considerato il più antico uccello in assoluto (Anchiornis, Xiaotingia) e la sua posizione esatta è discussa. Volo: le penne asimmetriche permettevano di volare, ma non è chiaro se battesse le ali come gli uccelli di oggi o planasse; camminava anche su due zampe. Dieta: carnivoro per il NHM (piccoli animali, insetti); it.wiki lo dice probabilmente onnivoro. Peso adulto 0,8-1 kg; lunghezza fino a circa 50 cm.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Archaeopteryx",
+"https://it.wikipedia.org/wiki/Archaeopteryx",
+"https://www.nhm.ac.uk/discover/dino-directory/archaeopteryx.html"
+],
+"denti": "conici",
+"etichetta": "Archaeopteryx"
+},
+{
+"id": "scipionyx",
+"nome": "Scipionyx samniticus",
+"soprannome": "Ciro",
+"significato": "artiglio di Scipione del Sannio (in onore del geologo Scipione Breislak e di Scipione l'Africano)",
+"inizio": 113,
+"fine": 110,
+"lunghezza_m": 0.46,
+"altezza_m": null,
+"peso_kg": null,
+"apertura_alare_m": null,
+"dieta": "carnivoro",
+"dentatura": "44 piccoli denti (22 per lato): quelli davanti appuntiti e lisci, gli altri appiattiti, ricurvi e con piccoli dentelli sul bordo posteriore. Denti da piccolo predatore.",
+"dove": "Cava Le Cavere, Pietraroja (provincia di Benevento, Campania)",
+"e_dinosauro": true,
+"testo": [
+"Scipionyx, detto Ciro, è stato trovato a Pietraroja, in Campania. Era un cucciolo appena nato, lungo meno di mezzo metro. Nel fossile si vedono ancora l'intestino e i muscoli. Nella pancia aveva resti di lucertole e pesci."
+],
+"nota": "Un solo esemplare, un cucciolo appena nato (probabilmente circa 3 giorni, al massimo poche settimane). 23,7 cm conservati; circa 46 cm con la coda mancante (Dal Sasso e Maganuco 2011). Taglia adulta sconosciuta; peso non stimato. Età circa 113 Ma (Albiano inferiore); la sezione sull'olotipo indica circa 110 Ma: l'intervallo 113-110 riflette questa incertezza. Scoperto nel 1980-81 da Giovanni Todesco, descritto nel 1998 (Dal Sasso e Signore). Originale custodito a Benevento.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Scipionyx",
+"https://it.wikipedia.org/wiki/Scipionyx_samniticus"
+],
+"denti": "lama",
+"etichetta": "Ciro (Scipionyx)"
+},
+{
+"id": "spinosaurus",
+"nome": "Spinosaurus aegyptiacus",
+"soprannome": null,
+"significato": "lucertola con la spina (per le lunghe spine della vela)",
+"inizio": 99,
+"fine": 94,
+"lunghezza_m": 14,
+"altezza_m": null,
+"peso_kg": 7400,
+"apertura_alare_m": null,
+"dieta": "pesci",
+"dentatura": "Denti conici e dritti, quasi senza seghettatura, in un muso lungo come quello di un coccodrillo: ottimi per afferrare pesci scivolosi.",
+"dove": "Formazione di Bahariya (Egitto) e Kem Kem (Marocco)",
+"e_dinosauro": true,
+"testo": [
+"Spinosaurus aveva una grande vela sulla schiena. Il suo muso era lungo e stretto, simile a quello di un coccodrillo. Mangiava soprattutto pesci. Viveva vicino ai fiumi del Nord Africa."
+],
+"nota": "Lunghezza e peso molto discussi: 14 m e 7400 kg (Sereno et al. 2022, NHM); altre stime 12,6-18 m e 4000-20 900 kg (Dal Sasso et al. 2005: 16-18 m). Mangiava soprattutto pesci ma era un predatore opportunista. Discusso anche se camminasse su due o quattro zampe (Ibrahim 2014: forse quadrupede; Sereno 2022: bipede) e quanto nuotasse. Intervallo 99-94 Ma (NHM); en.wiki circa 100-94.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Spinosaurus",
+"https://www.nhm.ac.uk/discover/dino-directory/spinosaurus.html"
+],
+"denti": "conici",
+"etichetta": "Spinosaurus",
+"lontano": true
+},
+{
+"id": "tethyshadros",
+"nome": "Tethyshadros insularis",
+"soprannome": "Antonio",
+"significato": "adrosauro della Tetide, delle isole (dal mare Tetide e dall'ambiente insulare)",
+"inizio": 81.5,
+"fine": 80.5,
+"lunghezza_m": 4,
+"altezza_m": 1.3,
+"peso_kg": 350,
+"apertura_alare_m": null,
+"dieta": "erbivoro",
+"dentatura": "Davanti un becco; dietro una 'batteria dentale' con decine di piccoli denti stretti uno all'altro, che si consumavano e venivano sostituiti di continuo: adatti a macinare le piante.",
+"dove": "Villaggio del Pescatore, Duino-Aurisina (provincia di Trieste, Friuli-Venezia Giulia)",
+"e_dinosauro": true,
+"testo": [
+"Tethyshadros è stato trovato vicino a Trieste. Lo scheletro più famoso si chiama Antonio. Era un erbivoro con il becco, lungo circa 4 metri. Visse circa 80 milioni di anni fa, vicino a un antico mare."
+],
+"nota": "Datazione rivista: in origine circa 70 Ma (limite Campaniano-Maastrichtiano); Chiarenza et al. (Scientific Reports, 2021) datano il sito al Campaniano inferiore-medio, circa 81,5-80,5 Ma. Lo stesso studio respinge l'idea di 'dinosauro nano': Antonio (olotipo SC 57021) era un subadulto; un secondo scheletro più grande, Bruno (SC 57247), è un adulto di 514-584 kg. Peso di Antonio 338-350 kg (una scheda museale indica 700 kg). Andatura incerta: it.wiki lo descrive come prevalentemente quadrupede; Dalla Vecchia (2009) collegava le zampe posteriori lunghe alla corsa su due zampe. Fossili al Museo Civico di Storia Naturale di Trieste.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Tethyshadros",
+"https://it.wikipedia.org/wiki/Tethyshadros_insularis",
+"https://pmc.ncbi.nlm.nih.gov/articles/PMC8640049",
+"https://www.triestecontemporanea.it/en/2014/05/08/map-pin-antonios-technical-file/"
+],
+"denti": "batteria",
+"etichetta": "Antonio (Tethyshadros)"
+},
+{
+"id": "pteranodon",
+"nome": "Pteranodon longiceps",
+"soprannome": null,
+"significato": "ala senza denti",
+"inizio": 86,
+"fine": 78.25,
+"lunghezza_m": null,
+"altezza_m": null,
+"peso_kg": 30,
+"apertura_alare_m": 5.6,
+"dieta": "pesci",
+"dentatura": "Nessun dente: un lungo becco appuntito, come quello di un uccello pescatore.",
+"dove": "Formazione di Niobrara, Smoky Hill Chalk (Kansas, Stati Uniti); anche Wyoming e Sud Dakota",
+"e_dinosauro": false,
+"testo": [
+"Pteranodon non era un dinosauro: era uno pterosauro, un rettile volante. Le sue ali erano di pelle e si aprivano per più di 5 metri. Non aveva denti: con il becco catturava i pesci."
+],
+"nota": "Gli pterosauri sono parenti stretti dei dinosauri (gruppo Avemetatarsalia) ma non sono dinosauri. Apertura alare: maschi adulti in media 5,6 m (5,6-7,6 m), femmine 3,8 m. Peso dei grandi maschi 20-35 kg secondo Witton e Habib (2010); stime più vecchie 50-93 kg. Lunghezza del corpo non indicata dalle fonti. Intervallo del genere 86-78,25 Ma (infobox en.wiki); P. sternbergi forse fino a 88 Ma.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Pteranodon"
+],
+"denti": "becco",
+"etichetta": "Pteranodon",
+"lontano": true
+},
+{
+"id": "velociraptor",
+"nome": "Velociraptor mongoliensis",
+"soprannome": null,
+"significato": "ladro veloce",
+"inizio": 75,
+"fine": 71,
+"lunghezza_m": 2,
+"altezza_m": 0.5,
+"peso_kg": 15,
+"apertura_alare_m": null,
+"dieta": "carnivoro",
+"dentatura": "Denti appuntiti, tutti simili, con piccoli dentelli soprattutto sul bordo posteriore: denti per tagliare la carne.",
+"dove": "Formazione di Djadochta, deserto del Gobi (Mongolia)",
+"e_dinosauro": true,
+"testo": [
+"Velociraptor era grande più o meno come un tacchino. Aveva le piume e un artiglio a falce su ogni piede. Visse in Mongolia. Era molto più piccolo di come appare in alcuni film."
+],
+"nota": "Lunghezza 1,5-2,07 m (fino a circa 2,5 m), altezza ai fianchi circa 0,5 m, peso 14,1-19,7 kg (en.wiki); NHM 1,8 m e 7 kg. Piume: indicate da bottoni d'attacco delle penne su un'ulna e dai parenti stretti. Famoso il fossile 'Dinosauri combattenti' con un Protoceratops (1971). Intervallo 75-71 Ma (en.wiki), NHM 74-70.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Velociraptor",
+"https://www.nhm.ac.uk/discover/dino-directory/velociraptor.html"
+],
+"denti": "lama",
+"n": 2,
+"etichetta": "Velociraptor"
+},
+{
+"id": "triceratops",
+"nome": "Triceratops horridus",
+"soprannome": null,
+"significato": "faccia con tre corna",
+"inizio": 68,
+"fine": 66,
+"lunghezza_m": 9,
+"altezza_m": 3,
+"peso_kg": 10000,
+"apertura_alare_m": null,
+"dieta": "erbivoro",
+"dentatura": "Davanti un becco stretto e senza denti; dietro centinaia di denti in 'batterie' che tagliavano le piante dure come forbici.",
+"dove": "Formazioni di Hell Creek (Montana) e Lance (Wyoming), Stati Uniti; anche Canada",
+"e_dinosauro": true,
+"testo": [
+"Triceratops aveva tre corna e un grande collare d'osso. Era un erbivoro e camminava su quattro zampe. Visse alla fine del Cretaceo, nello stesso periodo del T. rex."
+],
+"nota": "Lunghezza 8-9 m (NHM 9 m); peso 6000-10 000 kg (en.wiki), NHM 10 000 kg (valore alto), l'esemplare Kelsey circa 5400 kg. Altezza 3,0 m stimata per 'Big John', 2,3 m per Kelsey. Da 432 a 800 denti in tutto, solo alcuni in uso. Intervallo 68-66 Ma (NHM); en.wiki circa 69-66.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Triceratops",
+"https://www.nhm.ac.uk/discover/dino-directory/triceratops.html"
+],
+"denti": "batteria",
+"etichetta": "Triceratops",
+"lontano": true
+},
+{
+"id": "tyrannosaurus",
+"nome": "Tyrannosaurus rex",
+"soprannome": null,
+"significato": "re delle lucertole tiranne",
+"inizio": 68,
+"fine": 66,
+"lunghezza_m": 12.3,
+"altezza_m": 3.7,
+"peso_kg": 8800,
+"apertura_alare_m": null,
+"dieta": "carnivoro",
+"dentatura": "Denti robusti, conici e seghettati, grandi come banane (il più grande circa 30 cm con la radice): adatti a mordere forte e rompere le ossa.",
+"dove": "Nord America occidentale: Hell Creek (Montana) e altre formazioni di Stati Uniti e Canada",
+"e_dinosauro": true,
+"testo": [
+"Tyrannosaurus rex era uno dei più grandi carnivori di terra mai esistiti. Era lungo circa 12 metri. I suoi denti erano grossi come banane. Visse circa 68-66 milioni di anni fa, molto dopo Stegosaurus."
+],
+"nota": "Lunghezza dell'esemplare Sue 12,3-12,4 m (fino a oltre 13 m per Scotty); altezza ai fianchi 3,7-4 m; peso 8400-9220 kg per Sue (en.wiki), 8800 kg nell'introduzione en.wiki, NHM 12 m e 7000 kg. Intervallo 68-66 Ma (NHM); en.wiki circa 69-66. Tra Stegosaurus (fino a ~145 Ma) e T. rex (da ~68 Ma) passano circa 80 milioni di anni.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Tyrannosaurus",
+"https://www.nhm.ac.uk/discover/dino-directory/tyrannosaurus.html"
+],
+"denti": "robusti",
+"etichetta": "T. rex",
+"lontano": true
+},
+{
+"id": "uccello",
+"nome": "Uccelli",
+"etichetta": "Uccelli",
+"inizio": 66,
+"fine": 0,
+"n": 3,
+"fuoriTappa": true,
+"pad": 0.3,
+"dieta": "onnivoro",
+"testo": [
+"Gli uccelli discendono dai dinosauri teropodi, come Archaeopteryx.",
+"Sono gli unici dinosauri sopravvissuti all'asteroide di 66 milioni di anni fa: un passero è un dinosauro!"
+],
+"nota": "Testo redatto per l'app sulla base della scheda \"estinzione\" (Chicxulub): «Scomparvero tutti i dinosauri, tranne gli uccelli»."
+},
+{
+"id": "homo",
+"nome": "Homo sapiens",
+"etichetta": "Esseri umani",
+"inizio": 0.3,
+"fine": 0,
+"n": 3,
+"pad": 0,
+"fuoriTappa": true,
+"dieta": "onnivoro",
+"denti": "umani",
+"testo": [
+"Il genere Homo, quello degli esseri umani, comparve in Africa circa 2,8 milioni di anni fa. Noi, Homo sapiens, esistiamo da almeno 300 000 anni. Gli ultimi grandi dinosauri erano scomparsi più di 60 milioni di anni prima. Nessun essere umano ha mai visto un T. rex vivo."
+],
+"nota": "Homo sapiens: 'almeno 300 000 anni' (en.wiki). Genere Homo: mandibola LD 350-1 (Etiopia), circa 2,8 milioni di anni (Villmoare et al. 2015); l'origine del genere resta discussa (stime da orologio molecolare tra 4,3 e 2,56 milioni di anni). Tra la fine dei dinosauri non aviani (66 Ma) e il primo Homo (2,8 Ma) passano circa 63 milioni di anni.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Homo_sapiens",
+"https://en.wikipedia.org/wiki/Homo"
+]
+}
+],
+"ere": [
+{
+"nome": "Triassico",
+"ambiente": "Le terre formavano un solo grande continente, la Pangea. Il clima era caldo e spesso secco, con molti deserti. Crescevano conifere, felci e piante simili alle palme. Non c'erano ancora i fiori. In questo periodo comparvero i primi dinosauri.",
+"nota": "Date ICS: 251,902 ± 0,024 e 201,4 ± 0,2 milioni di anni fa.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Triassic"
+]
+},
+{
+"nome": "Giurassico",
+"ambiente": "La Pangea cominciò a dividersi e si formarono nuovi mari. Il clima era più caldo di oggi e non c'erano ghiacci ai poli. C'erano grandi foreste di conifere, felci e cicadee. Non c'erano ancora piante con i fiori.",
+"nota": "Fine del Giurassico: 143,1 ± 0,6 Ma secondo la carta ICS 2024; molti libri riportano ancora circa 145 Ma. È l'unico limite tra periodi senza una definizione ufficiale (GSSP).",
+"fonti": [
+"https://en.wikipedia.org/wiki/Jurassic",
+"https://sites.duke.edu/eos204/files/2025/01/ChronostratChart2024-12.pdf"
+]
+},
+{
+"nome": "Cretaceo",
+"ambiente": "I continenti si allontanavano sempre di più. Il clima era caldo e il mare copriva molte terre basse. Comparvero le prime piante con i fiori, che si diffusero ovunque. Alla fine del Cretaceo un asteroide causò una grande estinzione.",
+"nota": "Inizio 143,1 ± 0,6 Ma (ICS 2024; prima circa 145 Ma). Fine 66,0 Ma (limite K-Pg).",
+"fonti": [
+"https://en.wikipedia.org/wiki/Cretaceous",
+"https://sites.duke.edu/eos204/files/2025/01/ChronostratChart2024-12.pdf"
+]
+},
+{
+"nome": "Cenozoico",
+"ambiente": "Dopo l'asteroide si diffusero i mammiferi e gli uccelli. Comparvero le praterie d'erba e i continenti presero, a poco a poco, la forma di oggi. Alla fine di quest'era comparvero gli esseri umani.",
+"nota": "Il Cenozoico è un'era (comprende Paleogene, Neogene e Quaternario), non un periodo come Triassico, Giurassico e Cretaceo: sulla striscia è indicato per intero per semplicità. Testo redatto per l'app.",
+"fonti": []
+}
+],
+"umani": {
+"homo_sapiens_anni": 300000,
+"genere_homo_ma": 2.8,
+"testo": [
+"Il genere Homo, quello degli esseri umani, comparve in Africa circa 2,8 milioni di anni fa. Noi, Homo sapiens, esistiamo da almeno 300 000 anni. Gli ultimi grandi dinosauri erano scomparsi più di 60 milioni di anni prima. Nessun essere umano ha mai visto un T. rex vivo."
+],
+"nota": "Homo sapiens: 'almeno 300 000 anni' (en.wiki). Genere Homo: mandibola LD 350-1 (Etiopia), circa 2,8 milioni di anni (Villmoare et al. 2015); l'origine del genere resta discussa (stime da orologio molecolare tra 4,3 e 2,56 milioni di anni). Tra la fine dei dinosauri non aviani (66 Ma) e il primo Homo (2,8 Ma) passano circa 63 milioni di anni.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Homo_sapiens",
+"https://en.wikipedia.org/wiki/Homo"
+]
+},
+"estinzione": {
+"ma": 66.0,
+"testo": [
+"Circa 66 milioni di anni fa un asteroide colpì la Terra. Era largo circa 10 chilometri. Cadde dove oggi c'è la penisola dello Yucatán, in Messico. Lasciò un enorme cratere, chiamato Chicxulub. Si estinsero circa tre specie di piante e animali su quattro. Scomparvero tutti i dinosauri, tranne gli uccelli. Scomparvero anche gli pterosauri."
+],
+"nota": "Età dell'impatto 66,043 ± 0,043 Ma. Cratere largo circa 180-200 km (alcuni studi indicano fino a circa 300 km). Asteroide circa 10 km. Estinzione di circa il 75% delle specie, compresi tutti i dinosauri non aviani; gli uccelli, che sono dinosauri, sopravvissero.",
+"fonti": [
+"https://en.wikipedia.org/wiki/Chicxulub_crater",
+"https://en.wikipedia.org/wiki/Cretaceous"
+]
+}
+};
+const TEMPO=(()=>{
+const S=0.1,T0=252,ZA=-9.85,ZB=9.85,LEN=ZB-ZA;
+const zOf=t=>ZA+(T0-t)/T0*LEN,tOfZ=z=>clamp(T0-(z-ZA)/LEN*T0,0,T0);
+const STRIP={x0:3.95,x1:4.50};                 // lungo le vetrate: si legge da sinistra (passato) a destra (oggi)
+const ISL={cx:-0.55,cz:-0.2,a:3.75,b:8.4};
+const LAKE={x:0.9,z:-3.4,a:1.05,b:1.55};
+const FIRE={x:-1.5,z:6.4};
+const root=new THREE.Group();root.name='mondo-tempo';
+const W={id:'tempo',root,footprint:{x:0,z:0,w:10.2,d:20.4},
+  tab:{title:'Tempo profondo',sub:'Storia e Scienze · 3ª',icon:ICON_TEMPO},
+  view:{target:new THREE.Vector3(0.6,0.25,-0.6),r:11.6,theta:-0.47,phi:1.33},surfaces:[]};
+let tNow=T0,tGoal=T0,lastT=T0,playing=false,playIdx=-1,playWait=0;
+
+// ---------- terreno del plastico ----------
+function islandMask(x,z){const u=(x-ISL.cx)/ISL.a,v=(z-ISL.cz)/ISL.b,an=Math.atan2(v,u);
+  const wob=1+0.05*Math.sin(an*5+1)+0.035*Math.sin(an*9+2)+0.02*Math.sin(an*17);
+  return 1-Math.pow(Math.pow(Math.abs(u),4)+Math.pow(Math.abs(v),4),0.25)/wob;}
+function lakeF(x,z){const u=(x-LAKE.x)/LAKE.a,v=(z-LAKE.z)/LAKE.b;return 1-Math.sqrt(u*u+v*v);}
+function groundH(x,z){const m=islandMask(x,z);if(m<=0)return 0;const e=smooth(clamp(m/0.06,0,1));
+  let h=0.075+0.06*Math.sin(x*0.85+1.3)*Math.cos(z*0.5-0.4)+0.04*Math.sin(z*1.25+x*0.45)+0.018*Math.sin(x*2.6-z*1.9);
+  h+=0.16*Math.exp(-((x+2.2)**2/2.2+(z+6.2)**2/4));                   // collina verso la parete delle sedie
+  const l=lakeF(x,z);if(l>-0.3)h=lerp(h,0.012,smooth(clamp((l+0.3)/0.38,0,1)));
+  return Math.max(0.012,h)*e;}
+const SOIL=[[252,'#B78657'],[205,'#A48858'],[198,'#7E8C50'],[150,'#6F8E4A'],[120,'#6B9248'],[66,'#6E9A4C'],[35,'#80A453'],[0,'#88AA5A']].map(s=>[s[0],col(s[1])]);
+const soilAt=t=>{for(let i=0;i<SOIL.length-1;i++){const a=SOIL[i],b=SOIL[i+1];if(t<=a[0]&&t>=b[0])return a[1].clone().lerp(b[1],(a[0]-t)/(a[0]-b[0]));}return SOIL[SOIL.length-1][1].clone();};
+let groundMat,dustT=0;
+function buildGround(){const GX=78,GZ=168,x0=ISL.cx-ISL.a*1.06,x1=ISL.cx+ISL.a*1.06,z0=ISL.cz-ISL.b*1.03,z1=ISL.cz+ISL.b*1.03;
+  const pos=[],clr=[],idx=[],r=rng(5);
+  for(let j=0;j<=GZ;j++)for(let i=0;i<=GX;i++){const x=lerp(x0,x1,i/GX),z=lerp(z0,z1,j/GZ),m=islandMask(x,z);
+    pos.push(x,groundH(x,z),z);let v=0.86+0.1*Math.sin(x*7.1+z*3.3)*Math.cos(z*5.7-x*2.1)+(r()-.5)*0.08;
+    if(m<0.03)v*=0.62;const l=lakeF(x,z);if(l>-0.42&&l<-0.18)v*=1.12;clr.push(v,v*0.98,v*0.94);}
+  for(let j=0;j<GZ;j++)for(let i=0;i<GX;i++){const a=j*(GX+1)+i,b=a+1,c=a+GX+1,d=c+1;
+    const mx=Math.max(...[a,b,c,d].map(k=>islandMask(pos[k*3],pos[k*3+2])));if(mx<=-0.02)continue;idx.push(a,c,b,b,c,d);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(clr,3));g.setIndex(idx);g.computeVertexNormals();
+  // polygonOffset: il terreno vince sempre sul pavimento dove i due quasi coincidono (bordo, emersione)
+  groundMat=new THREE.MeshLambertMaterial({vertexColors:true,color:soilAt(T0),polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4});
+  const m=new THREE.Mesh(g,groundMat);m.name='plastico';root.add(m);W.surfaces.push(m);
+  const water=new THREE.Mesh(new THREE.CircleGeometry(1,40),new THREE.MeshPhongMaterial({color:col('#4E86A6'),shininess:90,specular:0x667788,transparent:true,opacity:0.88}));
+  water.rotation.x=-Math.PI/2;water.scale.set(LAKE.a*1.02,LAKE.b*1.02,1);water.position.set(LAKE.x,0.034,LAKE.z);root.add(water);}
+
+// ---------- piante (instanced, compaiono e scompaiono col tempo) ----------
+function plantGeo(type){const P=[],add=(g,m,c)=>P.push({g,m,c:col(c)}),r=rng(type.length*31+7);
+  const trunk=(h,r0,r1,c)=>add(new THREE.CylinderGeometry(r1,r0,h,6),M(0,h/2,0),c||'#6b5234');
+  switch(type){
+  case 'conifera':trunk(1.0,0.045,0.025);for(let i=0;i<4;i++)add(new THREE.ConeGeometry(0.30-0.06*i,0.5,7),M(0,0.5+0.27*i,0),i%2?'#2F5233':'#355A37');break;
+  case 'araucaria':trunk(1.55,0.04,0.025,'#5e4a33');for(let i=0;i<4;i++)add(new THREE.ConeGeometry(0.36-0.07*i,0.16,8),M(0,1.2+0.13*i,0),'#3B5B33');break;
+  case 'felce':for(let i=0;i<8;i++){const a=i/8*Math.PI*2;add(new THREE.ConeGeometry(0.035,0.26,4),M(Math.cos(a)*0.08,0.09,Math.sin(a)*0.08,0,-a,0).multiply(M(0,0,0,0,0,-1.0)),i%2?'#4F7A35':'#5C8A3C');}break;
+  case 'equiseto':for(let i=0;i<7;i++){const h=0.18+r()*0.2;add(new THREE.CylinderGeometry(0.008,0.011,h,5),M((r()-.5)*0.12,h/2,(r()-.5)*0.12,(r()-.5)*0.2,0,(r()-.5)*0.2),'#6E8B3D');}break;
+  case 'cicade':trunk(0.2,0.08,0.06,'#6b5634');for(let i=0;i<10;i++){const a=i/10*Math.PI*2;add(new THREE.ConeGeometry(0.05,0.38,4),M(Math.cos(a)*0.12,0.3,Math.sin(a)*0.12,0,-a,0).multiply(M(0,0,0,0,0,-0.85)).multiply(M(1,1,0.3)),'#4E7A33');}break;
+  case 'felceArborea':trunk(0.95,0.04,0.028,'#4d3b28');for(let i=0;i<9;i++){const a=i/9*Math.PI*2;add(new THREE.ConeGeometry(0.05,0.55,4),M(Math.cos(a)*0.2,0.92,Math.sin(a)*0.2,0,-a,0).multiply(M(0,0,0,0,0,-1.3)).multiply(M(1,1,0.25)),'#4C7D3A');}break;
+  case 'ginkgo':trunk(0.8,0.05,0.03);[[0,1.0,0,0.3],[0.15,1.2,0.1,0.24],[-0.12,1.15,-0.08,0.26]].forEach(p=>add(new THREE.IcosahedronGeometry(p[3],0),M(p[0],p[1],p[2]),'#7FA046'));break;
+  case 'cespuglio':[[0,0.08,0,0.11],[0.08,0.06,0.05,0.08],[-0.07,0.06,-0.04,0.08]].forEach(p=>add(new THREE.IcosahedronGeometry(p[3],0),M(p[0],p[1],p[2]),'#5E8F3E'));break;
+  case 'fiore':for(let i=0;i<6;i++){const a=i/6*Math.PI*2;add(new THREE.IcosahedronGeometry(0.022,0),M(Math.cos(a)*0.09,0.15+r()*0.04,Math.sin(a)*0.09),'#ffffff');}break;
+  case 'latifoglia':trunk(0.75,0.06,0.035);[[0,0.95,0,0.34],[0.2,0.85,0.1,0.25],[-0.18,0.9,-0.12,0.27],[0.02,1.15,-0.05,0.24]].forEach(p=>add(new THREE.IcosahedronGeometry(p[3],0),M(p[0],p[1],p[2]),'#4F8239'));break;
+  case 'erba':for(let i=0;i<9;i++){const h=0.08+r()*0.08;add(new THREE.ConeGeometry(0.01,h,3),M((r()-.5)*0.1,h/2,(r()-.5)*0.1,(r()-.5)*0.5,0,(r()-.5)*0.5),i%2?'#7DA24A':'#8DB055');}break;
+  case 'palma':{let x=0,y=0;for(let i=0;i<4;i++){add(new THREE.CylinderGeometry(0.03,0.038,0.3,6),M(x,y+0.15,0,0,0,-0.08*i),'#7a6243');x+=0.025*i;y+=0.29;}
+    for(let i=0;i<8;i++){const a=i/8*Math.PI*2;add(new THREE.ConeGeometry(0.05,0.5,4),M(x+Math.cos(a)*0.18,y,Math.sin(a)*0.18,0,-a,0).multiply(M(0,0,0,0,0,-1.45)).multiply(M(1,1,0.25)),'#4E8236');}}break;}
+  return mergeParts(P);}
+// tipo, quanti, da (Ma), a (Ma), ritardo massimo di comparsa (Ma), quota che sopravvive dopo 'a'
+// tipo, quanti, da (Ma), a (Ma), ritardo massimo di comparsa, quota che sopravvive, taglia min, max, preferisce il bordo
+const FLORA=[['conifera',10,252,0,0,1,0.6,1.0,1],['araucaria',6,252,0,0,1,0.6,0.9,1],['felce',34,252,0,0,1,0.45,0.8,0],['equiseto',18,252,0,0,1,0.6,1,0],
+  ['cicade',18,235,66,0,0.2,0.6,1,0],['felceArborea',10,252,66,0,0.3,0.6,0.9,1],['ginkgo',5,200,66,0,0.15,0.6,0.9,1],
+  ['cespuglio',22,125,0,40,1,0.6,1,0],['fiore',22,125,0,40,1,0.6,1,0],['latifoglia',10,100,0,40,1,0.6,0.95,1],['palma',5,80,0,20,1,0.6,0.9,1],['erba',70,40,0,30,1,0.7,1.1,0]];
+const flora=[];
+function buildFlora(){const r=rng(99);const FLOWER=['#F2D34B','#F7F3EA','#E58FB0','#B48BD6','#F0A04B'].map(col);
+  FLORA.forEach(([type,n,from,to,delay,survive,smin,smax,edge])=>{const geo=plantGeo(type),mat=new THREE.MeshLambertMaterial({vertexColors:true});
+    const im=new THREE.InstancedMesh(geo,mat,n);im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);root.add(im);const items=[];
+    for(let i=0;i<n;i++){let x,z,k=0;do{x=ISL.cx+(r()*2-1)*ISL.a*0.95;z=ISL.cz+(r()*2-1)*ISL.b*0.95;k++;}
+      while(k<60&&(islandMask(x,z)<0.07||lakeF(x,z)>-0.12||Math.hypot(x-FIRE.x,z-FIRE.z)<0.7||(edge&&k<45&&islandMask(x,z)>0.42)));
+      const it={x,z,y:groundH(x,z),rot:r()*Math.PI*2,size:smin+r()*(smax-smin),appear:from-r()*delay,vanish:r()<survive?-1:to,s:0};
+      if(type==='fiore'){im.setColorAt(i,FLOWER[Math.floor(r()*FLOWER.length)]);}items.push(it);}
+    if(im.instanceColor)im.instanceColor.needsUpdate=true;flora.push({im,items});});}
+const _q=new THREE.Quaternion(),_e=new THREE.Euler(),_s=new THREE.Vector3(),_t=new THREE.Vector3(),_mm=new THREE.Matrix4();
+function updateFlora(dt,force){const k=1-Math.pow(0.02,dt);
+  flora.forEach(f=>{let dirty=force;f.items.forEach((it,i)=>{const on=tNow<=it.appear&&tNow>=it.vanish?1:0;
+    if(Math.abs(it.s-on)>0.002||force){it.s=force?on:lerp(it.s,on,k);if(Math.abs(it.s-on)<0.003)it.s=on;
+      const s=Math.max(1e-4,it.s*it.size);_mm.compose(_t.set(it.x,it.y,it.z),_q.setFromEuler(_e.set(0,it.rot,0)),_s.set(s,s,s));f.im.setMatrixAt(i,_mm);dirty=true;}});
+    if(dirty)f.im.instanceMatrix.needsUpdate=true;});}
+
+// ---------- linea del tempo sul pavimento ----------
+const PERIODI=[{n:'Triassico',a:251.9,b:201.4,c:'#9C5FA8'},{n:'Giurassico',a:201.4,b:143.1,c:'#33A9C4'},{n:'Cretaceo',a:143.1,b:66,c:'#6FB84A'},{n:'Cenozoico',a:66,b:0,c:'#E9A93A'}];
+const periodOf=t=>PERIODI.find(p=>t<=p.a+1e-6&&t>=p.b-1e-6)||PERIODI[0];
+function stripTexture(){const big=renderer.capabilities.maxTextureSize>=8192,Hc=big?8192:4096,Wc=big?256:128,c=mkCanvas(Wc,Hc),g=c.getContext('2d'),k=Wc/256;
+  const y=t=>(T0-t)/T0*Hc;
+  g.fillStyle='#F7F4EA';g.fillRect(0,0,Wc,Hc);
+  PERIODI.forEach(p=>{g.fillStyle=p.c;g.globalAlpha=0.9;g.fillRect(0,y(Math.min(p.a,T0)),Wc*0.34,y(p.b)-y(Math.min(p.a,T0)));g.globalAlpha=0.16;
+    g.fillRect(Wc*0.34,y(Math.min(p.a,T0)),Wc*0.66,y(p.b)-y(Math.min(p.a,T0)));g.globalAlpha=1;});
+  // tacche ogni 10 milioni di anni, numeri ogni 50
+  g.fillStyle='#3b3b33';for(let t=250;t>=0;t-=10){const yy=y(t);g.fillRect(Wc*0.34,yy-1.5*k,(t%50===0?Wc*0.36:Wc*0.16),3*k);}
+  g.save();g.translate(0,0);
+  const text=(s,t,x,size,color,weight)=>{g.save();g.translate(x,y(t));g.rotate(Math.PI/2);g.font=`${weight||700} ${size*k}px Lexend, sans-serif`;g.fillStyle=color;g.fillText(s,0,0);g.restore();};
+  PERIODI.forEach(p=>text(p.n.toUpperCase(),Math.min(p.a,T0)-3,Wc*0.10,46,'#ffffff'));
+  [250,200,150,100,50].forEach(t=>text(String(t),t-1.2,Wc*0.74,30,'#1A2E1A',700));
+  text('milioni di anni fa',248.5,Wc*0.56,20,'#4A6B4A',500);
+  text('1 metro = circa 13 milioni di anni',236,Wc*0.56,19,'#4A6B4A',500);
+  // asteroide e oggi
+  g.fillStyle='#7a5a07';g.fillRect(0,y(66)-3*k,Wc,6*k);text('ASTEROIDE',64.5,Wc*0.56,22,'#7a5a07',700);
+  g.fillStyle='#1B6D3F';g.fillRect(0,Hc-10*k,Wc,10*k);text('OGGI',5.2,Wc*0.56,26,'#1B6D3F',700);
+  g.fillStyle='#B8860B';g.fillRect(Wc*0.3,y(0.3)-2,Wc*0.7,3);
+  g.restore();return texOf(c);}
+let strip,cursor,cursorLabel;
+function buildStrip(){strip=new THREE.Mesh(new THREE.PlaneGeometry(STRIP.x1-STRIP.x0,LEN),new THREE.MeshLambertMaterial({map:stripTexture()}));
+  strip.rotation.x=-Math.PI/2;strip.position.set((STRIP.x0+STRIP.x1)/2,0.006,(ZA+ZB)/2);strip.name='linea-del-tempo';root.add(strip);W.surfaces.push(strip);
+  strip.userData.pick=h=>{setGoal(tOfZ(h.point.z));toast(fmtT(tOfZ(h.point.z)));};
+  contatto((STRIP.x0+STRIP.x1)/2,0,(STRIP.x1-STRIP.x0)+0.16,LEN+0.3,0.35,root,0.003);
+  cursor=new THREE.Group();root.add(cursor);
+  const gold=new THREE.MeshBasicMaterial({color:col('#D4A017'),toneMapped:false});
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.7,8),gold);post.position.y=0.35;cursor.add(post);
+  const bar=new THREE.Mesh(new THREE.BoxGeometry(STRIP.x1-STRIP.x0+0.12,0.012,0.035),gold);bar.position.y=0.008;cursor.add(bar);
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.12,4),gold);tip.position.y=0.76;tip.rotation.x=Math.PI;cursor.add(tip);
+  cursor.position.set((STRIP.x0+STRIP.x1)/2,0,zOf(T0));
+  cursorLabel=addLabel({text:'',world:'tempo',anchor:()=>_cl.set(cursor.position.x,0.86,cursor.position.z),onClick:()=>openEra(periodOf(tNow))});
+  PERIODI.forEach(p=>addLabel({text:p.n,world:'tempo',small:true,maxDist:9,anchor:()=>_v2.set(STRIP.x1+0.12,0.02,zOf((Math.min(p.a,T0)+p.b)/2)).clone(),onClick:()=>openEra(p)}));
+  addLabel({text:'Asteroide',world:'tempo',small:true,anchor:()=>new THREE.Vector3(STRIP.x1+0.08,0.02,zOf(66)),onClick:openAsteroid});
+  addLabel({text:'Comparsa dell\'uomo',world:'tempo',small:true,anchor:()=>new THREE.Vector3(STRIP.x1+0.05,0.02,zOf(0.3)),onClick:()=>{setGoal(0.3);openHuman();}});}
+const _cl=new THREE.Vector3(),_v2=new THREE.Vector3();
+
+// ---------- animali ----------
+const SPECIE=DATI_TEMPO.specie;                   // dati (testi, intervalli) — vedi DATI_TEMPO
+const MODELLI={
+  eoraptor:()=>tplTheropod({H:0.36,bulk:0.55,neck:0.75,neckAng:0.55,head:0.42,headH:0.2,headW:0.13,tail:1.9,arm:0.55,col:['#8A6440','#CDB38A'],stripe:'#5c4128'}),
+  herrerasaurus:()=>tplTheropod({H:1.1,bulk:0.62,neck:0.55,neckAng:0.5,head:0.45,headH:0.22,headW:0.14,tail:2.0,arm:0.5,col:['#6B5236','#BFA27A'],stripe:'#45331f'}),
+  coelophysis:()=>tplTheropod({H:0.75,bulk:0.45,neck:0.85,neckAng:0.6,neckThin:0.8,head:0.42,headH:0.15,headW:0.1,tail:2.2,arm:0.55,col:['#6F7A44','#C9C39A'],stripe:'#4c5530'}),
+  plateosaurus:()=>tplTheropod({H:1.9,bulk:0.85,neck:1.05,neckAng:0.75,neckThin:0.75,head:0.22,headH:0.12,headW:0.10,tail:1.8,arm:0.95,armRest:0.25,herb:true,col:['#7A6F48','#CDBF95'],stripe:'#5a5132'}),
+  saltriovenator:()=>tplTheropod({H:2.1,bulk:0.8,neck:0.5,neckAng:0.5,head:0.48,headH:0.24,headW:0.15,tail:1.8,arm:0.45,crest:true,accent:'#9a5a35',col:['#6A4B36','#C2A07E'],stripe:'#4a3324'}),
+  allosaurus:()=>tplTheropod({H:2.15,bulk:0.82,neck:0.5,neckAng:0.5,head:0.42,headH:0.22,headW:0.14,tail:1.85,arm:0.45,crest:true,accent:'#a0582f',col:['#7C5A3A','#CBAE88'],stripe:'#4f3622'}),
+  tyrannosaurus:()=>tplTheropod({H:3.5,bulk:1,neck:0.42,neckAng:0.55,head:0.45,headH:0.25,headW:0.2,tail:1.6,arm:0.26,col:['#4F4C3A','#B3A27F'],stripe:'#383526'}),
+  velociraptor:()=>tplTheropod({H:0.5,bulk:0.55,neck:0.6,neckAng:0.6,head:0.5,headH:0.17,headW:0.13,tail:2.0,arm:0.7,feathers:true,accent:'#3f3428',col:['#5A4A38','#C7B08B'],stripe:'#3d3125'}),
+  scipionyx:()=>tplTheropod({H:0.14,bulk:0.6,neck:0.6,neckAng:0.55,head:0.6,headH:0.26,headW:0.18,tail:1.7,arm:0.6,col:['#957651','#DCC8A0'],stripe:'#6d5434'}),
+  spinosaurus:()=>tplTheropod({H:2.3,bulk:0.9,neck:0.75,neckAng:0.45,head:0.78,headH:0.15,headW:0.12,croc:true,tail:2.9,arm:0.65,sail:1.6,accent:'#A0603E',col:['#5A5848','#B8AE8C'],stripe:'#403e32'}),
+  brachiosaurus:()=>tplQuad({H:4.1,F:5.3,BL:5.0,R:1.35,N:8.2,nAng:1.05,nCurve:0.12,nR:0.55,T:7,tailDrop:0.25,head:0.9,headTilt:-0.35,col:['#5F675C','#9D9C88'],grazeAng:-0.7}),
+  diplodocus:()=>tplQuad({H:3.4,F:3.0,BL:4.4,R:1.15,N:7.2,nAng:0.22,nCurve:-0.12,nR:0.5,T:13,tailDrop:0.15,head:0.65,headTilt:-0.25,col:['#776A52','#BDAF90'],stripe:'#5a4f3c',grazeAng:-0.35}),
+  stegosaurus:()=>tplQuad({H:2.2,F:1.35,BL:2.4,R:0.8,N:0.8,nAng:-0.35,nCurve:0.1,nR:0.5,T:3.0,tailDrop:-0.1,head:0.5,headTilt:-0.3,foreR:0.8,col:['#5E6A40','#BEB78D'],accent:'#B0703A',
+    extras:(R,q)=>{const plate=new THREE.OctahedronGeometry(1,0);
+      const spots=[[0.15,0.55,0],[0.35,0.7,1],[0.55,0.75,0],[0.75,0.65,1],[0.95,0.45,0]];
+      spots.forEach(([u,s,side])=>{const m=new THREE.Mesh(plate,R.acc);const x=lerp(-0.2*q.BL,0.95*q.BL,1-u);const y=lerp(0,q.F-q.H,clamp(1-u,0,1))+0.14*q.R*Math.sin(Math.PI*clamp(1-u,0,1))+q.R*0.95;
+        m.position.set(x,y+s*0.35,(side?1:-1)*0.07);m.scale.set(0.38*s,0.42*s+0.12,0.035);m.rotation.z=0.2;R.body.add(m);});
+      [[0.0,0.6,0],[-0.6,0.5,1],[-1.2,0.38,0]].forEach(([x,s,side])=>{const m=new THREE.Mesh(plate,R.acc);m.position.set(x,q.R*0.5+s*0.3,(side?1:-1)*0.06);m.scale.set(0.3*s,0.38*s,0.03);m.rotation.z=0.25;R.tail1.add(m);});
+      [[-0.3,0.42,1],[-0.8,0.3,0]].forEach(([x,s,side])=>{const m=new THREE.Mesh(plate,R.acc);m.position.set(x,q.R*0.28+s*0.25,(side?1:-1)*0.05);m.scale.set(0.25*s,0.3*s,0.03);m.rotation.z=0.3;R.tail2.add(m);});
+      const sp=new THREE.ConeGeometry(0.05,0.75,5);[[-1.2,1],[-1.42,-1]].forEach(([x,s])=>[0.6,-0.6].forEach(zz=>{const m=new THREE.Mesh(sp,R.acc);m.position.set(x,0.12,zz*0.35);m.rotation.set(zz>0?-1.1:1.1,0,0.5);R.tail2.add(m);}));}}),
+  triceratops:()=>tplQuad({H:2.3,F:1.9,BL:3.0,R:1.0,N:0.55,nAng:-0.1,nR:0.6,T:2.6,tailDrop:0.2,head:2.1,headH:0.9,headW:0.75,headType:'beak',headTilt:-0.15,foreR:0.95,col:['#6A5A40','#C2AC86'],accent:'#9C6A42',grazeAng:-0.3,
+    extras:(R,q)=>{const s0=new THREE.Shape();s0.moveTo(-0.85,0);for(let i=0;i<=12;i++){const a=Math.PI*i/12;s0.lineTo(-Math.cos(a)*0.85,Math.sin(a)*0.95+(i%2?0.06:0));}s0.lineTo(0.85,0);
+      const fg=new THREE.ShapeGeometry(s0);fg.rotateY(Math.PI/2);const fr=new THREE.Mesh(fg,R.acc);fr.position.set(0.02*q.L,0.15*q.h,0);fr.rotation.z=0.75;R.head.add(fr);
+      const horn=new THREE.ConeGeometry(0.1,1.0,6),hm=new THREE.MeshPhongMaterial({color:col('#E6DCC4'),flatShading:true});
+      [-1,1].forEach(s=>{const m=new THREE.Mesh(horn,hm);m.position.set(0.32*q.L,0.55*q.h,s*0.18*q.w);m.rotation.set(s*0.2,0,-1.0);R.head.add(m);});
+      const n=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.3,6),hm);n.position.set(0.82*q.L,0.05*q.h,0);n.rotation.z=-0.5;R.head.add(n);}}),
+  tethyshadros:()=>tplQuad({H:1.1,F:0.8,BL:1.25,R:0.36,N:0.75,nAng:0.4,nR:0.55,T:1.9,tailDrop:-0.05,head:0.55,headType:'duck',headTilt:-0.2,foreR:0.7,col:['#6C774F','#C8C49C'],stripe:'#4f5838'}),
+  pteranodon:()=>tplFlyer({B:0.7,neck:0.5,neckAng:0.3,head:1.1,headH:0.16,crest:0.7,span:5.6,chord:1.1,flap:0.5,flapF:3,col:['#CFC6B4','#EFE9DC'],accent:'#A99B86'}),
+  archaeopteryx:()=>tplFlyer({B:0.18,neck:0.08,head:0.06,headH:0.035,tail:0.25,tailFan:0.12,feather:true,span:0.7,chord:0.14,flap:0.7,flapF:9,col:['#2E2B28','#4a4540'],accent:'#24211f'}),
+  uccello:()=>tplFlyer({B:0.25,neck:0.06,head:0.08,headH:0.05,tailFan:0.12,feather:true,span:0.8,chord:0.16,flap:0.8,flapF:8,col:['#5B6670','#D8D8D0'],accent:'#3f4a55'}),
+  homo:()=>Object.assign(tplHuman({Hh:1.65,col:['#6E5034','#8C6A47'],hair:'#241a12'}),{headCol:['#B98A66','#A87A58'],limbCol:['#B08060','#9E7052'],footCol:'#4a3626'})};
+const animals=[];
+function buildAnimals(){const r=rng(17);
+  SPECIE.forEach(sd=>{const mk=MODELLI[sd.id];if(!mk)return;for(let k=0;k<(sd.n||1);k++){const sp=mk(),R=buildRig(sp);
+    R.root.scale.setScalar(1e-4);R.root.visible=false;root.add(R.root);
+    const a={sd,R,sp,seed:r()*10,x:0,z:0,h:r()*6.28,tx:0,tz:0,state:'idle',timer:r()*3,phase:r()*6,amp:0,app:0,graze:0,
+      speed:(sd.speed||1.2)*S,stride:Math.max(0.12,(R.size.x||1)*0.5)*S,fly:!!sp.fly,human:!!sp.human,alt:0,orbit:{cx:0,cz:0,r:1,w:0.3}};
+    placeAnimal(a,r);R.root.traverse(o=>{if(o.isMesh)o.userData.animal=a;});R.root.userData.pick=()=>openSpecies(a);
+    animals.push(a);
+    if(k===0)addLabel({text:sd.etichetta||sd.nome,world:'tempo',small:true,maxDist:sd.lontano?14:8,anchor:()=>labelAnchor(a),visible:()=>a.app>0.6,onClick:()=>openSpecies(a)});}});}
+const _la=new THREE.Vector3();
+function labelAnchor(a){const o=a.R.head||a.R.body;o.getWorldPosition(_la);_la.y+=Math.max(0.05,a.R.size.y*S*0.25);return _la;}
+function validSpot(x,z,m){return islandMask(x,z)>(m||0.12)&&lakeF(x,z)<-0.18;}
+function placeAnimal(a,r){r=r||Math.random;
+  if(a.human){const an=r()*6.28;a.x=FIRE.x+Math.cos(an)*0.5;a.z=FIRE.z+Math.sin(an)*0.5;return;}
+  let k=0;do{a.x=ISL.cx+(r()*2-1)*ISL.a*0.8;a.z=ISL.cz+(r()*2-1)*ISL.b*0.8;k++;}while(k<80&&!validSpot(a.x,a.z));
+  if(a.fly){a.orbit={cx:ISL.cx+(r()-.5)*2,cz:ISL.cz+(r()-.5)*8,r:a.sd.id==='pteranodon'?2.4:1.2+r()*0.8,w:(a.sd.id==='pteranodon'?0.22:0.45)*(r()<.5?1:-1)};
+    a.alt=a.sd.id==='pteranodon'?1.75:1.0+r()*0.6;}
+  a.tx=a.x;a.tz=a.z;}
+function pickTarget(a){if(a.human){const an=Math.random()*6.28,rr=0.35+Math.random()*0.5;a.tx=FIRE.x+Math.cos(an)*rr;a.tz=FIRE.z+Math.sin(an)*rr;return;}
+  for(let k=0;k<40;k++){const an=Math.random()*6.28,d=0.6+Math.random()*2.4,x=a.x+Math.cos(an)*d,z=a.z+Math.sin(an)*d;if(validSpot(x,z,0.14)){a.tx=x;a.tz=z;return;}}
+  a.tx=ISL.cx;a.tz=ISL.cz;}
+const alive=sd=>{const p=sd.pad??0.45;return tNow<=sd.inizio+p&&tNow>=sd.fine-p;};
+function updateAnimals(dt,t){
+  animals.forEach(a=>{const on=alive(a.sd);const target=on?1:0;
+    if(on&&!a.R.root.visible){a.R.root.visible=true;placeAnimal(a);}
+    a.app=lerp(a.app,target,1-Math.pow(0.03,dt));if(Math.abs(a.app-target)<0.004)a.app=target;
+    if(a.app===0){if(a.R.root.visible){a.R.root.visible=false;if(panelState&&panelState.animal===a)closePanel();}return;}
+    const R=a.R;R.root.scale.setScalar(Math.max(1e-4,S*smooth(a.app)));
+    if(a.fly){a.orbit.cx+=Math.sin(t*0.05+a.seed)*0.002;const an=t*a.orbit.w+a.seed;
+      a.x=a.orbit.cx+Math.cos(an)*a.orbit.r;a.z=a.orbit.cz+Math.sin(an)*a.orbit.r;a.h=-(an+(a.orbit.w>0?Math.PI/2:-Math.PI/2));
+      R.root.position.set(a.x,a.alt+0.12*Math.sin(t*0.7+a.seed),a.z);R.root.rotation.set(0,a.h,(a.orbit.w>0?1:-1)*0.25);
+      poseRig(R,0,0,t,a.seed,0);return;}
+    a.timer-=dt;
+    if(a.state==='idle'){a.amp=lerp(a.amp,0,1-Math.pow(0.05,dt));a.graze=lerp(a.graze,a.sd.dieta&&a.sd.dieta!=='carnivoro'&&!a.human?1:0.3,1-Math.pow(0.3,dt));
+      if(a.timer<=0){a.state='walk';pickTarget(a);a.timer=8+Math.random()*8;}}
+    else{a.graze=lerp(a.graze,0,1-Math.pow(0.05,dt));const dx=a.tx-a.x,dz=a.tz-a.z,d=Math.hypot(dx,dz);
+      const want=Math.atan2(-dz,dx);let dh=want-a.h;while(dh>Math.PI)dh-=6.283;while(dh<-Math.PI)dh+=6.283;
+      a.h+=clamp(dh,-1,1)*Math.min(1,dt*1.4);a.amp=lerp(a.amp,Math.abs(dh)>1.2?0.4:1,1-Math.pow(0.1,dt));
+      const v=a.speed*a.amp*(Math.abs(dh)>1.2?0.3:1);
+      // separazione semplice dagli altri animali
+      let sx=0,sz=0;animals.forEach(b=>{if(b===a||b.app<0.5||b.fly)return;const ex=a.x-b.x,ez=a.z-b.z,dd=Math.hypot(ex,ez),min=(a.R.size.x+b.R.size.x)*S*0.38;
+        if(dd<min&&dd>1e-4){sx+=ex/dd*(min-dd);sz+=ez/dd*(min-dd);}});
+      const nx=a.x+Math.cos(a.h)*v*dt+sx*dt*2,nz=a.z-Math.sin(a.h)*v*dt+sz*dt*2;
+      if(validSpot(nx,nz,0.1)||a.human){a.x=nx;a.z=nz;}else{pickTarget(a);}
+      a.phase+=v/a.stride*Math.PI*dt;
+      if(d<0.12||a.timer<=0){a.state='idle';a.timer=2+Math.random()*5;}}
+    R.root.position.set(a.x,groundH(a.x,a.z),a.z);R.root.rotation.set(0,a.h,0);poseRig(R,a.phase,a.amp,t,a.seed,a.graze);});}
+
+// ---------- fuoco degli esseri umani ----------
+let fire;
+function buildFire(){fire=new THREE.Group();const y=groundH(FIRE.x,FIRE.z);fire.position.set(FIRE.x,y,FIRE.z);root.add(fire);
+  const stone=new THREE.MeshLambertMaterial({color:col('#8d867a')});for(let i=0;i<9;i++){const a=i/9*6.283;const s=new THREE.Mesh(new THREE.DodecahedronGeometry(0.022,0),stone);s.position.set(Math.cos(a)*0.07,0.01,Math.sin(a)*0.07);fire.add(s);}
+  const wood=new THREE.MeshLambertMaterial({color:col('#5a3f28')});[0,1.2,2.4].forEach(a=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.12,5),wood);w.rotation.set(Math.PI/2-0.3,a,0);w.position.y=0.02;fire.add(w);});
+  const fl=new THREE.MeshBasicMaterial({color:col('#F2A33A'),toneMapped:false}),fl2=new THREE.MeshBasicMaterial({color:col('#FFE08A'),toneMapped:false});
+  fire.userData.f1=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.13,6),fl);fire.userData.f1.position.y=0.07;fire.add(fire.userData.f1);
+  fire.userData.f2=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.08,6),fl2);fire.userData.f2.position.y=0.06;fire.add(fire.userData.f2);fire.visible=false;}
+
+// ---------- asteroide (66 milioni di anni fa) ----------
+let meteor=null,meteorT=-1,dust;
+function buildMeteor(){meteor=new THREE.Group();const m=new THREE.Mesh(new THREE.IcosahedronGeometry(0.12,1),new THREE.MeshBasicMaterial({color:col('#FFD28A'),toneMapped:false}));meteor.add(m);
+  const tr=new THREE.Mesh(new THREE.ConeGeometry(0.11,1.4,10,1,true),new THREE.MeshBasicMaterial({color:col('#FFB25A'),transparent:true,opacity:0.55,toneMapped:false,side:THREE.DoubleSide}));
+  tr.rotation.x=-Math.PI/2;tr.position.z=-0.75;meteor.add(tr);meteor.visible=false;root.add(meteor);
+  dust=new THREE.Mesh(new THREE.RingGeometry(0.2,0.6,48),new THREE.MeshBasicMaterial({color:col('#9a8f80'),transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+  dust.rotation.x=-Math.PI/2;dust.position.set(ISL.cx+0.5,0.2,ISL.cz-5.5);root.add(dust);}
+function startMeteor(){if(meteorT>=0)return;meteorT=0;meteor.visible=true;toast('66 milioni di anni fa: un asteroide colpisce la Terra',4200);}
+function updateMeteor(dt){if(meteorT<0)return;meteorT+=dt;const A=new THREE.Vector3(3.5,2.9,-10.2),B=new THREE.Vector3(ISL.cx+0.5,0.12,ISL.cz-5.5);
+  if(meteorT<1.3){const u=meteorT/1.3;meteor.position.lerpVectors(A,B,u*u);meteor.lookAt(B);}
+  else if(meteorT<1.36){meteor.visible=false;const f=document.getElementById('flash');f.style.opacity=0.92;setTimeout(()=>f.style.opacity=0,180);dustT=1;}
+  const d=clamp((meteorT-1.3)/3.5,0,1);dust.material.opacity=meteorT>1.3?0.55*(1-d):0;dust.scale.setScalar(1+d*14);
+  if(meteorT>5){meteorT=-1;dust.material.opacity=0;}}
+
+// ---------- tempo: obiettivo, tappe, riproduzione ----------
+function fmtT(t){if(t<0.0008)return'Oggi';if(t<1)return Math.round(t*1000)*1000>=1000?(Math.round(t*1000)*1000).toLocaleString('it-IT')+' anni fa':'Oggi';
+  return(t<10?t.toFixed(1).replace('.',','):Math.round(t))+' milioni di anni fa';}
+function setGoal(t,instant){tGoal=clamp(t,0,T0);if(instant)tNow=tGoal;}
+// tappe: gruppi di specie vissute nello stesso momento (+ asteroide, uomo, oggi)
+const STOPS=(()=>{const list=SPECIE.filter(s=>!s.fuoriTappa&&s.id!=='homo').slice().sort((a,b)=>b.inizio-a.inizio),out=[];let g=null;
+  list.forEach(s=>{if(g&&s.inizio>=g.lo-0.01&&s.fine<=g.hi+0.01&&Math.min(g.hi,s.inizio)>=Math.max(g.lo,s.fine)){g.hi=Math.min(g.hi,s.inizio);g.lo=Math.max(g.lo,s.fine);g.sp.push(s);}
+    else{g={hi:s.inizio,lo:s.fine,sp:[s]};out.push(g);}});
+  const st=out.map(g=>({t:(g.hi+g.lo)/2,name:g.sp.map(s=>s.etichetta||s.nome).join(', ')}));
+  st.push({t:66.0,name:'L\'asteroide',ast:true});st.push({t:0.3,name:'Compare l\'uomo'});st.push({t:0,name:'Oggi'});
+  return st.sort((a,b)=>b.t-a.t);})();
+function nearestStop(t){let b=-1,d=1e9;STOPS.forEach((s,i)=>{const dd=Math.abs(s.t-t);if(dd<d){d=dd;b=i;}});return d<0.6?b:-1;}
+function goStop(i){i=clamp(i,0,STOPS.length-1);playIdx=i;setGoal(STOPS[i].t);}
+function nextStop(dir){const t=tGoal;let i;if(dir>0){i=STOPS.findIndex(s=>s.t<t-0.05);if(i<0)i=STOPS.length-1;}
+  else{i=-1;for(let k=STOPS.length-1;k>=0;k--)if(STOPS[k].t>t+0.05){i=k;break;}if(i<0)i=0;}goStop(i);}
+
+// ---------- pannelli ----------
+function teethSVG(tipo){const jaw='<path d="M10 70 Q150 92 290 64 L290 82 Q150 108 10 86 Z" fill="#D9C7A4" stroke="#8a7a5a" stroke-width="2"/>';
+  let t='';const T=(d)=>t+=`<path d="${d}" fill="#FBF7EC" stroke="#7d6c4c" stroke-width="1.6" stroke-linejoin="round"/>`;
+  if(tipo==='lama')for(let i=0;i<7;i++){const x=28+i*36;T(`M${x} 72 Q${x+4} 40 ${x+18} 26 Q${x+14} 48 ${x+20} 74 Z`);t+=`<path d="M${x+15} 34 l3 2 M${x+16} 44 l3 2 M${x+17} 54 l3 2" stroke="#7d6c4c" stroke-width="1"/>`;}
+  else if(tipo==='robusti')for(let i=0;i<6;i++){const x=24+i*44;T(`M${x} 74 Q${x+2} 36 ${x+16} 18 Q${x+30} 36 ${x+32} 74 Z`);t+=`<path d="M${x+26} 34 l3 2 M${x+28} 46 l3 2 M${x+29} 58 l3 2" stroke="#7d6c4c" stroke-width="1"/>`;}
+  else if(tipo==='misti'){for(let i=0;i<3;i++){const x=24+i*29;T(`M${x} 74 L${x} 56 L${x+6} 42 L${x+12} 36 L${x+18} 42 L${x+24} 56 L${x+24} 74 Z`);}
+    for(let i=0;i<5;i++){const x=118+i*34;T(`M${x} 72 Q${x+4} 44 ${x+18} 30 Q${x+14} 50 ${x+20} 74 Z`);}}
+  else if(tipo==='becco-foglia'){t+='<path d="M10 70 Q20 40 70 46 L74 74 Z" fill="#E8DFC9" stroke="#8a7a5a" stroke-width="2"/>';for(let i=0;i<8;i++){const x=86+i*25;T(`M${x} 74 L${x} 60 L${x+5} 50 L${x+10} 46 L${x+15} 50 L${x+20} 60 L${x+20} 74 Z`);}}
+  else if(tipo==='cucchiaio')for(let i=0;i<8;i++){const x=24+i*33;T(`M${x+6} 76 L${x+4} 52 Q${x} 30 ${x+13} 26 Q${x+26} 30 ${x+22} 52 L${x+20} 76 Z`);}
+  else if(tipo==='foglia')for(let i=0;i<9;i++){const x=24+i*29;T(`M${x} 74 L${x} 56 L${x+6} 42 L${x+12} 36 L${x+18} 42 L${x+24} 56 L${x+24} 74 Z`);}
+  else if(tipo==='piolo')for(let i=0;i<11;i++){const x=22+i*24;T(`M${x} 76 L${x} 40 Q${x+7} 30 ${x+14} 40 L${x+14} 76 Z`);}
+  else if(tipo==='batteria'){T('M10 70 Q-6 50 30 44 L40 70 Z');for(let r=0;r<2;r++)for(let i=0;i<14;i++){const x=48+i*17,y=62-r*12;T(`M${x} ${y} l8 -9 l8 9 l-8 9 Z`);}}
+  else if(tipo==='conici')for(let i=0;i<9;i++){const x=24+i*29;T(`M${x} 74 L${x+11} 30 L${x+22} 74 Z`);}
+  else if(tipo==='becco'){t+='<path d="M10 70 Q160 66 292 40 Q170 92 10 88 Z" fill="#E8DFC9" stroke="#8a7a5a" stroke-width="2"/>';}
+  else if(tipo==='umani'){[[20,'i'],[42,'i'],[64,'c'],[90,'p'],[118,'p'],[150,'m'],[190,'m'],[230,'m']].forEach(([x,k])=>{if(k==='i')T(`M${x} 74 L${x} 44 L${x+16} 44 L${x+16} 74 Z`);
+    else if(k==='c')T(`M${x} 74 L${x+2} 44 L${x+10} 32 L${x+18} 44 L${x+20} 74 Z`);else if(k==='p')T(`M${x} 74 L${x} 46 Q${x+12} 36 ${x+24} 46 L${x+24} 74 Z`);
+    else T(`M${x} 74 L${x} 48 Q${x+8} 40 ${x+16} 48 Q${x+24} 40 ${x+34} 48 L${x+34} 74 Z`);});}
+  return `<svg class="fig" viewBox="0 0 300 110" role="img" aria-label="Disegno dei denti">${jaw}${t}</svg>`;}
+function openSpecies(a){const s=a.sd;const pe=periodOf((s.inizio+s.fine)/2);
+  const facts=[];if(s.lunghezza_m!=null)facts.push(['Lunghezza',fmtNum(s.lunghezza_m)+' m']);if(s.altezza_m!=null)facts.push(['Altezza',fmtNum(s.altezza_m)+' m']);
+  if(s.apertura_alare_m!=null)facts.push(['Apertura alare',fmtNum(s.apertura_alare_m)+' m']);
+  if(s.peso_kg!=null)facts.push(['Peso',fmtPeso(s.peso_kg)]);if(s.dove)facts.push(['Trovato in',s.dove]);
+  const d={title:s.soprannome?`${s.soprannome} (${s.nome})`:s.nome,sci:s.significato?`«${s.significato}»`:'',
+    badges:[[pe.n],[rangeTxt(s),'gold']].concat(s.e_dinosauro===false?[['non è un dinosauro']]:[]),facts,text:s.testo||[],
+    fig:s.denti?`<p class="tl-stopname">Guarda i denti: che cosa mangiava?</p>${teethSVG(s.denti)}<div class="reveal" id="rv"><b>${esc(DIETA[s.dieta]||cap(s.dieta||''))}.</b> ${esc(s.dentatura||'')}</div>`:'',
+    doc:{nota:s.nota,fonti:s.fonti},actions:s.denti?[{label:'Scopri la risposta',cls:'gold',fn:()=>{const r=document.getElementById('rv');r&&r.classList.add('on');}}]:[]};
+  openPanel(d,()=>labelAnchor(a),null);panelState.animal=a;}
+function rangeTxt(s){if(s.inizio<1)return 'da circa '+Math.round(s.inizio*1e6).toLocaleString('it-IT')+' anni fa';
+  return (s.inizio===s.fine?fmtNum(s.inizio):fmtNum(s.inizio)+'–'+fmtNum(s.fine))+' milioni di anni fa';}
+const fmtNum=v=>{v=+v;const d=v<100&&Math.abs(v-Math.round(v))>0.04?1:0;return v.toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d});};
+const fmtPeso=kg=>kg>=1000?fmtNum(kg/1000)+' tonnellate':fmtNum(kg)+' kg';
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+const DIETA={carnivoro:'Carnivoro: mangiava carne',erbivoro:'Erbivoro: mangiava piante',onnivoro:'Onnivoro: mangiava un po\' di tutto',pesci:'Mangiava soprattutto pesci'};
+function openEra(p){const e=DATI_TEMPO.ere.find(x=>x.nome===p.n)||{};
+  openPanel({title:p.n,badges:[[(p.a>T0?'252':fmtNum(p.a))+'–'+(p.b===0?'oggi':fmtNum(p.b)+' milioni di anni fa'),'gold']],text:[e.ambiente||''].filter(Boolean),doc:{nota:e.nota,fonti:e.fonti},
+    note:'Sul pavimento questo periodo è lungo '+((Math.min(p.a,T0)-p.b)/T0*LEN).toFixed(1).replace('.',',')+' metri.',
+    actions:[{label:'Vai all\'inizio del '+p.n,fn:()=>setGoal(Math.min(p.a,T0)-0.5)}]},()=>new THREE.Vector3(STRIP.x1,0.05,zOf((Math.min(p.a,T0)+p.b)/2)));}
+function openAsteroid(){const e=DATI_TEMPO.estinzione;
+  openPanel({title:'L\'asteroide di Chicxulub',badges:[['fine del Cretaceo'],['66 milioni di anni fa','gold']],text:e.testo,doc:{nota:e.nota,fonti:e.fonti},
+    note:'Sul pavimento l\'asteroide cade a '+(66/T0*LEN).toFixed(1).replace('.',',')+' metri da «Oggi».',
+    actions:[{label:'Rivedi l\'impatto',fn:()=>{setGoal(67,true);setTimeout(()=>setGoal(65.5),300);}}]},()=>new THREE.Vector3(STRIP.x1,0.05,zOf(66)));}
+function openHuman(){const u=DATI_TEMPO.umani;const hum=animals.find(a=>a.human);
+  openPanel({title:'Homo sapiens',sci:'«uomo sapiente»',badges:[['Cenozoico'],['da circa '+Math.round(u.homo_sapiens_anni).toLocaleString('it-IT')+' anni fa','gold']],
+    text:u.testo,doc:{nota:u.nota,fonti:u.fonti},fig:`<p class="tl-stopname">Anche i nostri denti raccontano che cosa mangiamo</p>${teethSVG('umani')}`,
+    note:'Sulla linea del tempo l\'uomo occupa solo gli ultimi '+(u.homo_sapiens_anni/1e6/T0*LEN*100).toFixed(1).replace('.',',')+' cm prima di «Oggi». Da qui comincia la storia che si studia in terza.'},
+    ()=>hum&&hum.app>0.5?labelAnchor(hum):new THREE.Vector3(STRIP.x1,0.05,zOf(0.3)));}
+
+// ---------- pannello di controllo (dock) ----------
+const dock=document.createElement('div');dock.className='dock tl';W.dock=dock;document.body.appendChild(dock);
+const ICON_PREV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>';
+const ICON_NEXT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',ICON_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+dock.innerHTML=`<div class="tl-row"><div class="tl-read"><b id="tlMa"></b><span id="tlUnit"></span></div><span class="badge" id="tlEra"></span><span class="tl-stopname" id="tlStop"></span>
+  <div class="tl-btns"><button id="tlPrev" title="Tappa precedente">${ICON_PREV}Prima</button><button class="play" id="tlPlay" title="Viaggio nel tempo">${ICON_PLAY}Viaggia</button><button id="tlNext" title="Tappa successiva">Dopo${ICON_NEXT}</button></div></div>
+  <div class="tl-track"><div class="tl-stops" id="tlStops"></div><div class="tl-bands">${PERIODI.map(p=>`<div style="flex:${Math.min(p.a,T0)-p.b};background:${p.c}">${p.n.toUpperCase()}</div>`).join('')}</div>
+  <input class="tl-range" id="tlRange" type="range" min="0" max="${T0*10}" step="1" aria-label="Linea del tempo"><div class="tl-ticks">${[250,200,150,100,50,0].map(t=>`<span style="left:${(T0-t)/T0*100}%">${t||'oggi'}</span>`).join('')}</div></div>
+  <div class="tl-note">Sul pavimento, lungo le vetrate: 1 metro = circa 13 milioni di anni. Animali e piante del plastico in scala 1:10. Nel plastico compaiono insieme animali vissuti nello stesso periodo, anche se in continenti diversi.</div>`;
+const $=id=>dock.querySelector('#'+id);
+const range=$('tlRange');range.addEventListener('input',()=>{playing=false;updPlayBtn();setGoal(T0-range.value/10);});
+$('tlPrev').onclick=()=>{playing=false;updPlayBtn();nextStop(-1);};$('tlNext').onclick=()=>{playing=false;updPlayBtn();nextStop(1);};
+$('tlPlay').onclick=()=>{playing=!playing;if(playing){if(tGoal<0.05)setGoal(T0,true);playWait=0.4;}updPlayBtn();};
+function updPlayBtn(){$('tlPlay').innerHTML=playing?ICON_PAUSE+'Pausa':ICON_PLAY+'Viaggia';}
+STOPS.forEach((s,i)=>{const b=document.createElement('button');b.style.left=((T0-s.t)/T0*100)+'%';if(i>0&&Math.abs(STOPS[i-1].t-s.t)<3){s.nudge=(STOPS[i-1].nudge||0)+1;b.style.marginLeft=(s.nudge*13)+'px';}b.title=fmtT(s.t)+' — '+s.name;if(s.ast)b.classList.add('ast');
+  b.onclick=()=>{playing=false;updPlayBtn();goStop(i);};$('tlStops').appendChild(b);s.el=b;});
+let lastStopShown=-2;
+function updateDock(){const txt=fmtT(tNow),m=txt.match(/^([\d.,]+)\s(.*)$/);
+  $('tlMa').textContent=m?m[1]:txt;$('tlUnit').textContent=m?m[2]:'';$('tlEra').textContent=periodOf(tNow).n;
+  if(document.activeElement!==range)range.value=String(Math.round((T0-tNow)*10));
+  const si=nearestStop(tNow);if(si!==lastStopShown){lastStopShown=si;$('tlStop').textContent=si>=0?STOPS[si].name:'';STOPS.forEach((s,i)=>s.el.classList.toggle('on',i===si));}
+  cursorLabel.el.querySelector('span').textContent=txt;}
+
+// ---------- ciclo del mondo ----------
+W.build=()=>{buildGround();buildFlora();buildStrip();buildAnimals();buildFire();buildMeteor();updateFlora(0,true);};
+W.setTime=t=>setGoal(t,true);W.stops=STOPS;W.animals=animals;
+W.enter=()=>{};W.entered=()=>{toast('Usa la linea del tempo in basso, oppure fai clic sulla striscia colorata sul pavimento',4200);};
+W.exit=()=>{playing=false;updPlayBtn();};
+W.pickables=()=>[strip,...animals.filter(a=>a.app>0.5).map(a=>a.R.root)];
+W.update=(dt,t)=>{
+  if(playing){if(playWait>0){playWait-=dt;}else{const i=STOPS.findIndex(s=>s.t<tGoal-0.05);
+      if(Math.abs(tNow-tGoal)<0.05){if(i<0){playing=false;updPlayBtn();}else{goStop(i);playWait=Math.abs(STOPS[i].t-tNow)>0.01?2.8:0;}}}}
+  // avvicinamento al tempo obiettivo: veloce nei grandi salti, preciso vicino all'arrivo
+  const k=1-Math.pow(0.04,dt);let nt=lerp(tNow,tGoal,k);if(Math.abs(nt-tGoal)<0.002)nt=tGoal;
+  if(tGoal<1&&tNow>=1)nt=Math.max(tGoal,tNow-Math.max(1.5,(tNow-tGoal)*k));
+  if(lastT>66&&nt<=66&&tGoal<=66)startMeteor();lastT=tNow=nt;
+  groundMat.color.copy(soilAt(tNow));if(dustT>0){dustT=Math.max(0,dustT-dt*0.35);groundMat.color.lerp(col('#77736a'),dustT*0.7);}
+  cursor.position.z=zOf(tNow);updateFlora(dt,false);updateAnimals(dt,t);updateMeteor(dt);
+  fire.visible=tNow<=0.31;if(fire.visible){const f=1+0.25*Math.sin(t*17)+0.15*Math.sin(t*29);fire.userData.f1.scale.set(1,f,1);fire.userData.f2.scale.set(1,2-f,1);}
+  updateDock();};
+registerWorld(W);return W;})();
+
+/* =====================================================================
+   5. CICLO PRINCIPALE + controllo prestazioni (iMac late 2015)
+   ===================================================================== */
+const clock=new THREE.Clock();let fpsAcc=0,fpsN=0,fpsChecked=false,elapsed=0;
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+const DTMAX=/[?&]prova=1/.test(location.search)?5:0.05;   // prova=1: solo per gli screenshot automatici
+function loop(){const dt=Math.min(clock.getDelta(),DTMAX);elapsed+=dt;
+  keyPan(dt);runTweens(dt);if(current&&current.update)current.update(dt,elapsed);
+  updateCamera(dt);renderer.render(scene,camera);updateLabels();updatePanel();
+  // dopo 4 s, se il frame-rate è basso, si abbassa la risoluzione di rendering
+  if(!fpsChecked&&elapsed>2){fpsAcc+=dt;fpsN++;if(fpsAcc>2){fpsChecked=true;const fps=fpsN/fpsAcc;
+    if(fps<40&&pixelRatio>0.8){pixelRatio=0.8;renderer.setPixelRatio(pixelRatio);resize();}}}
+  if(fpsBox){fpsF++;fpsT+=dt;if(fpsT>=0.5){const r=renderer.info.render;
+    fpsBox.textContent=`${Math.round(fpsF/fpsT)} fps · ${r.calls} draw call · ${Math.round(r.triangles/1000)}k triangoli · risoluzione ${pixelRatio}`;fpsF=0;fpsT=0;}}
+  requestAnimationFrame(loop);}
+// ?fps=1 → contatore prestazioni (per le prove sugli iMac del laboratorio)
+let fpsBox=null,fpsF=0,fpsT=0;
+if(/[?&]fps=1/.test(location.search)){fpsBox=document.createElement('div');
+  fpsBox.style.cssText='position:fixed;right:16px;top:74px;z-index:25;background:rgba(14,68,35,.9);color:#fff;font:600 14px Lexend,sans-serif;padding:6px 12px;border-radius:10px';
+  document.body.appendChild(fpsBox);}
+document.getElementById('helpMin').onclick=()=>{const h=document.getElementById('help');h.classList.toggle('min');
+  document.getElementById('helpMin').textContent=h.classList.contains('min')?'mostra':'nascondi';};
+renderTabs();updateCamera(1);
+// link diretti per i docenti: ?mondo=tempo&t=153  (t = milioni di anni fa)
+const QS=new URLSearchParams(location.search);
+requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('loading').classList.add('done');loop();
+  const m=QS.get('mondo');if(m&&WORLDS.find(w=>w.id===m)){switchWorld(m).then(()=>{const w=current;
+    if(QS.has('t')&&w&&w.setTime)w.setTime(parseFloat(QS.get('t')));if(QS.has('cam')){const c=QS.get('cam').split(',').map(Number);
+      if(c.length===6)flyTo(new THREE.Vector3(c[0],c[1],c[2]),c[3],c[4],c[5]);}});}}));
+window.__aula={scene,camera,renderer,switchWorld,flyTo,view,goal,WORLDS,get current(){return current;}};
+</script>
+</body>
+</html>
