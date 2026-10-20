@@ -2791,22 +2791,49 @@ function tratte(){return TRIP.tappe.slice(1).map((b,i)=>({a:TRIP.tappe[i],b,mz:T
 function aggiungiTappa(id){if(vanim)return;const T=TRIP.tappe;if(T[T.length-1]===id){toast(`${VL[id].nome} è già l'ultima tappa`);return;}if(T.length>=8){toast('Al massimo 8 tappe');return;}
   T.push(id);if(T.length>1)TRIP.mezzi.push(TRIP.mezzi[TRIP.mezzi.length-1]||'auto');TRIP.ridotto=false;aggiornaViaggio();}
 function togliTappa(i){const T=TRIP.tappe,M=TRIP.mezzi;if(T.length<=1){return;}T.splice(i,1);M.splice(Math.max(0,i-1),1);TRIP.mostra.clear();aggiornaViaggio();}
-// ---------- disegno sulla cartina: nastri sul rilievo (tratteggiati per il treno), arco per il volo ----------
-function nastro(pts,w,color,tratt,y0){const P=[];pts.forEach((p,i)=>{const [x,z]=ll2w(p[0],p[1]);if(i){const q=P[P.length-1],d=Math.hypot(x-q[0],z-q[2]),n=Math.ceil(d/0.03);
-    for(let k=1;k<n;k++){const xx=q[0]+(x-q[0])*k/n,zz=q[2]+(z-q[2])*k/n;P.push([xx,Math.max(yAtW(xx,zz),BASE)+(y0||0.007),zz]);}}P.push([x,Math.max(yAtW(x,z),BASE)+(y0||0.007),z]);});
-  const v=[];let acc=0;for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],dx=b[0]-a[0],dz=b[2]-a[2],l=Math.hypot(dx,dz)||1e-6,ox=-dz/l*w/2,oz=dx/l*w/2;acc+=l;
-    if(tratt&&Math.floor(acc/0.045)%2)continue;v.push(a[0]+ox,a[1],a[2]+oz,a[0]-ox,a[1],a[2]-oz,b[0]+ox,b[1],b[2]+oz,a[0]-ox,a[1],a[2]-oz,b[0]-ox,b[1],b[2]-oz,b[0]+ox,b[1],b[2]+oz);}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
-  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:col(color),toneMapped:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4}));m.renderOrder=4;vgrp.add(m);
-  return{P,m,tot:g.attributes.position.count,passo:6};}
-function arco(p,q,color){const [x1,z1]=ll2w(p[0],p[1]),[x2,z2]=ll2w(q[0],q[1]),y1=Math.max(yAtW(x1,z1),BASE),y2=Math.max(yAtW(x2,z2),BASE),H=0.12+Math.hypot(x2-x1,z2-z1)*0.09,P=[];
-  for(let i=0;i<=48;i++){const t=i/48;P.push(new THREE.Vector3(lerp(x1,x2,t),lerp(y1,y2,t)+0.01+H*4*t*(1-t),lerp(z1,z2,t)));}
-  const m=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(P),64,0.01,6,false),new THREE.MeshBasicMaterial({color:col(color),toneMapped:false}));vgrp.add(m);
-  return{P:P.map(v=>[v.x,v.y,v.z]),m,tot:m.geometry.index.count,passo:36};}
+// ---------- disegno sulla cartina: strada, binario, rotta in mare, arco del volo ----------
+// Strada (auto, bici, a piedi, autobus): asfalto grigio con la mezzeria bianca tratteggiata. Binario (treno):
+// massicciata chiara, traversine di legno e due rotaie (chiesto da Andrea). Mare (i traghetti dentro i percorsi in
+// auto): rotta tratteggiata bianca. Volo: arco. Ogni pezzo ha due strati con gli indici dei punti, per il disegno
+// progressivo: «F» (fondo: la strada o il binario, tracciati prima della partenza) e «C» (il colore del mezzo, che
+// si stende sotto mezzeria, traversine e rotaie quando il mezzo passa). Gli strati complanari si separano con il
+// polygonOffset e piccoli scarti di quota.
+const VCOL={strada:'#6E747A',mass:'#B6B0A5',trav:'#6B4F35',rot:'#4F555B',riga:'#FFFFFF'};
+function puntiW(pts,y0){const P=[];pts.forEach((p,i)=>{const [x,z]=ll2w(p[0],p[1]);if(i){const q=P[P.length-1],n=Math.ceil(Math.hypot(x-q[0],z-q[2])/0.03);
+    for(let k=1;k<n;k++){const xx=q[0]+(x-q[0])*k/n,zz=q[2]+(z-q[2])*k/n;P.push([xx,Math.max(yAtW(xx,zz),BASE)+y0,zz]);}}P.push([x,Math.max(yAtW(x,z),BASE)+y0,z]);});return P;}
+// nastro sui punti P[a..b]: larghezza w, spostato di lato di «off», alzato di dy, tratteggio [pieno, vuoto] facoltativo
+function striscia(P,a,b,w,off,dy,tratt){const v=[];let acc=0;for(let i=a;i<b;i++){const p=P[i],q=P[i+1],dx=q[0]-p[0],dz=q[2]-p[2],l=Math.hypot(dx,dz)||1e-6,nx=-dz/l,nz=dx/l;
+    const pieno=!tratt||(acc%(tratt[0]+tratt[1]))<tratt[0];acc+=l;if(!pieno)continue;const o1=off-w/2,o2=off+w/2;
+    v.push(p[0]+nx*o1,p[1]+dy,p[2]+nz*o1,p[0]+nx*o2,p[1]+dy,p[2]+nz*o2,q[0]+nx*o1,q[1]+dy,q[2]+nz*o1,p[0]+nx*o2,p[1]+dy,p[2]+nz*o2,q[0]+nx*o2,q[1]+dy,q[2]+nz*o2,q[0]+nx*o1,q[1]+dy,q[2]+nz*o1);}return v;}
+// traversine: rettangoli di traverso ogni «passo» lungo il binario
+function traversine(P,a,b,lung,passo,spess,dy){const v=[];let acc=0,next=passo/2;for(let i=a;i<b;i++){const p=P[i],q=P[i+1],dx=q[0]-p[0],dz=q[2]-p[2],l=Math.hypot(dx,dz)||1e-6,ux=dx/l,uz=dz/l,nx=-uz,nz=ux,h=lung/2,s=spess/2;
+    while(next<=acc+l){const t=(next-acc)/l,cx=p[0]+dx*t,cy=lerp(p[1],q[1],t)+dy,cz=p[2]+dz*t,c=[[-s,h],[-s,-h],[s,h],[s,-h]].map(([u,n])=>[cx+ux*u+nx*n,cz+uz*u+nz*n]);
+      v.push(c[0][0],cy,c[0][1],c[1][0],cy,c[1][1],c[2][0],cy,c[2][1],c[1][0],cy,c[1][1],c[3][0],cy,c[3][1],c[2][0],cy,c[2][1]);next+=passo;}acc+=l;}return v;}
+function vmesh(v,color,po,ro){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:col(color),toneMapped:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:po,polygonOffsetUnits:po*2}));
+  m.renderOrder=ro;vgrp.add(m);return{m,tot:g.attributes.position.count,passo:6};}
+// tratti di mare: sequenze lunghe (almeno 4 punti, circa 10 km) sotto il livello del mare; i ponti e le coste restano strada
+function tratti(P){const mare=P.map(p=>yAtW(p[0],p[2])<BASE-0.001),R=[];let a=0;
+  for(let i=1;i<=P.length;i++)if(i===P.length||mare[i]!==mare[a]){R.push([a,i-1,mare[a]]);a=i;}
+  R.forEach(r=>{if(r[2]&&r[1]-r[0]<4)r[2]=false;});const M=[];R.forEach(r=>{const u=M[M.length-1];if(u&&u[2]===r[2])u[1]=r[1];else M.push(r.slice());});
+  M.forEach((r,i)=>{if(i<M.length-1)r[1]++;});return M;}   // ogni tratto arriva al primo punto del successivo: niente buchi
+function pezzoTerra(P,stile,c,sottile,out,base){const add=(arr,r,a,b)=>arr.push(Object.assign(r,{i0:base+a,i1:base+b}));
+  tratti(P).forEach(([a,b,mare])=>{if(b<=a)return;for(let i=a;i<=b;i++)out.mare[base+i]=mare;
+    if(mare){add(out.F,vmesh(striscia(P,a,b,0.012,0,0.001,[0.05,0.04]),VCOL.riga,-2,4),a,b);add(out.C,vmesh(striscia(P,a,b,0.02,0,0.0015,[0.05,0.04]),c,-3,5),a,b);return;}
+    if(stile==='binario'){add(out.F,vmesh(striscia(P,a,b,0.046,0,0),VCOL.mass,-1,3),a,b);add(out.C,vmesh(striscia(P,a,b,0.046,0,0.0003),c,-2,4),a,b);
+      add(out.F,vmesh(traversine(P,a,b,0.038,0.02,0.008,0.0007),VCOL.trav,-3,5),a,b);[-0.0105,0.0105].forEach(o=>add(out.F,vmesh(striscia(P,a,b,0.0035,o,0.0012),VCOL.rot,-4,6),a,b));}
+    else{const w=sottile?0.02:0.05;add(out.F,vmesh(striscia(P,a,b,w,0,0),VCOL.strada,-1,3),a,b);add(out.C,vmesh(striscia(P,a,b,w,0,0.0003),c,-2,4),a,b);
+      if(!sottile)add(out.F,vmesh(striscia(P,a,b,0.005,0,0.0007,[0.035,0.028]),VCOL.riga,-3,5),a,b);}});}
+function pezzoVolo(p,q,c,out,base){const [x1,z1]=ll2w(p[0],p[1]),[x2,z2]=ll2w(q[0],q[1]),y1=Math.max(yAtW(x1,z1),BASE),y2=Math.max(yAtW(x2,z2),BASE),H=0.12+Math.hypot(x2-x1,z2-z1)*0.09,V=[];
+  for(let i=0;i<=48;i++){const t=i/48;V.push(new THREE.Vector3(lerp(x1,x2,t),lerp(y1,y2,t)+0.01+H*4*t*(1-t),lerp(z1,z2,t)));}
+  const tubo=(r,c2)=>{const m=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(V),64,r,6,false),new THREE.MeshBasicMaterial({color:col(c2),toneMapped:false}));vgrp.add(m);return{m,tot:m.geometry.index.count,passo:36,i0:base,i1:base+48};};
+  out.F.push(tubo(0.0075,VCOL.strada));out.C.push(tubo(0.0095,c));V.forEach(()=>out.mare.push(false));return V.map(v=>[v.x,v.y,v.z]);}
 function disegnaViaggio(){[...vgrp.children].forEach(o=>{vgrp.remove(o);o.geometry.dispose();o.material.dispose();});const percorso=[];
-  tratte().forEach((t,i)=>{const c=t.ok?MZ[t.mz].col:'#9AA0A6',pts=[],mesh=[],metti=r=>{const i0=pts.length;pts.push(...r.P);mesh.push({m:r.m,i0,i1:pts.length,tot:r.tot,passo:r.passo});};
-    if(!t.ok)metti(nastro([[VL[t.a].lon,VL[t.a].lat],[VL[t.b].lon,VL[t.b].lat]],0.008,c,true));
-    else t.pezzi.forEach(p=>{if(p.volo)metti(arco(p.volo[0],p.volo[1],c));else metti(nastro(p.pts,p.tr?0.012:0.03,c,p.tr||t.mz==='treno'));});percorso.push({t,pts,mesh});});
+  tratte().forEach(t=>{const c=t.ok?MZ[t.mz].col:'#9AA0A6',out={t,pts:[],F:[],C:[],mare:[]};
+    if(!t.ok){const P=puntiW([[VL[t.a].lon,VL[t.a].lat],[VL[t.b].lon,VL[t.b].lat]],0.007);out.F.push(Object.assign(vmesh(striscia(P,0,P.length-1,0.008,0,0,[0.04,0.03]),c,-1,3),{i0:0,i1:P.length-1}));out.pts.push(...P);P.forEach(()=>out.mare.push(false));}
+    else t.pezzi.forEach(p=>{const base=out.pts.length;if(p.volo){out.pts.push(...pezzoVolo(p.volo[0],p.volo[1],c,out,base));return;}
+      const P=puntiW(p.pts,0.007);pezzoTerra(P,t.mz==='treno'&&!p.tr?'binario':'strada',c,!!p.tr,out,base);out.pts.push(...P);});
+    percorso.push(out);});
   return percorso;}
 // ---------- pannello «Il mio viaggio» ----------
 const vpan=document.createElement('div');vpan.className='viaggio';document.body.appendChild(vpan);
@@ -2870,35 +2897,59 @@ function modelloMezzo(mz){const vivi=[],pezzi=[];let lungo=0;
     B(o,-0.3,1.45,0,0.3,0.55,0.4,'#D9822B');[0.18,-0.18].forEach((z,i)=>{const gl=new THREE.Group();gl.position.set(0,0.95,z);o.g.add(gl);gl.add(new THREE.Mesh(new THREE.BoxGeometry(0.16,0.9,0.16).translate(0,-0.45,0),new THREE.MeshLambertMaterial({color:col('#2C3E66')})));vivi.push({tipo:'gamba',m:gl,fase:i*Math.PI});});
     fine(o,0);lungo=1;}
   return{mz,pezzi,vivi,lungo:lungo*VSC[mz]};}
-function togliMezzo(){if(!vveh)return;vveh.pezzi.forEach(p=>{root.remove(p.g);p.g.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});});vveh=null;}
+// sui tratti di mare il mezzo sale sul traghetto: si vede una nave al suo posto
+function modelloNave(){const P=[],B=(x,y,z,sx,sy,sz,c)=>P.push({g:new THREE.BoxGeometry(sx,sy,sz),m:M(x,y,z),c:col(c)});
+  B(0,0.42,0,5,0.75,1.6,'#F4F2EE');B(0,0.12,0,4.95,0.26,1.56,'#1F3F86');P.push({g:new THREE.CylinderGeometry(0.01,0.8,1.3,3),m:M(3.1,0.42,0,0,0,-Math.PI/2,1,1,0.98),c:col('#F4F2EE')});
+  B(-0.5,1.12,0,2.8,0.65,1.3,'#F4F2EE');B(-0.5,1.16,0.66,2.6,0.2,0.02,'#2C3E66');B(-0.5,1.16,-0.66,2.6,0.2,0.02,'#2C3E66');B(0.75,1.65,0,1.0,0.45,1.1,'#F4F2EE');B(0.75,1.7,0,1.02,0.14,1.12,'#2C3E66');
+  P.push({g:new THREE.CylinderGeometry(0.28,0.32,0.75,10),m:M(-1.5,1.8,0),c:col('#D4A017')});
+  const g=new THREE.Group();g.add(new THREE.Mesh(mergeParts(P),new THREE.MeshLambertMaterial({vertexColors:true})));g.scale.setScalar(0.032);g.visible=false;root.add(g);return g;}
+function togliMezzo(){if(!vveh)return;if(vveh.nave){root.remove(vveh.nave);vveh.nave.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});}vveh.pezzi.forEach(p=>{root.remove(p.g);p.g.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});});vveh=null;}
 // punto alla distanza d lungo la tratta (indice del segmento per il disegno progressivo)
 function lungoTratta(lg,d,out){d=clamp(d,0,lg.tot);let i=1;while(i<lg.L.length-1&&lg.L[i]<d)i++;const a=lg.pts[i-1],b=lg.pts[i],f=clamp((d-lg.L[i-1])/((lg.L[i]-lg.L[i-1])||1e-6),0,1);
   out.set(lerp(a[0],b[0],f),lerp(a[1],b[1],f),lerp(a[2],b[2],f));return i;}
 const _va=new THREE.Vector3(),_vb=new THREE.Vector3(),_vdir=new THREE.Vector3(1,0,0),_cpos=new THREE.Vector3(),_clook=new THREE.Vector3();
 function posaMezzo(lg,d){let idx=0;vveh.pezzi.forEach((p,k)=>{const dd=d-p.back,i=lungoTratta(lg,dd,_va);if(!k)idx=i;lungoTratta(lg,dd+0.02,_vb);p.g.position.copy(_va);p.g.position.y+=0.003;
     if(_vb.distanceToSquared(_va)>1e-12){_vb.y+=0.003;p.g.lookAt(_vb);p.g.rotateY(-Math.PI/2);}});   // i modellini guardano verso +x
+  const mare=!!(lg.mare&&lg.mare[idx]);if(mare!==!!vveh.inMare){vveh.inMare=mare;vveh.pezzi.forEach(p=>p.g.visible=!mare);vveh.nave.visible=mare;if(vanim)capEl.textContent=vanim.cap+(mare?' · ora in traghetto':'');}
+  if(mare){vveh.nave.position.copy(vveh.pezzi[0].g.position);vveh.nave.quaternion.copy(vveh.pezzi[0].g.quaternion);}
   lungoTratta(lg,d+0.3,_vb);_vb.sub(vveh.pezzi[0].g.position);_vb.y=0;if(_vb.lengthSq()>1e-8)_vdir.lerp(_vb.normalize(),0.12).normalize();
   // ruote che girano, pedali e passi: dipendono dalla strada fatta
   vveh.vivi.forEach(v=>{const s=d/VSC[vveh.mz];if(v.tipo==='ruota')v.m.rotation.z=-s/v.r;else if(v.tipo==='pedala')v.m.rotation.z=Math.sin(s*3)*0.6;else v.m.rotation.z=Math.sin(s*2.4+v.fase)*0.55;});
   return idx;}
 // il percorso della tratta in corso si disegna fino al mezzo; le tratte già fatte restano intere, le altre spariscono
-function rivela(k,idx){vanim.per.forEach((leg,j)=>leg.mesh.forEach(o=>{const geo=o.m.geometry,tot=o.tot;let n=j<k?tot:j>k?0:Math.round(clamp((idx-o.i0)/Math.max(1,o.i1-o.i0),0,1)*tot);n-=n%o.passo;geo.setDrawRange(0,n);}));}
+// Prima della partenza la strada si traccia in grigio, con un pennino in punta e la telecamera che inquadra tutto il
+// viaggio (chiesto da Andrea); poi parte il mezzo, che la colora mentre la percorre.
+function traccia(dt){vanim.s=Math.min(1,vanim.s+dt/vanim.durTraccia);let d=smooth(vanim.s)*vanim.lungh,k=0;while(k<vanim.legs.length-1&&d>vanim.legs[k].tot){d-=vanim.legs[k].tot;k++;}
+  const idx=lungoTratta(vanim.legs[k],d,_va);vanim.penna.position.set(_va.x,_va.y+0.012,_va.z);
+  vanim.per.forEach((lg,j)=>lg.F.forEach(o=>{let n=j<k?o.tot:j>k?0:Math.round(clamp((idx-o.i0)/Math.max(1,o.i1-o.i0),0,1)*o.tot);n-=n%o.passo;o.m.geometry.setDrawRange(0,n);}));
+  if(vanim.s<1)return;vanim.per.forEach(lg=>lg.F.forEach(o=>o.m.geometry.setDrawRange(0,Infinity)));vgrp.remove(vanim.penna);vanim.penna.geometry.dispose();vanim.penna.material.dispose();vanim.penna=null;
+  vanim.fase='viaggio';vanim.pausa=0.5;camera.getWorldDirection(_va);vanim.look.copy(camera.position).addScaledVector(_va,2);cambiaMezzo();setCamDriver(guidaViaggio);}
+function rivela(k,idx){vanim.per.forEach((leg,j)=>leg.C.forEach(o=>{const geo=o.m.geometry,tot=o.tot;let n=j<k?tot:j>k?0:Math.round(clamp((idx-o.i0)/Math.max(1,o.i1-o.i0),0,1)*tot);n-=n%o.passo;geo.setDrawRange(0,n);}));}
 function guidaViaggio(dt){if(!vanim||!vveh)return;const h=vveh.pezzi[0].g.position,aereo=vveh.mz==='aereo',dist=aereo?0.6:0.45,alt=aereo?0.14:0.22,k=1-Math.pow(0.04,dt);
   _cpos.set(h.x-_vdir.x*dist,h.y+alt,h.z-_vdir.z*dist);_cpos.y=Math.max(_cpos.y,suolo(_cpos.x,_cpos.z)+0.06,h.y+0.05);
   camera.position.lerp(_cpos,k);_clook.set(h.x+_vdir.x*0.3,h.y+0.02,h.z+_vdir.z*0.3);vanim.look.lerp(_clook,k);camera.lookAt(vanim.look);}
 function partiViaggio(){const T=tratte();if(!T.length||!T.every(t=>t.ok))return;fermaVolo();closePanel();stopFollow();if(EXP.on)setExplore(false);const per=disegnaViaggio();
-  const legs=per.map(({t,pts})=>{const L=[0];for(let i=1;i<pts.length;i++)L.push(L[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1],pts[i][2]-pts[i-1][2]));
-    return{t,pts,L,tot:L[L.length-1]||1e-6,dur:clamp(t.h*1.1,4,14)*(/[?&]prova=1/.test(location.search)?0.25:1)};});
-  vanim={legs,per,i:0,u:0,pausa:0.6,look:new THREE.Vector3()};camera.getWorldDirection(_va);vanim.look.copy(camera.position).addScaledVector(_va,2);
-  camera.near=0.004;camera.updateProjectionMatrix();vanim.rid=TRIP.ridotto;TRIP.ridotto=true;cambiaMezzo();setCamDriver(guidaViaggio);renderViaggio();}
-function cambiaMezzo(){togliMezzo();const lg=vanim.legs[vanim.i];vveh=modelloMezzo(lg.t.mz);lungoTratta(lg,0.3,_vb);lungoTratta(lg,0,_va);_vdir.copy(_vb.sub(_va).setY(0)).normalize();
-  rivela(vanim.i,posaMezzo(lg,Math.min(vveh.lungo,lg.tot*0.3)));capEl.textContent=`Tappa ${vanim.i+1} di ${vanim.legs.length}: ${MZ[lg.t.mz].nome} da ${VL[lg.t.a].nome} a ${VL[lg.t.b].nome} · ${kmT(lg.t.km)} km · ${durata(lg.t.h)}`;capEl.classList.add('on');}
-function updateViaggio(dt){if(!vanim)return;const lg=vanim.legs[vanim.i];if(vanim.pausa>0){vanim.pausa-=dt;return;}
+  const legs=per.map(({t,pts,mare})=>{const L=[0];for(let i=1;i<pts.length;i++)L.push(L[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1],pts[i][2]-pts[i-1][2]));
+    return{t,pts,mare,L,tot:L[L.length-1]||1e-6,dur:clamp(t.h*1.1,4,14)*(/[?&]prova=1/.test(location.search)?0.25:1)};});
+  const prova=/[?&]prova=1/.test(location.search),lungh=legs.reduce((s,l)=>s+l.tot,0);
+  vanim={legs,per,i:0,u:0,pausa:0,look:new THREE.Vector3(),fase:'traccia',s:0,lungh,durTraccia:clamp(1.8+lungh*0.3,2.5,5)*(prova?0.25:1)};
+  per.forEach(leg=>leg.F.forEach(o=>o.m.geometry.setDrawRange(0,0)));   // la strada si traccia, il colore arriva con il mezzo
+  vanim.penna=new THREE.Mesh(new THREE.SphereGeometry(0.03,16,12),new THREE.MeshBasicMaterial({color:col('#3E4348'),toneMapped:false}));vgrp.add(vanim.penna);
+  rivela(0,-1e9);   // il colore arriva solo con il mezzo
+  // durante il tracciato la telecamera inquadra tutto il viaggio
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;legs.forEach(l=>l.pts.forEach(p=>{x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);z0=Math.min(z0,p[2]);z1=Math.max(z1,p[2]);}));
+  flyTo(new THREE.Vector3((x0+x1)/2,0.05,(z0+z1)/2),Math.max(x1-x0,z1-z0,0.6)*1.1+0.6,view.theta,0.72);
+  const A=VL[T[0].a],Z=VL[T[T.length-1].b];capEl.textContent=`Ecco la strada: da ${A.nome} a ${Z.nome}, ${kmT(T.reduce((s,t)=>s+t.km,0))} km`;capEl.classList.add('on');
+  camera.near=0.004;camera.updateProjectionMatrix();vanim.rid=TRIP.ridotto;TRIP.ridotto=true;renderViaggio();}
+function cambiaMezzo(){togliMezzo();const lg=vanim.legs[vanim.i];vveh=modelloMezzo(lg.t.mz);vveh.nave=modelloNave();vveh.inMare=false;lungoTratta(lg,0.3,_vb);lungoTratta(lg,0,_va);_vdir.copy(_vb.sub(_va).setY(0)).normalize();
+  rivela(vanim.i,posaMezzo(lg,Math.min(vveh.lungo,lg.tot*0.3)));vanim.cap=`Tappa ${vanim.i+1} di ${vanim.legs.length}: ${MZ[lg.t.mz].nome} da ${VL[lg.t.a].nome} a ${VL[lg.t.b].nome} · ${kmT(lg.t.km)} km · ${durata(lg.t.h)}`;capEl.textContent=vanim.cap;capEl.classList.add('on');}
+function updateViaggio(dt){if(!vanim)return;if(vanim.fase==='traccia'){traccia(dt);return;}const lg=vanim.legs[vanim.i];if(vanim.pausa>0){vanim.pausa-=dt;return;}
   vanim.u=Math.min(1,vanim.u+dt/lg.dur);const l0=Math.min(vveh.lungo,lg.tot*0.3);rivela(vanim.i,posaMezzo(lg,l0+smooth(vanim.u)*(lg.tot-l0)));
   if(vanim.u>=1){toast(`Arrivati a ${VL[lg.t.b].nome}!`,1800);vanim.i++;vanim.u=0;vanim.pausa=1.2;
     if(vanim.i>=vanim.legs.length){vanim.pausa=99;setTimeout(fermaViaggio,1600);return;}cambiaMezzo();}}
-function fermaViaggio(){if(!vanim&&!vveh)return;const era=vanim;vanim=null;togliMezzo();if(era){TRIP.ridotto=!!era.rid;era.per.forEach(leg=>leg.mesh.forEach(o=>o.m.geometry.setDrawRange(0,Infinity)));}
-  if(CAMDRIVER===guidaViaggio){setCamDriver(null);orbitFromCamera();camera.near=0.02;camera.updateProjectionMatrix();}capEl.classList.remove('on');if(state.layer==='viaggi')renderViaggio();}
+function fermaViaggio(){if(!vanim&&!vveh)return;const era=vanim;vanim=null;togliMezzo();if(era){TRIP.ridotto=!!era.rid;era.per.forEach(leg=>leg.C.forEach(o=>o.m.geometry.setDrawRange(0,Infinity)));
+    era.per.forEach(leg=>leg.F.forEach(o=>o.m.geometry.setDrawRange(0,Infinity)));if(era.penna){vgrp.remove(era.penna);era.penna.geometry.dispose();era.penna.material.dispose();}}
+  if(CAMDRIVER===guidaViaggio){setCamDriver(null);orbitFromCamera();}camera.near=0.02;camera.updateProjectionMatrix();capEl.classList.remove('on');if(state.layer==='viaggi')renderViaggio();}
 canvas.addEventListener('pointerdown',()=>{if(vanim)fermaViaggio();},true);
 addEventListener('keydown',e=>{if(e.key==='Escape'&&vanim)fermaViaggio();});
 function buildViaggi(){vgrp=new THREE.Group();vgrp.name='viaggi';vgrp.visible=false;root.add(vgrp);
