@@ -637,6 +637,48 @@ body.cine-fermo .ct,body.cine-fermo .ct-r,body.cine-fermo .cine-lb::before,body.
 @media (max-height:640px){.cart-marchio{width:84px;height:84px;margin-bottom:14px}.cart-fil{margin:18px 0 16px}}
 @media (max-width:520px){.cart-entra{min-width:0;width:100%;font-size:22px;padding:16px 26px}}
 @media (prefers-reduced-motion:reduce){.cart-marchio,.cart-marchio .tri,.cart-occ,.cart-tit,.cart-sot,.cart-fil{animation:none}.cart-bar b{animation-duration:3s}.cart-az,#loading.pronto .cart-az{transform:none}}
+/* P25 · Fuga dall'aula */
+.dock.fuga{padding:10px 16px}
+.fg-row{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.fg-lock{display:flex;align-items:center;gap:4px}
+.fg-lock>svg{width:24px;height:24px;flex:none;color:var(--gold);margin-right:4px}
+.fg-c{width:26px;height:34px;border:1.5px solid #e3cf9a;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:19px;font-weight:600;color:#c9b27a;background:#FBF7EA;font-variant-numeric:tabular-nums}
+.fg-c.ok{color:var(--greenD);border-color:var(--green);background:#EAF4EC}
+.fg-c.qui{border-color:var(--gold);box-shadow:0 0 0 2px rgba(212,160,23,.35)}
+.fg-t{display:flex;flex-direction:column;line-height:1.15;min-width:136px}
+.fg-t b{font-family:var(--head);font-size:13px;font-weight:500;color:#7a5a07}
+.fg-t span{font-size:16px;color:var(--greenD);font-weight:700}
+.fg-row .btn{font-size:14px;padding:6px 12px}
+.fg-row .btn[aria-pressed="true"]{background:var(--goldL);border-color:var(--gold);color:#5f4706}
+.fg-aiu{font-size:14px;color:var(--muted)}
+.fg-aiu b{color:#7a5a07;font-family:var(--head)}
+.fg-tempo{font-family:var(--head);font-variant-numeric:tabular-nums;font-size:15px;color:var(--greenD);min-width:44px}
+.fg-tempo[hidden]{display:none}
+#fgMsg{position:fixed;left:50%;bottom:104px;transform:translateX(-50%);z-index:11;font-style:italic;font-size:22px;line-height:1.3;color:#E2C35A;text-shadow:0 1px 6px rgba(0,0,0,.7);pointer-events:none;opacity:0;transition:opacity 1.2s;text-align:center;width:max-content;max-width:min(760px,calc(100vw - 32px))}
+#fgMsg.on{opacity:1}
+.info .fg-q{font-size:17px;margin:0 0 6px}
+.info .fg-fig{display:block;width:100%;height:auto;background:#F5F9F5;border:1px solid var(--brd);border-radius:10px;margin:4px 0 10px}
+.fg-ops{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+.fg-ops .btn{font-size:15px;padding:7px 12px}
+.fg-ops .btn:disabled{opacity:.5;cursor:default}
+.fg-num{width:120px;font-size:18px;padding:6px 10px;border:1.5px solid var(--brd2);border-radius:10px;font-family:var(--head)}
+.fg-num.lk{width:150px;letter-spacing:.25em;font-size:22px}
+.fg-fb{font-size:16px;margin:4px 0 8px;border-radius:10px}
+.fg-fb:empty{display:none}
+.fg-fb.ok{background:#EAF4EC;border:1px solid var(--green);color:var(--greenD);padding:8px 12px}
+.fg-fb.ambra{background:#FFF6E0;border:1px solid #e3c27a;color:#6b4e07;padding:8px 12px}
+.fg-fb .fg-cif{font-family:var(--head);font-size:20px;color:#7a5a07}
+.fg-ai{background:var(--goldL);border-left:3px solid var(--gold);padding:6px 10px;border-radius:6px;font-size:15px;margin:0 0 6px}
+.fg-ai b{font-family:var(--head);font-weight:500;color:#7a5a07;margin-right:6px}
+.fg-az{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.fg-az .btn{font-size:14px;padding:6px 12px}
+#fgIntro .rcard,#fgDeb .rcard{border-top-color:var(--gold)}
+#fgIntro .fg-seme,#fgDeb .fg-seme{font-size:15px;color:var(--muted);margin:0 0 6px}
+#fgDeb ol.fg-rie{margin:0 0 12px;padding-left:22px;font-size:17px}
+#fgDeb ol.fg-rie li{margin:2px 0}
+#fgDeb h3{font-family:var(--head);font-size:19px;color:var(--greenD);margin:10px 0 4px}
+#fgDeb ol.fg-dom{margin:0 0 8px;padding-left:22px;font-size:18px;font-style:italic;color:#5f4706}
+@media (max-width:1180px){.fg-t{min-width:0}.fg-row{gap:9px}.fg-c{width:23px}}
 /* @slot:css */
 </style>
 </head>
@@ -8930,6 +8972,368 @@ const CARTELLO=(()=>{const $=id=>document.getElementById(id),L=$('loading'),bE=$
     stato:()=>({visto,pronto,errore,entrato,esito,suoni,schermo,on:vivo(),avviso:letto()})};
   AGG.api.cartello=C;
   return C;})();
+/* ===== P25 · FUGA DALL'AULA: escape room geometrica (5ª primaria) ===== */
+const FUGA=(()=>{
+const PQ=new URLSearchParams(location.search),$f=id=>document.getElementById(id);
+const RIDOTTO=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
+const ICON_FUGA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h8A1.5 1.5 0 0 1 16 4.5V21"/><path d="M3 21h18"/><circle cx="13" cy="12.5" r="1.1" fill="currentColor"/><path d="M19 9l2 2-2 2"/></svg>';
+const ICON_LUCCHETTO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/></svg>';
+function nuovoSeme(){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0].toString(36).slice(0,5);}
+const fmt=x=>String(Math.round(x*100)/100).replace('.',',');
+const leggiNum=s=>{s=String(s==null?'':s).trim().replace(/\s/g,'').replace(',','.');return s===''||!/^-?\d*\.?\d+$/.test(s)?NaN:+s;};
+
+// ---------------------------------------------------------------- disegni SVG (nessuna texture: sta tutto nel pannello)
+const CG='#1B6D3F',CO='#B8860B',CT='#1A2E1A',CF='#FBF3DC';
+const svg=(w,h,lab,inner)=>`<svg class="fg-fig" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(lab)}">${inner}</svg>`;
+const txt=(x,y,t,o)=>`<text x="${x}" y="${y}" font-family="Lexend,sans-serif" font-size="${(o&&o.s)||15}" fill="${(o&&o.c)||CT}" text-anchor="middle" dominant-baseline="middle"${o&&o.w?` font-weight="${o.w}"`:''}>${esc(t)}</text>`;
+const poly=(pts,o)=>`<polygon points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="${(o&&o.f)||CF}" stroke="${(o&&o.c)||CG}" stroke-width="${(o&&o.sw)||2.5}" stroke-linejoin="round"/>`;
+const linea=(a,b,o)=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${(o&&o.c)||CG}" stroke-width="${(o&&o.sw)||3}" stroke-linecap="round"${o&&o.d?' stroke-dasharray="7 6"':''}/>`;
+function griglia(x0,y0,n,m,s){let h='';for(let i=0;i<n;i++)for(let j=0;j<m;j++)h+=`<rect x="${x0+j*s}" y="${y0+i*s}" width="${s}" height="${s}" fill="${CF}" stroke="${CG}" stroke-width="2"/>`;return h;}
+// adatta una lista di punti dentro un riquadro (x0,y0,w,h), y verso l'alto nei dati e verso il basso nello schermo
+function adatta(P,x0,y0,w,h){let a=1e9,b=1e9,c=-1e9,d=-1e9;for(const p of P){a=Math.min(a,p[0]);c=Math.max(c,p[0]);b=Math.min(b,p[1]);d=Math.max(d,p[1]);}
+  const k=Math.min(w/Math.max(1e-6,c-a),h/Math.max(1e-6,d-b)),ox=x0+(w-(c-a)*k)/2,oy=y0+(h-(d-b)*k)/2;return P.map(p=>[ox+(p[0]-a)*k,oy+(d-p[1])*k]);}
+// angolo con il vertice in (x,y): un lato orizzontale e uno a «deg» gradi, arco o quadratino (retto)
+function angolo(x,y,deg,L,et){const r=deg*Math.PI/180,b=[x+L*Math.cos(r),y-L*Math.sin(r)],q=16;let h=linea([x,y],[x+L,y])+linea([x,y],b);
+  if(deg===90)h+=`<path d="M${x+q} ${y}V${y-q}H${x}" fill="none" stroke="${CO}" stroke-width="2.5"/>`;
+  else h+=`<path d="M${x+22} ${y}A22 22 0 0 0 ${(x+22*Math.cos(r)).toFixed(1)} ${(y-22*Math.sin(r)).toFixed(1)}" fill="none" stroke="${CO}" stroke-width="2.5"/>`;
+  h+=`<circle cx="${x}" cy="${y}" r="3.5" fill="${CG}"/>`;if(et)h+=txt(x+L/2,y+20,et,{w:600,s:17});return h;}
+// coppia di rette dentro un riquadro centrato in (cx,cy): 'par', 'perp', 'inc'
+function coppia(cx,cy,rel,rot,R){const u=a=>[Math.cos(a),Math.sin(a)],seg=(c,a,l)=>{const v=u(a);return [[c[0]-v[0]*l,c[1]-v[1]*l],[c[0]+v[0]*l,c[1]+v[1]*l]];};
+  let h='';if(rel==='par'){const n=u(rot+Math.PI/2),d=16;const s1=seg([cx+n[0]*d,cy+n[1]*d],rot,R),s2=seg([cx-n[0]*d,cy-n[1]*d],rot,R);h=linea(s1[0],s1[1])+linea(s2[0],s2[1],{c:CO});}
+  else{const b=rel==='perp'?Math.PI/2:0.62;const s1=seg([cx,cy],rot,R),s2=seg([cx,cy],rot+b,R);h=linea(s1[0],s1[1])+linea(s2[0],s2[1],{c:CO});
+    if(rel==='perp'){const a=u(rot),c=u(rot+b),q=10;h+=`<path d="M${(cx+a[0]*q).toFixed(1)} ${(cy+a[1]*q).toFixed(1)}L${(cx+a[0]*q+c[0]*q).toFixed(1)} ${(cy+a[1]*q+c[1]*q).toFixed(1)}L${(cx+c[0]*q).toFixed(1)} ${(cy+c[1]*q).toFixed(1)}" fill="none" stroke="${CT}" stroke-width="1.6"/>`;}}
+  return h;}
+const FORME={quadrato:[[0,0],[1,0],[1,1],[0,1]],rettangolo:[[0,0],[1.8,0],[1.8,1],[0,1]],rombo:[[0.8,0],[1.6,0.55],[0.8,1.1],[0,0.55]],
+  parallelogramma:[[0.45,1],[1.95,1],[1.5,0],[0,0]],trapezio:[[0.35,1],[1.25,1],[1.8,0],[0,0]],equilatero:[[0,0],[1,0],[0.5,Math.sqrt(3)/2]],
+  isoscele:[[0,0],[1,0],[0.5,1.25]],scaleno:[[0,0],[1.6,0],[0.35,0.9]],esagono:[0,1,2,3,4,5].map(i=>[Math.cos(i*Math.PI/3),Math.sin(i*Math.PI/3)])};
+
+// ---------------------------------------------------------------- generatori delle 6 tappe: ogni enigma ha domanda, disegno, risposta,
+// tre aiuti (suggerimento, secondo suggerimento, soluzione) e un perché per ogni risposta sbagliata (errore = informazione, mai rosso)
+const NOMI_ANG={acuto:'acuto',retto:'retto',ottuso:'ottuso'},DEF_ANG={acuto:'è minore di un angolo retto',retto:'misura 90°, come lo spigolo di un foglio',ottuso:'è maggiore di un angolo retto e minore di un angolo piatto'};
+const tipoAng=d=>d<90?'acuto':d===90?'retto':'ottuso';
+function T1(r,pk,mi){const v=Math.floor(r()*3);
+  if(v===0){const n=pk([2,3,4]),parti=[];let tot=0;for(let k=1;k<=n;k++){const c=(n-k+1)**2;tot+=c;parti.push(c+(k===1?' piccoli':' da '+k+' × '+k));}
+    const s=Math.min(34,120/n);return {v:'quadrati',tipo:'numero',giusta:tot,
+      domanda:`Guardate questo riquadro di ${n} × ${n} piastrelle del pavimento. Quanti quadrati vedete in tutto, contando anche quelli formati da più piastrelle?`,
+      fig:svg(300,150,`Riquadro di ${n} per ${n} piastrelle`,griglia(150-n*s/2,75-n*s/2,n,n,s)),
+      aiuti:['Non ci sono solo le piastrelle piccole: anche 2 × 2 piastrelle vicine formano un quadrato.',`Contate per grandezza: i quadrati piccoli, poi quelli da 2 × 2${n>2?', da 3 × 3':''}${n>3?', da 4 × 4':''}. Poi sommate.`,`Soluzione: ${parti.join(' + ')} = ${tot} quadrati.`],
+      fb:x=>x===n*n?'Avete contato solo le piastrelle piccole. Anche più piastrelle insieme possono formare un quadrato: cercate quelli più grandi.':
+        x<tot?'Ne mancano. Contate i quadrati di una grandezza alla volta, dal più piccolo al più grande, e poi sommate.':'Sono troppi. Un quadrato ha 4 lati uguali: un rettangolo allungato non vale. Contate di nuovo per grandezza.',
+      spiega:`${parti.join(' + ')} = ${tot}.`};}
+  if(v===1){const n=pk([3,4,5]),parti=[];let tot=0;for(let k=1;k<=n;k++){tot+=n-k+1;parti.push(n-k+1);}const s=Math.min(48,260/n);
+    return {v:'rettangoli',tipo:'numero',giusta:tot,domanda:`Lungo il muro c'è una fila di ${n} piastrelle una accanto all'altra. Quanti rettangoli vedete in tutto? Attenzione: anche un quadrato è un rettangolo.`,
+      fig:svg(300,110,`Fila di ${n} piastrelle`,griglia(150-n*s/2,55-s/2,1,n,s)),
+      aiuti:['Un rettangolo può essere fatto da 1, 2, 3 o più piastrelle vicine.',`Contate per lunghezza: rettangoli lunghi 1 piastrella, lunghi 2, lunghi 3… fino a ${n}.`,`Soluzione: ${parti.join(' + ')} = ${tot} rettangoli.`],
+      fb:x=>x===n?'Avete contato solo le piastrelle una per una: anche 2 o più piastrelle vicine formano un rettangolo.':x===n+1?'Avete aggiunto la fila intera, ma ci sono anche i rettangoli di 2, 3… piastrelle in mezzo.':
+        x<tot?'Ne mancano. Contate prima quelli lunghi 1, poi quelli lunghi 2, e così via.':'Sono troppi. Ogni rettangolo va contato una volta sola: procedete per lunghezza.',spiega:`${parti.join(' + ')} = ${tot}.`};}
+  // perimetro: tre rettangoli di piastrelle da 20 cm, un solo perimetro massimo e, se si può, non quello della figura più grande
+  const D=[[1,2],[1,3],[1,4],[1,5],[1,6],[2,2],[2,3],[2,4],[3,3],[2,5],[3,4]];let F=null;
+  for(let t=0;t<60;t++){const c=mi(D.length,3).map(i=>D[i]),p=c.map(d=>2*(d[0]+d[1])),a=c.map(d=>d[0]*d[1]),m=Math.max(...p);
+    if(p.filter(x=>x===m).length!==1)continue;F={c,p,a};if(a[p.indexOf(m)]!==Math.max(...a))break;}
+  if(!F){const c=[[1,4],[2,2],[1,3]];F={c,p:c.map(d=>2*(d[0]+d[1])),a:c.map(d=>d[0]*d[1])};}
+  const L=['A','B','C'],gi=F.p.indexOf(Math.max(...F.p)),s=16;let h='';
+  F.c.forEach((d,i)=>{const [a,b]=r()<0.5?[d[0],d[1]]:[d[1],d[0]],x=55+i*110-b*s/2,y=70-a*s/2;h+=griglia(x,y,a,b,s)+txt(55+i*110,140,L[i],{w:600,s:17});});
+  return {v:'perimetro',tipo:'scelta',giusta:gi,domanda:'Ogni piastrella ha il lato di 20 cm. Quale figura ha il perimetro maggiore?',fig:svg(330,155,'Tre figure fatte di piastrelle: A, B e C',h),
+    opzioni:L.map((l,i)=>({t:'Figura '+l,perche:`La figura ${l} ha un perimetro di ${F.p[i]*20} cm: ${F.p[i]} lati di piastrella da 20 cm. Il perimetro è il giro intorno, non quante piastrelle ci sono dentro.`})),
+    aiuti:['Il perimetro è la lunghezza del giro intorno alla figura, non lo spazio che occupa.','Contate i lati di piastrella sul bordo di ogni figura e moltiplicate per 20 cm.',`Soluzione: A ${F.p[0]*20} cm, B ${F.p[1]*20} cm, C ${F.p[2]*20} cm. La risposta è la figura ${L[gi]}.`],
+    spiega:`la figura ${L[gi]} ha il giro più lungo: ${F.p[gi]*20} cm.`};}
+function T2(r,pk,mi,mescola){const v=Math.floor(r()*3);
+  if(v===0){const deg={acuto:pk([30,40,50,60,70]),retto:90,ottuso:pk([110,120,130,140,150])},tipi=mescola(['acuto','retto','ottuso']),T=pk(['acuto','retto','ottuso']),L=['A','B','C'];
+    let h='';tipi.forEach((t,i)=>{h+=angolo(22+i*105,110,deg[t],78,L[i]);});const gi=tipi.indexOf(T);
+    return {v:'tipo',tipo:'scelta',giusta:gi,domanda:`Nei telai delle vetrate ci sono angoli di ogni tipo. Quale di questi tre angoli è ${NOMI_ANG[T]}?`,fig:svg(330,145,'Tre angoli: A, B e C',h),
+      opzioni:L.map((l,i)=>({t:'Angolo '+l,perche:`L'angolo ${l} è ${NOMI_ANG[tipi[i]]}: ${DEF_ANG[tipi[i]]}. Un angolo ${NOMI_ANG[T]} invece ${DEF_ANG[T]}: guardate di nuovo l'apertura.`})),
+      aiuti:['Prendete come confronto lo spigolo di un foglio: è un angolo retto.',`Un angolo ${NOMI_ANG[T]} ${DEF_ANG[T]}.`,`Soluzione: l'angolo ${L[gi]}.`],spiega:`l'angolo ${L[gi]} ${DEF_ANG[T]}.`};}
+  if(v===1){const n=pk([2,3,4,6]),cols=n===6?3:n,rows=n===6?2:1,w=210,hh=120,x0=60,y0=12;let h=`<rect x="${x0}" y="${y0}" width="${w}" height="${hh}" fill="#E6F0F5" stroke="${CG}" stroke-width="5"/>`;
+    for(let j=1;j<cols;j++)h+=linea([x0+j*w/cols,y0],[x0+j*w/cols,y0+hh],{sw:5});for(let i=1;i<rows;i++)h+=linea([x0,y0+i*hh/rows],[x0+w,y0+i*hh/rows],{sw:5});
+    return {v:'retti',tipo:'numero',giusta:4*n,domanda:`Il telaio di questa finestra divide il vetro in ${n} riquadri rettangolari. Quanti angoli retti hanno, in tutto, i riquadri di vetro?`,
+      fig:svg(330,145,`Finestra con ${n} riquadri`,h),aiuti:['Ogni riquadro di vetro è un rettangolo.','Un rettangolo ha 4 angoli retti. Contate i riquadri e ripetete.',`Soluzione: ${n} riquadri × 4 angoli retti = ${4*n}.`],
+      fb:x=>x===4?'4 sono gli angoli di un solo riquadro: ogni riquadro ha i suoi 4 angoli retti.':x===n?'Avete contato i riquadri: ora contate gli angoli di ciascuno.':x===4+2*(cols-1)+2*(rows-1)?'Avete contato gli angoli del telaio esterno e qualche incrocio: contate invece gli angoli di ogni riquadro di vetro.':'Contate gli angoli di un riquadro e poi ripetete per tutti i riquadri.',
+      spiega:`${n} riquadri × 4 = ${4*n} angoli retti.`};}
+  const deg=pk([25,35,45,60,90,120,135,150]),T=tipoAng(deg),O=['acuto','retto','ottuso'];
+  return {v:'ribalta',tipo:'scelta',giusta:O.indexOf(T),domanda:`Il vetro in alto si apre a ribalta. Fra il vetro aperto e il telaio c'è un angolo di ${deg}°. Che angolo è?`,
+    fig:svg(330,145,`Angolo di ${deg} gradi`,angolo(110,118,deg,95,deg+'°')),
+    opzioni:O.map(t=>({t:'Angolo '+t,perche:t==='acuto'?`Un angolo acuto è minore di 90°: ${deg}° ${deg>90?'è più di':'non è meno di'} 90°.`:t==='retto'?`Un angolo retto misura esattamente 90°: qui ce ne sono ${deg}.`:`Un angolo ottuso è maggiore di 90°: ${deg}° ${deg<90?'è meno di':'non è più di'} 90°.`})),
+    aiuti:['Confrontate la misura con 90°, l\'angolo retto.','Minore di 90°: acuto. Esattamente 90°: retto. Fra 90° e 180°: ottuso.',`Soluzione: ${deg}° è un angolo ${T}.`],spiega:`${deg}° è un angolo ${T}.`};}
+const NOMI_REL={par:'parallele',perp:'perpendicolari',inc:'incidenti ma non perpendicolari'};
+function perRel(scelta,vera){const D={par:'Due rette parallele non si incontrano mai e restano sempre alla stessa distanza',perp:'Due rette perpendicolari si incontrano formando 4 angoli retti',inc:'Due rette incidenti si incontrano in un punto'};
+  if(scelta==='inc'&&vera==='perp')return 'Si incontrano, è vero: ma formano 4 angoli retti, quindi c\'è un nome più preciso.';
+  return D[scelta]+(vera==='par'?': queste due non si incontrano mai.':vera==='perp'?': queste formano angoli retti, guardate il quadratino.':': queste si incontrano, ma gli angoli non sono retti.');}
+function T3(r,pk,mi,mescola){const v=Math.floor(r()*3),rot=()=>pk([0,0.35,0.8,1.2,-0.5]);
+  if(v===0){const R=pk(['par','perp','inc']),O=['par','perp','inc'],ctx={par:'i due spigoli verticali di un pilastro blu',perp:'lo spigolo del pilastro e la riga del pavimento ai suoi piedi',inc:'lo spigolo del pilastro e l\'ombra obliqua di una tapparella'};
+    return {v:'coppia',tipo:'scelta',giusta:O.indexOf(R),domanda:`Le due linee del disegno sono ${ctx[R]}. Come sono fra loro?`,fig:svg(300,150,'Due rette',coppia(150,75,R,R==='par'?Math.PI/2:R==='perp'?0:Math.PI/2,62)),
+      opzioni:O.map(o=>({t:NOMI_REL[o][0].toUpperCase()+NOMI_REL[o].slice(1),perche:perRel(o,R)})),
+      aiuti:['Prima domanda: le due linee si incontrano, o si incontrerebbero prolungandole?','Se si incontrano, guardate gli angoli: sono retti?',`Soluzione: sono ${NOMI_REL[R]}.`],spiega:`sono ${NOMI_REL[R]}.`};}
+  if(v===1){const rel=mescola(['par','perp','inc']),R=pk(['par','perp','inc']),L=['A','B','C'];let h='';rel.forEach((t,i)=>{h+=coppia(55+i*110,68,t,rot(),40)+txt(55+i*110,138,L[i],{w:600,s:17});});
+    const gi=rel.indexOf(R);return {v:'trova',tipo:'scelta',giusta:gi,domanda:`Sulle pareti, fra i pilastri blu, ci sono tante linee. Quale coppia è di rette ${NOMI_REL[R]}?`,fig:svg(330,155,'Tre coppie di rette: A, B e C',h),
+      opzioni:L.map((l,i)=>({t:'Coppia '+l,perche:`La coppia ${l} è di rette ${NOMI_REL[rel[i]]}. ${perRel(R,rel[i])}`})),
+      aiuti:['Cercate prima le due rette che non si incontrano mai.','Fra quelle che si incontrano, le perpendicolari hanno il quadratino dell\'angolo retto.',`Soluzione: la coppia ${L[gi]}.`],spiega:`la coppia ${L[gi]} è di rette ${NOMI_REL[R]}.`};}
+  const F=[['Due rette perpendicolari sono anche incidenti.',true,'Si incontrano in un punto, quindi sono incidenti; in più formano 4 angoli retti.'],
+    ['Due rette parallele, se le prolunghiamo molto, prima o poi si incontrano.',false,'Le rette parallele restano sempre alla stessa distanza: non si incontrano mai.'],
+    ['Gli spigoli verticali di due pilastri blu diversi sono paralleli.',true,'Sono tutti e due verticali: restano sempre alla stessa distanza.'],
+    ['Due rette incidenti formano sempre 4 angoli retti.',false,'Solo le perpendicolari formano 4 angoli retti; le altre incidenti formano 2 angoli acuti e 2 ottusi.'],
+    ['Lo spigolo di un pilastro e il bordo del pavimento sono perpendicolari.',true,'Lo spigolo è verticale e il bordo del pavimento è orizzontale: si incontrano ad angolo retto.']],f=pk(F);
+  return {v:'vero',tipo:'scelta',giusta:f[1]?0:1,domanda:`Sul pilastro qualcuno ha scritto: «${f[0]}» È vero o falso?`,fig:svg(300,150,'Un pilastro e il pavimento',`<rect x="128" y="10" width="44" height="122" fill="#3C6FB0" stroke="${CG}" stroke-width="2"/>`+linea([20,132],[280,132],{c:CO})+linea([150,10],[150,132],{c:'#fff',sw:1.5,d:true})),
+    opzioni:[{t:'Vero',perche:'Non è così: '+f[2]},{t:'Falso',perche:'Invece è vero: '+f[2]}],
+    aiuti:['Pensate a un esempio vero nell\'aula: i pilastri, il pavimento, le righe delle piastrelle.','Ripassate le parole: parallele (mai incontro), incidenti (si incontrano), perpendicolari (si incontrano ad angolo retto).',`Soluzione: è ${f[1]?'vero':'falso'}. ${f[2]}`],spiega:f[2]};}
+function T4(r,pk){const v=Math.floor(r()*3),vero=r()<0.5;
+  const tav=(a,b,et)=>svg(330,140,`Rettangolo di ${fmt(a)} per ${fmt(b)} metri`,`<rect x="76" y="${70-Math.min(80,b/a*230)/2}" width="230" height="${Math.min(80,b/a*230)}" fill="#E7C891" stroke="${CG}" stroke-width="3"/>`+txt(191,70+Math.min(80,b/a*230)/2+16,fmt(a)+' m',{w:600})+txt(38,70,fmt(b)+' m',{w:600,s:14})+(et?txt(191,70,et,{s:13,c:'#5f4706'}):''));
+  if(v===0){const [a,b]=vero?[5,1.05]:[pk([2,2.5,3,3.5,4]),pk([0.5,1,1.5])],P=2*(a+b);
+    return {v:'perimetro',tipo:'numero',unita:'m',giusta:P,domanda:vero?'Il tavolone di pino è lungo 5 m e largo 1,05 m. Volete metterci intorno un nastro dorato. Quanti metri di nastro servono?':`Una tovaglia rettangolare è lunga ${fmt(a)} m e larga ${fmt(b)} m. Quanti metri di nastro servono per fare tutto il bordo?`,
+      fig:tav(a,b,vero?'tavolone':'tovaglia'),aiuti:['Il nastro fa il giro completo: è il perimetro.','Il rettangolo ha 4 lati: due lunghi e due corti. Sommateli tutti.',`Soluzione: ${fmt(a)} + ${fmt(b)} + ${fmt(a)} + ${fmt(b)} = ${fmt(P)} m.`],
+      fb:x=>Math.abs(x-(a+b))<0.005?'Avete sommato due lati soli: il nastro fa il giro completo, cioè 4 lati.':Math.abs(x-a*b)<0.005?'Questa è l\'area, cioè lo spazio coperto. Il nastro va intorno: serve il perimetro.':'Sommate i 4 lati: lungo + corto + lungo + corto. Attenzione alla virgola.',
+      spiega:`2 × (${fmt(a)} + ${fmt(b)}) = ${fmt(P)} m.`};}
+  if(v===1){const a=pk([2,3,4,5]),b=pk([0.5,1.5,2,2.5]),A=a*b;
+    return {v:'area',tipo:'numero',unita:'m²',giusta:A,domanda:`Sul tavolone c'è un telo rettangolare lungo ${a} m e largo ${fmt(b)} m. Quanti metri quadrati copre?`,fig:tav(a,b,'telo'),
+      aiuti:['La superficie coperta è l\'area.','Area del rettangolo = base × altezza.',`Soluzione: ${a} × ${fmt(b)} = ${fmt(A)} m².`],
+      fb:x=>Math.abs(x-2*(a+b))<0.005?'Questo è il perimetro, il giro intorno. L\'area è lo spazio coperto: base × altezza.':Math.abs(x-(a+b))<0.005?'Avete sommato le misure: per l\'area si moltiplicano.':'Moltiplicate base per altezza; controllate la virgola.',
+      spiega:`${a} × ${fmt(b)} = ${fmt(A)} m².`};}
+  const a=pk([2,3,4,5]),b=pk([1,1.5,2]),P=2*(a+b);
+  return {v:'lato',tipo:'numero',unita:'m',giusta:b,domanda:`Un rettangolo di carta sul tavolone ha il perimetro di ${fmt(P)} m. Il lato lungo misura ${a} m. Quanto misura il lato corto?`,fig:tav(a,b,'lato corto = ?').replace('>'+fmt(b)+' m<','>? m<'),
+    aiuti:['Nel perimetro ci sono due lati lunghi e due lati corti.',`Togliete i due lati lunghi: ${fmt(P)} − ${a} − ${a}. Quello che resta sono due lati corti.`,`Soluzione: (${fmt(P)} − ${2*a}) : 2 = ${fmt(b)} m.`],
+    fb:x=>Math.abs(x-(P-a))<0.005?'Avete tolto un solo lato lungo: nel perimetro ce ne sono due.':Math.abs(x-(P/2))<0.005?'Metà perimetro è lato lungo + lato corto: togliete ancora il lato lungo.':Math.abs(x-(P-2*a))<0.005?'Questi sono due lati corti insieme: dividete per 2.':'Togliete dal perimetro i due lati lunghi e dividete per 2 quello che resta.',
+    spiega:`(${fmt(P)} − ${2*a}) : 2 = ${fmt(b)} m.`};}
+function T5(r,pk,mi,mescola){const v=Math.floor(r()*4);
+  if(v===0){const T=pk(['equilatero','isoscele','scaleno']);let s;
+    if(T==='equilatero'){const a=pk([4,5,6]);s=[a,a,a];}else if(T==='isoscele'){const a=pk([5,6,7]),b=pk([4,8]);s=[a,a,b];}else s=pk([[4,5,6],[5,6,8],[4,6,7],[3,5,7]]);
+    s=mescola(s);const [a,b,c]=s,x=(b*b+c*c-a*a)/(2*c),y=Math.sqrt(Math.max(0,b*b-x*x)),P=adatta([[0,0],[c,0],[x,y]],70,14,190,112);
+    const mid=(p,q)=>[(p[0]+q[0])/2,(p[1]+q[1])/2],G=[(P[0][0]+P[1][0]+P[2][0])/3,(P[0][1]+P[1][1]+P[2][1])/3],et=(p,q,l)=>{const m=mid(p,q),d=[m[0]-G[0],m[1]-G[1]],n=Math.hypot(d[0],d[1])||1;return txt(m[0]+d[0]/n*16,m[1]+d[1]/n*14,l+' cm',{w:600,s:14});};
+    const O=['equilatero','isoscele','scaleno'],D={equilatero:'ha 3 lati uguali',isoscele:'ha 2 lati uguali e uno diverso',scaleno:'ha 3 lati tutti diversi'};
+    return {v:'lati',tipo:'scelta',giusta:O.indexOf(T),domanda:'Sul fondale del teatrino è disegnato questo triangolo. Guardate le misure dei lati: che triangolo è?',
+      fig:svg(330,145,'Triangolo con le misure dei lati',poly(P)+et(P[0],P[1],c)+et(P[1],P[2],a)+et(P[2],P[0],b)),
+      opzioni:O.map(o=>({t:'Triangolo '+o,perche:`Un triangolo ${o} ${D[o]}: qui i lati misurano ${s.join(', ')} cm.`})),
+      aiuti:['Confrontate le tre misure: quante sono uguali?','3 uguali: equilatero. 2 uguali: isoscele. Tutte diverse: scaleno.',`Soluzione: ${s.join(', ')} cm, quindi triangolo ${T}.`],spiega:`il triangolo ${T} ${D[T]}.`};}
+  if(v===1){const T=pk(['acutangolo','rettangolo','ottusangolo']);let A,B;
+    if(T==='rettangolo'){A=90;B=pk([30,35,40,50,55,60]);}else if(T==='ottusangolo'){A=pk([100,110,120,130]);B=pk([20,25,30]);}else{A=pk([60,65,70,75]);B=pk([50,55,60]);}
+    const C=180-A-B,ang=mescola([A,B,C]),ra=ang.map(x=>x*Math.PI/180),bb=Math.sin(ra[1])/Math.sin(ra[2]),P=adatta([[0,0],[1,0],[bb*Math.cos(ra[0]),bb*Math.sin(ra[0])]],70,16,190,108);
+    const G=[(P[0][0]+P[1][0]+P[2][0])/3,(P[0][1]+P[1][1]+P[2][1])/3],et=(p,l)=>{const d=[G[0]-p[0],G[1]-p[1]],n=Math.hypot(d[0],d[1])||1;return txt(p[0]+d[0]/n*24,p[1]+d[1]/n*18,l+'°',{w:600,s:13,c:'#5f4706'});};
+    const O=['acutangolo','rettangolo','ottusangolo'],D={acutangolo:'ha 3 angoli acuti',rettangolo:'ha un angolo retto',ottusangolo:'ha un angolo ottuso'};
+    return {v:'angoli',tipo:'scelta',giusta:O.indexOf(T),domanda:'Questo triangolo sta sopra il sipario. Guardate gli angoli: che triangolo è?',fig:svg(330,145,'Triangolo con le misure degli angoli',poly(P)+et(P[0],ang[0])+et(P[1],ang[1])+et(P[2],ang[2])),
+      opzioni:O.map(o=>({t:'Triangolo '+o,perche:`Un triangolo ${o} ${D[o]}: qui gli angoli misurano ${ang.join('°, ')}°.`})),
+      aiuti:['Cercate l\'angolo più grande e confrontatelo con 90°.','Minore di 90°: acuto. 90°: retto. Più di 90°: ottuso. Il triangolo prende il nome dal suo angolo più grande.',`Soluzione: l'angolo più grande misura ${Math.max(A,B,C)}°, quindi triangolo ${T}.`],spiega:`il triangolo ${T} ${D[T]}.`};}
+  if(v===2){const Q=['quadrato','rettangolo','rombo','parallelogramma','trapezio'],P={quadrato:'4 lati uguali e 4 angoli retti',rettangolo:'4 angoli retti e i lati opposti uguali, ma non tutti e 4 uguali',
+      rombo:'4 lati uguali, ma gli angoli non sono retti',parallelogramma:'i lati opposti paralleli e uguali, ma niente angoli retti e lati vicini diversi',trapezio:'solo due lati paralleli'};
+    const T=pk(Q),altri=mescola(Q.filter(q=>q!==T)).slice(0,3),O=mescola([T,...altri]);
+    return {v:'quadrilatero',tipo:'scelta',giusta:O.indexOf(T),domanda:`Una figura del teatrino ha ${P[T]}. Che figura è?`,fig:svg(330,140,'Un quadrilatero',poly(adatta(FORME[T],95,14,140,110))),
+      opzioni:O.map(o=>({t:o[0].toUpperCase()+o.slice(1),perche:`Il ${o} ha ${P[o]}. La figura del teatrino invece ha ${P[T]}.`})),
+      aiuti:['Guardate prima gli angoli: sono retti?','Poi i lati: sono tutti uguali? Quali sono paralleli?',`Soluzione: è un ${T}.`],spiega:`il ${T} ha ${P[T]}.`};}
+  const A=pk([40,50,60,70,80]),B=pk([30,35,45,55]),C=180-A-B;
+  return {v:'mancante',tipo:'numero',unita:'°',giusta:C,domanda:`Un triangolo del sipario ha un angolo di ${A}° e uno di ${B}°. Quanto misura il terzo angolo?`,
+    fig:svg(330,140,'Triangolo con un angolo da trovare',(()=>{const ra=[A,B,C].map(x=>x*Math.PI/180),bb=Math.sin(ra[1])/Math.sin(ra[2]),P=adatta([[0,0],[1,0],[bb*Math.cos(ra[0]),bb*Math.sin(ra[0])]],80,16,170,104);
+      return poly(P)+txt(P[0][0]+26,P[0][1]-10,A+'°',{w:600,s:13,c:'#5f4706'})+txt(P[1][0]-26,P[1][1]-10,B+'°',{w:600,s:13,c:'#5f4706'})+txt(P[2][0],P[2][1]+22,'?',{w:700,s:16,c:'#5f4706'});})()),
+    aiuti:['Gli angoli interni di un triangolo, sommati, fanno sempre 180°.',`Sommate i due angoli che conoscete (${A}° + ${B}°) e togliete il risultato da 180°.`,`Soluzione: 180° − ${A}° − ${B}° = ${C}°.`],
+    fb:x=>Math.abs(x-(A+B))<0.5?'Questa è la somma dei due angoli: ora toglietela da 180°.':Math.abs(x-(360-A-B))<0.5?'In un triangolo la somma degli angoli è 180°, non 360° (quella è per i quadrilateri).':'La somma dei tre angoli di un triangolo è 180°: 180° − '+A+'° − '+B+'°.',spiega:`180° − ${A}° − ${B}° = ${C}°.`};}
+function T6(r,pk,mi,mescola){const v=Math.floor(r()*3);
+  if(v===0){const F=pk([['quadrato',4],['rettangolo',2],['equilatero',3],['isoscele',1],['scaleno',0],['rombo',2],['esagono',6],['parallelogramma',0]]),[nome,n]=F;
+    const det={quadrato:'il quadrato',rettangolo:'il rettangolo',equilatero:'il triangolo equilatero',isoscele:'il triangolo isoscele',scaleno:'il triangolo scaleno',rombo:'il rombo',esagono:'l\'esagono regolare',parallelogramma:'il parallelogramma'}[nome];
+    return {v:'assi',tipo:'numero',giusta:n,domanda:`Sulla porta c'è un cartello a forma di ${det.replace(/^(il |l')/,'')}. Quanti assi di simmetria ha?`,fig:svg(330,140,'Una figura',poly(adatta(FORME[nome],105,12,120,116))),
+      aiuti:['Un asse di simmetria divide la figura in due parti che combaciano, piegando lungo la linea.','Provate a piegare la figura in verticale, in orizzontale e lungo le diagonali.',`Soluzione: ${det} ha ${n===0?'nessun asse':n===1?'1 asse':n+' assi'} di simmetria.`],
+      fb:x=>nome==='rettangolo'&&x===4?'Le diagonali del rettangolo non sono assi: piegando lungo una diagonale le due parti non combaciano.':nome==='parallelogramma'&&x>0?'Provate a piegare il parallelogramma: in nessun modo le due metà combaciano.':
+        x>n?'Sono troppi: un asse vale solo se, piegando, le due parti combaciano perfettamente.':'Ne mancano: provate a piegare la figura in tutti i modi, anche in diagonale.',spiega:`${det} ha ${n===0?'0 assi':n===1?'1 asse':n+' assi'} di simmetria.`};}
+  if(v===1){const giuV=r()<0.5,x0=110,y0=10,w=100,h=126,L=['A','B','C'],cand=mescola([giuV?'mezzoV':'mezzoO','diag',giuV?'fuoriV':'fuoriO']);
+    const seg={mezzoV:[[x0+w/2,y0-4],[x0+w/2,y0+h+4]],mezzoO:[[x0-4,y0+h/2],[x0+w+4,y0+h/2]],diag:[[x0,y0],[x0+w,y0+h]],fuoriV:[[x0+w*0.72,y0-4],[x0+w*0.72,y0+h+4]],fuoriO:[[x0-4,y0+h*0.3],[x0+w+4,y0+h*0.3]]};
+    const tinta=['#1B6D3F','#B8860B','#3C6FB0'];let g=`<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#F3D35B" stroke="${CG}" stroke-width="2.5"/>`;
+    cand.forEach((c,i)=>{const s=seg[c];g+=linea(s[0],s[1],{c:tinta[i],d:true,sw:3.5});const p=c==='diag'?[s[1][0]+10,s[1][1]-4]:c.endsWith('V')?[s[0][0],s[0][1]-0.5]:[s[1][0]+12,s[1][1]];g+=txt(p[0]+(c.endsWith('V')?0:4),p[1]+(c.endsWith('V')?-0:0),L[i],{w:700,s:15,c:tinta[i]});});
+    const gi=cand.findIndex(c=>c.startsWith('mezzo')),P={diag:'Piegando un rettangolo lungo la diagonale le due parti non combaciano: provate con un foglio.',fuoriV:'Questa linea non passa a metà: le due parti sono di grandezza diversa.',fuoriO:'Questa linea non passa a metà: le due parti sono di grandezza diversa.'};
+    return {v:'linea',tipo:'scelta',giusta:gi,domanda:'La porta è un rettangolo. Quale linea tratteggiata è un asse di simmetria?',fig:svg(330,150,'Un rettangolo con tre linee tratteggiate',g),
+      opzioni:L.map((l,i)=>({t:'Linea '+l,perche:P[cand[i]]||''})),aiuti:['Un asse di simmetria divide la figura in due parti uguali che combaciano piegando.','Il rettangolo ha due assi: uno verticale e uno orizzontale, tutti e due esattamente a metà.',`Soluzione: la linea ${L[gi]}.`],
+      spiega:`la linea ${L[gi]} divide la porta in due metà che combaciano.`};}
+  const SI=['A','M','T','U','V','W','Y','H','O','X'],NO=['F','G','J','L','N','P','R','S','Z'],s=pk(SI),n=mi(NO.length,2).map(i=>NO[i]),O=mescola([s,...n]),L=O;
+  return {v:'lettere',tipo:'scelta',giusta:O.indexOf(s),domanda:'Sulla porta qualcuno ha scritto tre lettere. Quale ha un asse di simmetria verticale (dall\'alto in basso)?',
+    fig:svg(330,130,'Tre lettere: '+O.join(', '),O.map((l,i)=>`<text x="${60+i*105}" y="70" font-family="Lexend,Helvetica,sans-serif" font-size="78" font-weight="500" fill="${CG}" text-anchor="middle" dominant-baseline="middle">${l}</text>`).join('')),
+    opzioni:L.map(l=>({t:'Lettera '+l,perche:`Piegando la lettera ${l} a metà, dall'alto in basso, le due parti non combaciano.`})),
+    aiuti:['Immaginate uno specchio verticale messo in mezzo alla lettera.','La metà di sinistra deve essere uguale alla metà di destra, rovesciata.',`Soluzione: la lettera ${s}.`],spiega:`la lettera ${s} ha le due metà uguali.`};}
+// tappe sugli oggetti veri: vista della camera, punto dell'anello, fila di plafoniere che si accende
+const TAPPE=[
+  {nome:'Il pavimento',gen:T1,vista:[0.9,0,1.5,3.4,-0.43,0.78],anello:[0.9,0.06,1.5,0.42],fila:3,msg:'Il pavimento conta in silenzio i suoi quadrati…'},
+  {nome:'Le vetrate',gen:T2,vista:[5.0,1.7,2.04,4.2,-Math.PI/2,1.42],anello:[5.2,1.75,2.04,0.55],fila:2,msg:'La luce passa dai vetri, ma gli angoli restano nell\'ombra…'},
+  {nome:'I pilastri blu',gen:T3,vista:[-5.0,1.5,0.55,4.0,Math.PI/2,1.36],anello:[-5.05,1.5,0.55,0.42],fila:4,msg:'I pilastri blu stanno dritti da sempre. Si incontreranno mai?'},
+  {nome:'Il tavolone',gen:T4,vista:[0.52,0.74,9.6,3.6,Math.PI,0.98],anello:[0.52,0.82,9.785,0.5],fila:6,msg:'Sul tavolone qualcuno ha lasciato delle misure…'},
+  {nome:'Il teatrino',gen:T5,vista:[-4.4,1.15,9.9,3.6,Math.PI-0.4,1.3],anello:[-4.55,1.3,10.0,0.55],fila:5,msg:'Dietro il sipario, le figure aspettano il loro nome…'},
+  {nome:'La porta',gen:T6,vista:[-5.2,1.05,-7.65,3.4,Math.PI/2,1.38],anello:[-5.25,1.05,-7.65,0.6],fila:1,msg:'La porta conosce le sue due metà. Il lucchetto aspetta sei cifre.'}];
+function genera(seme){const RL=RACCOLTA_LOGICA,r=RL.mulberry32(RL.cyrb53(String(seme)+'|fuga'));
+  const pk=a=>a[Math.floor(r()*a.length)],mescola=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const mi=(n,k)=>mescola([...Array(n).keys()]).slice(0,k);
+  const codice=[];for(let i=0;i<6;i++)codice.push(Math.floor(r()*10));
+  return {seme:String(seme),codice,enigmi:TAPPE.map(t=>t.gen(r,pk,mi,mescola))};}
+
+// ---------------------------------------------------------------- scena: anello d'oro, scatola da cliccare, luce del corridoio
+// un solo programma (MeshBasic additivo, toneMapped false) per anello e luci: compilato con il mondo (mondo:costruito)
+const root=new THREE.Group();root.name='fuga';
+const matOro=new THREE.MeshBasicMaterial({color:0xD4A017,transparent:true,opacity:0.7,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false});
+const anello=new THREE.Mesh(new THREE.TorusGeometry(1,0.045,8,56),matOro);anello.renderOrder=5;root.add(anello);
+const scatola=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({visible:false}));scatola.scale.set(1.3,1.3,1.3);scatola.userData.pick=()=>apriTappa();root.add(scatola);
+const matCor=new THREE.MeshBasicMaterial({color:0xFFC977,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
+const matPozza=matCor.clone();
+const d2=COR.door2,zc=(d2[0]+d2[1])/2,lw=d2[1]-d2[0];
+const luceCor=new THREE.Mesh(new THREE.PlaneGeometry(lw,COR.dh2),matCor);luceCor.rotation.y=Math.PI/2;luceCor.position.set(COR.x-0.35,COR.dh2/2,zc);root.add(luceCor);
+const pozza=new THREE.Mesh(new THREE.PlaneGeometry(2.2,lw*1.15),matPozza);pozza.rotation.x=-Math.PI/2;pozza.position.set(COR.x+1.15,0.012,zc);root.add(pozza);
+
+// ---------------------------------------------------------------- stato della partita
+let S=null;
+function avvia(seme){const g=genera(seme);S={seme:g.seme,codice:g.codice,enigmi:g.enigmi,tappa:0,fase:'intro',risolte:[0,0,0,0,0,0].map(()=>false),aiuti:[0,0,0,0,0,0],
+  tentativi:[0,0,0,0,0,0],fb:[null,null,null,null,null,null],tLuc:0,fbLuc:null,tempo:0,crono:false,luci:false,uscita:false};aggDock();return S;}
+const nRisolte=()=>S?S.risolte.filter(Boolean).length:0,nAiuti=()=>S?S.aiuti.reduce((a,b)=>a+b,0):0;
+
+// ---------------------------------------------------------------- clima: luce, plafoniere, porta, velo, sfarfallii, suoni
+const BUIO=[0.11,0.12,0.15];
+const C={dentro:false,porta0:null,lamp0:null,luce:[1,1,1],lt:[1,1,1],file:[1,1,1,1,1,1,1],ft:[1,1,1,1,1,1,1],porta:null,cor:0,corT:0,fl:null,flT:8,amb:12,msgT:null};
+const haResa=()=>typeof RESA!=='undefined'&&RESA.U&&RESA.U.uAulaLuce,haLamp=()=>typeof RESA!=='undefined'&&typeof RESA.fila==='function';
+const haPorta=()=>typeof PORTA!=='undefined'&&PORTA.mesh,suoni=()=>typeof SUONI!=='undefined'&&SUONI.attivo();
+function suona(n,o){try{if(suoni())SUONI.play(n,o);}catch(e){console.error(e);}}
+// bersagli di luce e plafoniere dallo stato: buio freddo che si scalda un po' a ogni tappa; «Luci accese» o uscita: tutto pieno
+function bersagli(){const n=nRisolte(),pieno=!S||S.luci||S.uscita;
+  for(let i=0;i<3;i++)C.lt[i]=pieno?1:Math.min(1,BUIO[i]+n*(i===2?0.05:0.06));
+  for(let k=0;k<7;k++)C.ft[k]=pieno?1:0;if(!pieno&&S)TAPPE.forEach((t,i)=>{if(S.risolte[i])C.ft[t.fila]=1;});}
+function velo(){if(typeof VELO==='undefined')return;try{if(C.dentro&&S&&!S.luci&&!S.uscita)VELO.set('fuga',{vig:0.42});else VELO.libera('fuga');}catch(e){console.error(e);}}
+function portaA(a,dur){if(!haPorta())return;const da=PORTA.stato().angolo;if(!dur){PORTA.angolo(a);C.porta=null;return;}C.porta={da,a,t:0,dur};}
+function scriviLuce(){if(!haResa())return;const v=RESA.U.uAulaLuce.value;if(Math.abs(v.x-C.luce[0])+Math.abs(v.y-C.luce[1])+Math.abs(v.z-C.luce[2])>1e-4)v.set(C.luce[0],C.luce[1],C.luce[2]);}
+function scriviFila(k,v){if(haLamp()){try{RESA.fila(k,v,v);}catch(e){console.error(e);}}}
+function entraClima(){C.dentro=true;C.porta0=haPorta()?PORTA.stato().angolo:null;
+  try{C.lamp0=typeof RESA!=='undefined'&&RESA.lampadeStato?RESA.lampadeStato(true):null;}catch(e){C.lamp0=null;}
+  if(haResa()){const v=RESA.U.uAulaLuce.value;C.luce=[v.x,v.y,v.z];}C.file=C.lamp0&&C.lamp0.righe?Array.from(C.lamp0.righe).slice(0,7):[1,1,1,1,1,1,1];
+  bersagli();if(S&&!S.uscita)portaA(0,PROVA?0:1.4);velo();C.fl=null;C.flT=6+Math.random()*8;C.amb=4+Math.random()*4;
+  suona('interruttore');setTimeout(()=>{if(C.dentro)suona('porta',{vol:0.6});},500);}
+function esciClima(){C.dentro=false;C.fl=null;C.porta=null;
+  if(haPorta()&&C.porta0!=null)PORTA.angolo(C.porta0);
+  if(haResa())RESA.U.uAulaLuce.value.set(1,1,1);C.luce=[1,1,1];
+  if(haLamp()){try{const L=C.lamp0;if(L&&L.livelli&&L.livelli.some(x=>x!==L.livelli[0]))L.livelli.forEach((x,i)=>RESA.lampada(i,x));else RESA.lampade(L?L.media:1);}catch(e){console.error(e);}}
+  matCor.opacity=0;matPozza.opacity=0;luceCor.visible=pozza.visible=false;C.cor=C.corT=0;
+  if(typeof VELO!=='undefined'){try{VELO.libera('fuga');}catch(e){}}msg(null);}
+// sfarfallio raro e lento di una fila spenta: rampe di almeno 0,35 s (sotto 3 Hz), livello massimo 0,3; mai con prefers-reduced-motion
+const FLICK=[[0,0],[0.45,0.28],[0.85,0.06],[1.3,0.22],[1.75,0.04],[2.3,0.18],[3.0,0]];
+function aggiornaClima(dt){const k=1-Math.exp(-dt*(S&&S.uscita?1.1:2.2));
+  for(let i=0;i<3;i++)C.luce[i]+=(C.lt[i]-C.luce[i])*k;scriviLuce();
+  const kf=1-Math.exp(-dt*3);
+  for(let f=0;f<7;f++){let t=C.ft[f];if(C.fl&&C.fl.k===f&&t===0){const T=C.fl.t;let v=0;for(let j=1;j<FLICK.length;j++)if(T<=FLICK[j][0]){const a=FLICK[j-1],b=FLICK[j],u=(T-a[0])/(b[0]-a[0]);v=a[1]+(b[1]-a[1])*u;break;}t=v;}
+    const prima=C.file[f];C.file[f]+=(t-C.file[f])*(C.fl&&C.fl.k===f?1:kf);if(Math.abs(C.file[f]-t)<0.004)C.file[f]=t;if(Math.abs(C.file[f]-prima)>0.003||C.file[f]===t&&prima!==t)scriviFila(f,C.file[f]);}
+  if(C.fl){C.fl.t+=dt;if(C.fl.t>FLICK[FLICK.length-1][0])C.fl=null;}
+  else if(!RIDOTTO&&!PROVA&&S&&S.fase!=='intro'&&!S.luci&&!S.uscita){C.flT-=dt;if(C.flT<=0){const sp=[0,1,2,3,4,5,6].filter(f=>C.ft[f]===0);if(sp.length)C.fl={k:sp[Math.floor(Math.random()*sp.length)],t:0};C.flT=14+Math.random()*16;}}
+  if(C.porta){const p=C.porta;p.t+=dt;const u=Math.min(1,p.t/p.dur),s=u*u*(3-2*u);PORTA.angolo(p.da+(p.a-p.da)*s);if(u>=1)C.porta=null;}
+  if(C.corT!==C.cor){C.cor+=(C.corT-C.cor)*(1-Math.exp(-dt*1.2));if(Math.abs(C.cor-C.corT)<0.003)C.cor=C.corT;matCor.opacity=0.85*C.cor;matPozza.opacity=0.32*C.cor;luceCor.visible=pozza.visible=C.cor>0.002;}
+  // suoni d'ambiente rari: passi lontani nel corridoio, ronzio dei reattori, uno scricchiolio
+  if(S&&S.fase!=='intro'&&!S.uscita){C.amb-=dt;if(C.amb<=0){C.amb=16+Math.random()*18;if(suoni()){const q=Math.random();
+    if(q<0.4){for(let i=0;i<4;i++)suona('passo-film',{vol:0.35-i*0.05,pan:-0.55,ritardo:i*0.62,f:0.95+Math.random()*0.1,piede:i&1});}
+    else if(q<0.75)suona('ronzio',{dur:9,vol:0.5});else suona('giunto',{vol:0.25,pan:Math.random()*1.2-0.6});}}}
+  // anello: segue la camera (sempre di fronte), respiro lento dell'opacità (fermo con prefers-reduced-motion)
+  if(anello.visible){anello.quaternion.copy(camera.quaternion);if(!RIDOTTO&&!PROVA)matOro.opacity=0.55+0.2*Math.sin(performance.now()/900);}
+  if(S&&S.crono&&(S.fase==='gioco'||S.fase==='lucchetto')){S.tempo+=dt;const el=$f('fgTempo');if(el){const t=Math.floor(S.tempo),s=t%60+'';const tx=Math.floor(t/60)+':'+(s.length<2?'0'+s:s);if(el.textContent!==tx)el.textContent=tx;}}}
+
+// messaggi enigmatici in corsivo oro, in alto al centro
+const msgEl=document.createElement('div');msgEl.id='fgMsg';msgEl.setAttribute('aria-live','polite');document.body.appendChild(msgEl);
+function msg(t,ms){clearTimeout(C.msgT);if(!t){msgEl.classList.remove('on');return;}msgEl.textContent=t;msgEl.classList.add('on');C.msgT=setTimeout(()=>msgEl.classList.remove('on'),ms||6500);}
+
+// ---------------------------------------------------------------- dock
+const dock=document.createElement('div');dock.className='dock fuga';document.body.appendChild(dock);
+dock.innerHTML=`<div class="fg-row"><div class="fg-lock" role="group" aria-label="Lucchetto: cifre trovate">${ICON_LUCCHETTO}${[0,1,2,3,4,5].map(i=>`<span class="fg-c" id="fgC${i}" title="Cifra ${i+1}: tappa ${i+1}">·</span>`).join('')}</div>
+<div class="fg-t"><b id="fgN"></b><span id="fgTit"></span></div>
+<button class="btn" id="fgEnigma" type="button">Enigma</button>
+<span class="fg-aiu">Aiuti usati: <b id="fgAiu">0</b></span>
+<button class="btn ghost" id="fgLuci" type="button" aria-pressed="false" title="Accende l'aula senza perdere i progressi">Luci accese</button>
+<button class="btn ghost" id="fgCrono" type="button" aria-pressed="false" title="Cronometro facoltativo: solo per voi, non dà punti">Cronometro</button><span class="fg-tempo" id="fgTempo" hidden>0:00</span></div>`;
+function aggDock(){if(!S)return;for(let i=0;i<6;i++){const c=$f('fgC'+i);if(!c)continue;c.textContent=S.risolte[i]?String(S.codice[i]):'·';c.classList.toggle('ok',S.risolte[i]);c.classList.toggle('qui',S.fase==='gioco'&&i===S.tappa);}
+  const fin=S.fase==='lucchetto'||S.fase==='fine';$f('fgN').textContent=fin?'Il lucchetto':S.fase==='intro'?'Pronti?':`Tappa ${S.tappa+1} di 6`;$f('fgTit').textContent=fin?(S.fase==='fine'?'Siete usciti!':'Sei cifre'):TAPPE[S.tappa].nome;
+  $f('fgEnigma').textContent=S.fase==='intro'?'Inizia':S.fase==='lucchetto'?'Lucchetto':S.fase==='fine'?'Riepilogo':'Enigma';$f('fgAiu').textContent=nAiuti();
+  const bl=$f('fgLuci');bl.setAttribute('aria-pressed',S.luci?'true':'false');bl.textContent=S.luci?'Torna al buio':'Luci accese';
+  $f('fgCrono').setAttribute('aria-pressed',S.crono?'true':'false');$f('fgTempo').hidden=!S.crono;}
+$f('fgEnigma').onclick=()=>{if(!S)return;if(S.fase==='intro')apriIntro();else if(S.fase==='fine')apriDeb();else apriTappa();};
+$f('fgLuci').onclick=()=>luci(!S.luci);
+$f('fgCrono').onclick=()=>{S.crono=!S.crono;aggDock();};
+function luci(on){if(!S)return;S.luci=!!on;bersagli();velo();profiloResa(1.2);aggDock();if(on){C.fl=null;toast('Luci accese: i progressi restano. Potete tornare al buio quando volete.',3200);}}
+
+// ---------------------------------------------------------------- tappe: volo, anello, pannello con l'enigma
+const _a=new THREE.Vector3(),_t=new THREE.Vector3();
+function posaTappa(i){if(i>5){anello.visible=false;scatola.position.set(0,-50,0);return;}const t=TAPPE[i],a=t.anello;anello.visible=true;anello.position.set(a[0],a[1],a[2]);anello.scale.setScalar(a[3]*0.55);
+  scatola.position.set(a[0],a[1],a[2]);}
+// il bersaglio si sposta un po' a destra della camera: l'oggetto resta a sinistra del centro e il pannello (a destra dell'ancora) non lo copre
+function volaTappa(i){const v=i>5?TAPPE[5].vista:TAPPE[i].vista,s=i>5?0:(innerWidth<1300?0.15:0.08)*v[3];_t.set(v[0]+Math.cos(v[4])*s,v[1],v[2]-Math.sin(v[4])*s);flyTo(_t,v[3],v[4],v[5]);}
+// ancora del pannello: appena a destra dell'anello (verso destra della camera della tappa), così il pannello non copre l'anello
+const ancora=()=>{const i=Math.min(S.tappa,5),a=TAPPE[i].anello,th=TAPPE[i].vista[4],d=a[3]*0.8;return _a.set(a[0]+Math.cos(th)*d,a[1],a[2]-Math.sin(th)*d);};
+let tApri=null;
+function vaiTappa(i,senzaVolo){S.tappa=i;posaTappa(S.fase==='lucchetto'?5:i);aggDock();if(!senzaVolo)volaTappa(i);
+  if(S.fase==='gioco')msg(TAPPE[i].msg);clearTimeout(tApri);tApri=setTimeout(()=>{if(C.dentro&&S&&(S.fase==='gioco'||S.fase==='lucchetto'))apriTappa();},PROVA?0:1300);}
+function opzioniHtml(E,i){const fatto=S.risolte[i];
+  if(E.tipo==='scelta')return `<div class="fg-ops" role="group" aria-label="Risposte">${E.opzioni.map((o,k)=>`<button class="btn ghost" type="button" data-fg-o="${k}"${fatto?' disabled':''}>${esc(o.t)}</button>`).join('')}</div>`;
+  return `<div class="fg-ops"><input class="fg-num" id="fgNum" type="text" inputmode="decimal" autocomplete="off" aria-label="Risposta"${fatto?' disabled':''}>${E.unita?`<span style="align-self:center">${esc(E.unita)}</span>`:''}<button class="btn" type="button" data-fg="controlla"${fatto?' disabled':''}>Controlla</button></div>`;}
+function apriTappa(){if(!S||!C.dentro)return;if(S.fase==='intro'){apriIntro();return;}if(S.fase==='fine'){apriDeb();return;}if(S.fase==='lucchetto'){apriLucchetto();return;}
+  const i=S.tappa,E=S.enigmi[i],fb=S.fb[i],na=S.aiuti[i];
+  const aiuti=E.aiuti.slice(0,na).map((a,k)=>`<p class="fg-ai"><b>${k<2?'Suggerimento '+(k+1):'Soluzione'}</b>${esc(a)}</p>`).join('');
+  const az=S.risolte[i]?`<button class="btn gold" type="button" data-fg="avanti">${i<5?'Avanti: tappa '+(i+2):'Al lucchetto'}</button>`:
+    (na<3?`<button class="btn ghost" type="button" data-fg="aiuto">${na<2?'Chiedi un suggerimento':'Mostra la soluzione'} (${na+1} di 3)</button>`:'');
+  openPanel({title:`Tappa ${i+1} · ${TAPPE[i].nome}`,badges:[['Fuga dall\'aula','gold'],[`Aiuti qui: ${na} di 3`,'']],
+    after:`<div class="fg-p"><p class="fg-q">${esc(E.domanda)}</p>${E.fig||''}${opzioniHtml(E,i)}<div class="fg-fb${fb?' '+fb.c:''}" role="status" aria-live="polite">${fb?fb.h:''}</div>${aiuti}<div class="fg-az">${az}</div></div>`},ancora);
+  collega();}
+function collega(){const info=$f('info');info.querySelectorAll('[data-fg-o]').forEach(b=>b.onclick=()=>rispondi(+b.dataset.fgO));
+  const n=$f('fgNum'),c=info.querySelector('[data-fg="controlla"]');if(c)c.onclick=()=>rispondi(leggiNum(n.value));if(n){n.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();rispondi(leggiNum(n.value));}};}
+  const a=info.querySelector('[data-fg="aiuto"]');if(a)a.onclick=()=>{chiediAiuto();};
+  const v=info.querySelector('[data-fg="avanti"]');if(v)v.onclick=()=>avanti();
+  const l=info.querySelector('[data-fg="lucchetto"]');if(l)l.onclick=()=>provaCodice($f('fgLk').value);
+  const lk=$f('fgLk');if(lk)lk.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();provaCodice(lk.value);}};}
+function chiediAiuto(){const i=S.tappa;if(S.risolte[i]||S.aiuti[i]>=3)return;S.aiuti[i]++;aggDock();apriTappa();}
+// risposta: indice per le scelte, numero per le domande aperte. Errore = informazione sul compito, in ambra; giusto: cifra, in verde
+function rispondi(val){if(!S||S.fase!=='gioco')return false;const i=S.tappa,E=S.enigmi[i];if(S.risolte[i])return true;
+  if(E.tipo==='numero'&&!isFinite(val)){S.fb[i]={c:'ambra',h:'Scrivete un numero (per i decimali va bene la virgola).'};apriTappa();return false;}
+  S.tentativi[i]++;const giusto=E.tipo==='scelta'?val===E.giusta:Math.abs(val-E.giusta)<0.005;
+  if(giusto){S.risolte[i]=true;S.fb[i]={c:'ok',h:`Esatto: ${esc(E.spiega)}<br>Cifra trovata: <span class="fg-cif">${S.codice[i]}</span> · è la cifra n. ${i+1} del lucchetto.`};
+    bersagli();suona('interruttore');suona('conferma',{ritardo:0.25});aggDock();}
+  else{const p=E.tipo==='scelta'?(E.opzioni[val]&&E.opzioni[val].perche)||'Guardate di nuovo il disegno.':E.fb(val);S.fb[i]={c:'ambra',h:'Non ancora. '+esc(p)};suona('neutro');}
+  if(C.dentro)apriTappa();return giusto;}
+function avanti(){const i=S.tappa;if(!S.risolte[i])return;if(i<5){vaiTappa(i+1);}else{S.fase='lucchetto';aggDock();posaTappa(5);msg('Sei cifre, nell\'ordine delle tappe. La porta ascolta…');apriLucchetto();}}
+function apriLucchetto(){if(!C.dentro)return;const fb=S.fbLuc;
+  openPanel({title:'Il lucchetto della porta',badges:[['Fuga dall\'aula','gold'],[`Tentativi: ${S.tLuc}`,'']],
+    after:`<div class="fg-p"><p class="fg-q">Scrivete le 6 cifre del lucchetto, nell'ordine delle tappe: la cifra della tappa 1 per prima.</p><div class="fg-ops"><input class="fg-num lk" id="fgLk" type="text" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="Codice di 6 cifre"><button class="btn gold" type="button" data-fg="lucchetto">Apri</button></div><div class="fg-fb${fb?' '+fb.c:''}" role="status" aria-live="polite">${fb?fb.h:''}</div></div>`},ancora);
+  collega();const lk=$f('fgLk');if(lk&&!PROVA)try{lk.focus({preventScroll:true});}catch(e){}}
+function provaCodice(s){if(!S||S.fase!=='lucchetto')return false;s=String(s||'').replace(/\D/g,'');
+  if(s.length!==6){S.fbLuc={c:'ambra',h:'Servono esattamente 6 cifre: guardate il lucchetto nel riquadro in basso.'};apriLucchetto();return false;}
+  S.tLuc++;const ok=s===S.codice.join('');
+  if(!ok){let n=0;for(let i=0;i<6;i++)if(+s[i]===S.codice[i])n++;S.fbLuc={c:'ambra',h:`Il lucchetto non si apre: ${n} cifr${n===1?'a è':'e sono'} al posto giusto. Controllate l'ordine: tappa 1, tappa 2… fino alla tappa 6.`};suona('neutro');apriLucchetto();return false;}
+  esci_();return true;}
+// finale: la porta si apre piano, luce calda dal corridoio, tutte le plafoniere si accendono una fila dopo l'altra, «Siete usciti!»
+function esci_(){S.fase='fine';S.uscita=true;closePanel();aggDock();anello.visible=false;velo();suona('maniglia');setTimeout(()=>suona('porta'),350);
+  portaA(haPorta()?PORTA.APERTA:-Math.PI/2,PROVA?0:4.2);C.corT=1;if(PROVA){C.cor=1;matCor.opacity=0.85;matPozza.opacity=0.32;luceCor.visible=pozza.visible=true;}
+  C.lt=[1,1,1];profiloResa(PROVA?0:3);const passo=PROVA?0:260;C.ft=C.ft.slice();for(let k=0;k<7;k++)setTimeout(()=>{if(C.dentro&&S&&S.uscita)C.ft[k]=1;},passo*(k+1));
+  volaTappa(6);msg('Siete usciti!',5000);setTimeout(()=>suona('cadenza'),1200);setTimeout(()=>{if(C.dentro&&S&&S.fase==='fine')apriDeb();},PROVA?0:4200);}
+
+// ---------------------------------------------------------------- finestra iniziale e debriefing (stesso stile di RACCOLTA e GEOMETRIA)
+const intro=document.createElement('div');intro.className='rmodal';intro.id='fgIntro';document.body.appendChild(intro);
+function apriIntro(){intro.innerHTML=`<div class="rcard" role="dialog" aria-modal="true" aria-labelledby="fgIntroT"><div class="rstep">Geometria · 5ª · escape room</div><h2 id="fgIntroT">Fuga dall'aula</h2>
+  <p>Le luci si sono spente e la porta si è chiusa. Per uscire servono le 6 cifre del lucchetto: le nasconde la geometria dell'aula.</p>
+  <p style="font-size:17px">Lavorate in squadra: 6 tappe, una dopo l'altra. Gli aiuti si chiedono quando servono e si vedono sempre nel riquadro in basso. Niente punti, niente classifiche. Se il buio vi dà fastidio, premete «Luci accese».</p>
+  <p class="fg-seme">Partita «${esc(S.seme)}»${PQ.get('seed')?' (uguale per tutte le squadre con lo stesso seme)':''}</p><div class="racts"><button class="btn gold" id="fgInizia" type="button">Inizia</button></div></div>`;
+  intro.classList.add('open');$f('fgInizia').onclick=()=>inizia();}
+function inizia(){intro.classList.remove('open');if(!S)return;S.fase='gioco';bersagli();velo();aggDock();suona('giunto',{vol:0.3,pan:-0.4});vaiTappa(0);}
+const deb=document.createElement('div');deb.className='rmodal';deb.id='fgDeb';document.body.appendChild(deb);
+function apriDeb(){const t=Math.round(S.tempo),dur=Math.floor(t/60)+' min '+(t%60)+' s';
+  deb.innerHTML=`<div class="rcard deb" role="dialog" aria-modal="true" aria-labelledby="fgDebT"><div class="rstep">Fuga dall'aula · riepilogo</div><h2 id="fgDebT">Siete usciti!</h2>
+  <p class="fg-seme">Partita «${esc(S.seme)}» · codice ${S.codice.join('')} · aiuti usati in tutto: ${nAiuti()} · tentativi al lucchetto: ${S.tLuc}${S.crono?' · tempo: '+dur+' (solo per voi)':''}</p>
+  <ol class="fg-rie">${TAPPE.map((tp,i)=>`<li><b>${esc(tp.nome)}</b> — ${S.tentativi[i]<=1?'al primo tentativo':'dopo '+S.tentativi[i]+' tentativi'}; aiuti: ${S.aiuti[i]}${S.aiuti[i]===3?' (con la soluzione)':''}</li>`).join('')}</ol>
+  <h3>Parlatene insieme</h3><ol class="fg-dom"><li>Quale enigma vi ha fatto ragionare di più? Perché?</li><li>Che cosa avete osservato per risolverlo?</li></ol>
+  <div class="racts"><button class="btn ghost" id="fgStessa" type="button">Rigioca la stessa partita</button><button class="btn gold" id="fgNuova" type="button">Nuova partita</button></div></div>`;
+  deb.classList.add('open');$f('fgStessa').onclick=()=>nuova(S.seme);$f('fgNuova').onclick=()=>nuova(nuovoSeme());}
+function nuova(seme){deb.classList.remove('open');closePanel();avvia(seme);S.fase='intro';bersagli();if(C.dentro){profiloResa(1.2);portaA(0,PROVA?0:1.4);C.corT=0;velo();posaTappa(0);flyTo(W.view.target,W.view.r,W.view.theta,W.view.phi);apriIntro();}aggDock();}
+
+// ---------------------------------------------------------------- il mondo
+const W={id:'fuga',order:5,root,footprint:{x:0.4,z:0,w:1.2,d:1.2},tab:{title:'Fuga dall\'aula',sub:'Geometria · 5ª',icon:ICON_FUGA},
+  view:{target:new THREE.Vector3(0.2,0.6,-0.6),r:10.5,theta:-0.6,phi:1.3},surfaces:[],dock};
+// W.resa (P03) letto a ogni RESA.profilo(W): al buio esposizione 0,62 e niente raggi; con «Luci accese» o dopo l'uscita il profilo dell'aula
+const RESA_BUIO={profilo:'aula',valori:{esposizione:0.62,raggi:0,polvere:0.3}};
+Object.defineProperty(W,'resa',{get:()=>S&&(S.luci||S.uscita)?'aula':RESA_BUIO});
+function profiloResa(dur){if(typeof RESA!=='undefined'&&RESA.profilo&&C.dentro){try{RESA.profilo(W,dur);}catch(e){console.error(e);}}}
+W.build=()=>{avvia(PQ.get('seed')||nuovoSeme());posaTappa(0);luceCor.visible=pozza.visible=true;};   // visibili alla compilazione del mondo, poi spente
+W.enter=()=>{posaTappa(S.fase==='lucchetto'?5:S.fase==='fine'?6:S.tappa);if(S.fase!=='fine'){matCor.opacity=matPozza.opacity=0;C.cor=C.corT=0;}entraClima();aggDock();};
+W.entered=()=>{luceCor.visible=pozza.visible=C.cor>0.002;if(!S)return;if(S.fase==='intro')apriIntro();else if(S.fase==='fine')apriDeb();else vaiTappa(S.tappa);};
+W.exit=()=>{clearTimeout(tApri);intro.classList.remove('open');deb.classList.remove('open');esciClima();};
+W.update=dt=>{if(C.dentro)aggiornaClima(Math.min(dt,0.1));};
+W.pickables=()=>S&&S.fase!=='intro'&&S.fase!=='fine'?[scatola]:[];
+// per i collaudi: stato della partita e risposte via API (stesse funzioni dei pulsanti)
+W.stato=()=>S&&{seme:S.seme,codice:S.codice.join(''),fase:S.fase,tappa:S.tappa,risolte:S.risolte.slice(),aiuti:S.aiuti.slice(),tentativi:S.tentativi.slice(),luci:S.luci,uscita:S.uscita,
+  enigmi:S.enigmi.map((e,i)=>({tappa:TAPPE[i].nome,v:e.v,tipo:e.tipo,domanda:e.domanda,giusta:e.giusta,opzioni:e.opzioni?e.opzioni.map(o=>o.t):null})),
+  clima:{luce:haResa()?RESA.U.uAulaLuce.value.toArray():null,file:C.file.slice(),porta:haPorta()?PORTA.stato():null,velo:typeof VELO!=='undefined'?VELO.stato().proprietari:null,dentro:C.dentro}};
+W.prova={inizia,rispondi,avanti,provaCodice,luci,nuova,aiuto:chiediAiuto,genera,
+  giusta:()=>{const E=S.enigmi[S.tappa];return E.giusta;},
+  sbagliata:()=>{const E=S.enigmi[S.tappa];return E.tipo==='scelta'?(E.giusta+1)%E.opzioni.length:E.giusta+7;},
+  risolviTutte(){if(S.fase==='intro')inizia();for(let i=0;i<6;i++){rispondi(W.prova.giusta());avanti();}return S.fase;}};
+AGG.api.fuga=W;
+registerWorld(W);return W;})();
 // @slot:P16
 /* ===== P17 · INTRO: regia del film d'avvio ===== */
 // API [A §2]: on, fase ('attesa'|'film'|null), versione, variante, qualita, start({attesa,versione,da,ferma}), parti(), update(dt), stop(finished),
