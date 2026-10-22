@@ -684,6 +684,36 @@ body.fg-strumento #c{cursor:crosshair}
 #fgDeb h3{font-family:var(--head);font-size:19px;color:var(--greenD);margin:10px 0 4px}
 #fgDeb ol.fg-dom{margin:0 0 8px;padding-left:22px;font-size:18px;font-style:italic;color:#5f4706}
 @media (max-width:1180px){.fg-t{min-width:0}.fg-row{gap:9px}.fg-c{width:23px}}
+/* P26 · L'aula dei saperi */
+.dock.saperi{padding:9px 14px}
+.sp-row{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.sp-row .btn{font-size:14px;padding:6px 11px;display:inline-flex;align-items:center;gap:6px}
+.sp-row .btn svg{width:17px;height:17px;flex:none}
+.sp-row .btn[aria-pressed="true"]{background:var(--goldL);border-color:var(--gold);color:#5f4706}
+.sp-sep{width:1px;height:26px;background:var(--brd);margin:0 3px}
+.info .sp-ric{background:#FFF6DA;border-left:4px solid var(--gold);border-radius:8px;padding:7px 11px;font-size:17px;margin:2px 0 10px;color:#4d3a05}
+.info .sp-ric b{font-family:var(--head);font-weight:600;color:#7a5a07;margin-right:4px}
+.sp-az{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0 8px}
+.sp-az .btn{font-size:15px;padding:7px 12px}
+.sp-az .btn:disabled{opacity:.45;cursor:default}
+.sp-big{font-family:var(--head);font-size:30px;color:var(--greenD);margin:2px 0 6px;font-variant-numeric:tabular-nums}
+.sp-fig{display:block;width:100%;height:auto;background:#FFFBEF;border:1px solid var(--brd);border-radius:10px;margin:4px 0 8px}
+.sp-let{display:flex;gap:12px;align-items:center;margin:4px 0 8px}
+.sp-let svg{width:96px;height:96px;flex:none;background:#FFFBEF;border:1px solid var(--brd);border-radius:12px}
+.sp-let .sp-fo{font-size:30px;line-height:1.25;color:var(--greenD)}
+.sp-let .sp-fo i{font-family:"Snell Roundhand","Apple Chancery","Brush Script MT",cursive;font-size:34px;color:#7a5a07}
+.sp-seq{display:flex;gap:4px;min-height:34px;flex-wrap:wrap;align-items:center;background:#F5F9F5;border:1px solid var(--brd);border-radius:10px;padding:4px 8px;margin:4px 0 8px}
+.sp-seq span{width:28px;height:28px;border-radius:7px;background:#fff;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center}
+.sp-seq span svg{width:20px;height:20px;color:var(--greenD)}
+.sp-seq span.on{background:var(--goldL);border-color:var(--gold)}
+.sp-seq em{color:var(--muted);font-size:14px}
+.sp-pag{font-size:17px;line-height:1.4;margin:4px 0 8px}
+.sp-cor{display:flex;gap:6px;margin:4px 0 8px}
+.sp-cor button{flex:1;font-family:var(--head);font-size:16px}
+/* con 8 schede la barra trabocca sotto 1240 px: niente sottotitoli; sotto 1140 le schede non attive restano icona (il titolo è nel tooltip) */
+@media (max-width:1240px){.tab .sub{display:none}}
+@media (max-width:1208px){.tab:not(.on)>span{display:none}.tab:not(.on){padding:7px}}
+@media (max-width:1180px){.sp-row{gap:5px}.sp-row .btn{padding:6px 8px;font-size:13px}.sp-row .btn svg{display:none}}
 /* @slot:css */
 </style>
 </head>
@@ -9372,6 +9402,379 @@ W.prova={inizia,rispondi,avanti,provaCodice,luci,nuova,aiuto:chiediAiuto,genera,
   sbagliata:()=>{const E=S.enigmi[S.tappa];return E.tipo==='scelta'?(E.giusta+1)%E.opzioni.length:E.giusta+7;},
   risolviTutte(){if(S.fase==='intro')inizia();for(let i=0;i<6;i++){W.prova.azione();avanti();}return S.fase;}};
 AGG.api.fuga=W;
+registerWorld(W);return W;})();
+/* ===== P26 · L'AULA DEI SAPERI: simboli della primaria da esplorare ===== */
+const SAPERI=(()=>{
+const PQ=new URLSearchParams(location.search),$s=id=>document.getElementById(id);
+const PROVA_S=PQ.get('prova')==='1';
+const SV=(p,a)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${a||''}>${p}</svg>`;
+const ICON_SAPERI=SV('<path d="M4 5.5C6.5 4 9.5 4 12 6c2.5-2 5.5-2 8-.5V19c-2.5-1.5-5.5-1.5-8 .5-2.5-2-5.5-2-8-.5z"/><path d="M12 6v13.5"/>');
+const IC={alfabeto:SV('<path d="M4 19L9 5l5 14M6 14h6M16 12h4M18 10v8"/>'),abaco:SV('<path d="M4 4v16M20 4v16M3 20h18M4 8h16M4 13h16"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="13" r="1.6" fill="currentColor"/>'),
+  imac:SV('<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M10 16l-1 4h6l-1-4"/>'),libro:ICON_SAPERI,coding:SV('<path d="M4 4h16v16H4zM4 12h16M12 4v16"/><path d="M7 8l2-1.5M7 8l2 1.5"/>'),
+  zaino:SV('<path d="M7 8a5 5 0 0 1 10 0v12H7z"/><path d="M9 13h6v4H9zM10 4.5V3h4v1.5"/>'),violino:SV('<path d="M9 21c-3 0-3-4-1-5-2-1-2-4 1-5h1V3h2v8h1c3 1 3 4 1 5 2 1 2 5-1 5z"/><path d="M11 13v6"/>'),
+  visita:SV('<path d="M8 5l11 7-11 7z"/>'),av:SV('<path d="M12 19V5M6 11l6-6 6 6"/>'),dx:SV('<path d="M6 19v-7a4 4 0 0 1 4-4h8M14 4l4 4-4 4"/>'),sx:SV('<path d="M18 19v-7a4 4 0 0 0-4-4H6M10 4L6 8l4 4"/>')};
+
+// ---------------------------------------------------------------- utilità geometriche: unisci parti con vertex colors (una draw call per modellino)
+const _m4=new THREE.Matrix4(),_q=new THREE.Quaternion(),_eu=new THREE.Euler(),_c=new THREE.Color(),_v=new THREE.Vector3(),_sc=new THREE.Vector3();
+function unisci(parti){const P=[],N=[],C=[];
+  for(const [g0,hex,p,r,s] of parti){const g=g0.index?g0.toNonIndexed():g0.clone();_eu.set(...(r||[0,0,0]));_q.setFromEuler(_eu);_m4.compose(_v.set(...p),_q,_sc.set(...(s||[1,1,1])));g.applyMatrix4(_m4);
+    _c.set(hex).convertSRGBToLinear();const pa=g.attributes.position.array,na=g.attributes.normal.array;for(let i=0;i<pa.length;i++){P.push(pa[i]);N.push(na[i]);}for(let i=0;i<pa.length/3;i++)C.push(_c.r,_c.g,_c.b);g.dispose();}
+  const G=new THREE.BufferGeometry();G.setAttribute('position',new THREE.Float32BufferAttribute(P,3));G.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));G.setAttribute('color',new THREE.Float32BufferAttribute(C,3));return G;}
+const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),CY=(r1,r2,h,n)=>new THREE.CylinderGeometry(r1,r2,h,n||12);
+const root=new THREE.Group();root.name='saperi';
+const matVC=new THREE.MeshLambertMaterial({vertexColors:true});
+const GEO=[],MAT=[matVC],TEX=[];
+const mesh=(g,m,par)=>{const o=new THREE.Mesh(g,m||matVC);GEO.push(g);(par||root).add(o);return o;};
+const tex=c=>{const t=texOf(c);TEX.push(t);return t;};
+const matT=c=>{const m=new THREE.MeshLambertMaterial({map:tex(c)});MAT.push(m);return m;};
+
+// ---------------------------------------------------------------- disegnini (path SVG in un quadrato 24×24): gli stessi per canvas e pannelli
+const D={
+  albero:[['M10.5 22v-8h3v8z','#8A5A2B'],['M12 2a6.5 6.5 0 1 1 0 13a6.5 6.5 0 1 1 0-13z','#3FA35B']],
+  barca:[['M3 15h18l-3 5H6z','#3B7DD8'],['M12 3v11h-1V3z','#6b4e2a'],['M12.5 4l6 9h-6z','#F4C542']],
+  casa:[['M4 11l8-7 8 7v10H4z','#F2A65A'],['M2.5 11.5L12 3l9.5 8.5','none','#B5502E'],['M10 21v-6h4v6z','#8A5A2B']],
+  dado:[['M5 5h14v14H5z','#fff','#333'],['M8.5 9.5a1.3 1.3 0 1 0 0-.1zM15.5 9.5a1.3 1.3 0 1 0 0-.1zM12 13a1.3 1.3 0 1 0 0-.1zM8.5 16.5a1.3 1.3 0 1 0 0-.1zM15.5 16.5a1.3 1.3 0 1 0 0-.1z','#222']],
+  erba:[['M2 21h20','none','#3F8F4A'],['M5 21c1-5 1-9 0-13M10 21c0-6 1-10 3-14M15 21c0-4 2-8 4-10M19 21c0-3-1-5-2-7','none','#3FA35B']],
+  fiore:[['M11.3 13h1.4v9h-1.4z','#3F8F4A'],['M12 3a3 3 0 0 1 0 6a3 3 0 0 1 0-6zM7 7a3 3 0 0 1 3 4a3 3 0 0 1-3-4zM17 7a3 3 0 0 1-3 4a3 3 0 0 1 3-4zM9 13a3 3 0 0 1 3-2a3 3 0 0 1-3 2zM15 13a3 3 0 0 1-3-2a3 3 0 0 1 3 2z','#E86FA8'],['M12 8.5a2 2 0 1 1 0 4a2 2 0 1 1 0-4z','#F4C542']],
+  gatto:[['M5 10l1.5-6 4.5 4h2l4.5-4 1.5 6v4a7 7 0 0 1-14 0z','#E9A23B'],['M9 13h.1M15 13h.1M11 16h2','none','#333']],
+  hotel:[['M6 3h12v18H6z','#5B8FD0'],['M8.5 6h2v2h-2zM13.5 6h2v2h-2zM8.5 10h2v2h-2zM13.5 10h2v2h-2zM8.5 14h2v2h-2zM13.5 14h2v2h-2zM10.5 18h3v3h-3z','#FFF2B8']],
+  isola:[['M1 19c4-3 18-3 22 0v3H1z','#4FA3E0'],['M6 18c2-2 10-2 12 0z','#F2D18B'],['M12 17V8h1v9z','#8A5A2B'],['M12.5 8c-3-2-6-1-7 1M12.5 8c3-2 6-1 7 1M12.5 8c-1-3-3-4-5-4M12.5 8c1-3 3-4 5-4','none','#3FA35B']],
+  luna:[['M15 3a9 9 0 1 0 6 13a7 7 0 1 1-6-13z','#F4C542']],
+  mela:[['M12 7c-4-3-9 0-8 6 1 6 5 9 8 7 3 2 7-1 8-7 1-6-4-9-8-6z','#D9534F'],['M12 7c0-2 1-4 3-5','none','#6b4e2a'],['M13 4c2-1 4 0 4 1-2 1-3 0-4-1z','#3FA35B']],
+  nave:[['M2 15h20l-3 5H5z','#3B7DD8'],['M6 10h11v5H6z','#fff','#555'],['M9 6h3v4H9z','#F2A65A'],['M8 12h1M11 12h1M14 12h1','none','#555']],
+  ombrello:[['M2 12a10 10 0 0 1 20 0z','#9B6BD3'],['M12 12v7a2 2 0 0 1-4 0','none','#444']],
+  pesce:[['M3 12c4-6 11-6 15 0-4 6-11 6-15 0z','#F28C38'],['M18 12l4-4v8z','#F28C38'],['M8 11h.1','none','#222']],
+  quadro:[['M3 4h18v16H3z','#C9A24A'],['M5 6h14v12H5z','#BFE3F7'],['M5 18l5-6 4 4 2-2 3 4z','#3FA35B'],['M16 8.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 1 1 0-3z','#F4C542']],
+  razzo:[['M12 2c4 3 5 9 3 15H9C7 11 8 5 12 2z','#E9EEF4','#556'],['M12 7.5a1.6 1.6 0 1 1 0 3.2a1.6 1.6 0 1 1 0-3.2z','#4FA3E0'],['M9 17l-3 4h4zM15 17l3 4h-4z','#F28C38']],
+  sole:[['M12 7a5 5 0 1 1 0 10a5 5 0 1 1 0-10z','#F4C542'],['M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M4 20l2-2M18 6l2-2','none','#E9A23B']],
+  tazza:[['M5 8h11v6a5 5 0 0 1-11 0z','#5BA4D8'],['M16 10h2a2 2 0 0 1 0 4h-2','none','#5BA4D8'],['M4 21h14','none','#8A5A2B']],
+  uva:[['M12 4v3','none','#6b4e2a'],['M9 9a2 2 0 1 0 .1 0zM15 9a2 2 0 1 0 .1 0zM12 9a2 2 0 1 0 .1 0zM10.5 12.5a2 2 0 1 0 .1 0zM13.5 12.5a2 2 0 1 0 .1 0zM12 16a2 2 0 1 0 .1 0z','#8E5BC4']],
+  vaso:[['M8 4h8l-1 3c4 3 4 10 1 14H8c-3-4-3-11 1-14z','#4FB3A8'],['M8 11h8','none','#2E7F76']],
+  zaino:[['M7 8a5 5 0 0 1 10 0v13H7z','#3B7DD8'],['M9 13h6v4H9z','#F4C542'],['M10 4.5V3h4v1.5','none','#24508F']],
+  jeans:[['M6 3h12l1 18h-5l-2-11-2 11H5z','#3D6FB0'],['M6 6h12','none','#F4C542']],
+  koala:[['M5 6a3 3 0 1 1 0 6a3 3 0 1 1 0-6zM19 6a3 3 0 1 1 0 6a3 3 0 1 1 0-6z','#9AA3AD'],['M12 6a7 7 0 1 1 0 14a7 7 0 1 1 0-14z','#B7BEC6'],['M11 13h2v3h-2z','#333']],
+  wafer:[['M3 8h18v8H3z','#E9C27A'],['M6 8v8M9 8v8M12 8v8M15 8v8M18 8v8M3 12h18','none','#B98A3A']],
+  xilofono:[['M3 6h3v12H3zM7 7h3v10H7zM11 8h3v8h-3zM15 9h3v6h-3zM19 10h3v4h-3z','#F28C38'],['M4.5 3l6 6','none','#6b4e2a']],
+  yogurt:[['M6 7h12l-2 14H8z','#fff','#5BA4D8'],['M5 5h14v2H5z','#5BA4D8'],['M9 12h6','none','#E86FA8']],
+  // per le fiabe
+  bambina:[['M12 3a3 3 0 1 1 0 6a3 3 0 1 1 0-6z','#F5D0A9'],['M12 2c-4 0-5 4-5 6l-2 14h14L17 8c0-2-1-6-5-6zM10 6c0-1 1-2 2-2s2 1 2 2','#D9534F']],
+  cestino:[['M4 11h16l-2 9H6z','#C98B4A'],['M7 11a5 5 0 0 1 10 0','none','#8A5A2B'],['M8 9h8v2H8z','#F4C542']],
+  lupo:[['M4 9l3-6 3 4h4l3-4 3 6v4c0 5-4 8-8 8s-8-3-8-8z','#7D8794'],['M9 12h.1M15 12h.1M10 17h4l-2 2z','none','#222']],
+  porcello:[['M12 6a8 7 0 1 1 0 14a8 7 0 1 1 0-14z','#F4A9C0'],['M5 7l2 3M19 7l-2 3','none','#E07FA0'],['M10 13a2 1.5 0 1 0 4 0a2 1.5 0 1 0-4 0z','#E07FA0'],['M9 10h.1M15 10h.1','none','#333']],
+  paglia:[['M4 12l8-7 8 7v9H4z','#F2D18B'],['M6 14v7M9 13v8M12 13v8M15 13v8M18 14v7','none','#C9A24A']],
+  legno:[['M4 12l8-7 8 7v9H4z','#B07A45'],['M4 15h16M4 18h16M4 12h16','none','#7A4E25']],
+  mattoni:[['M4 12l8-7 8 7v9H4z','#C9603F'],['M4 15h16M4 18h16M8 12v3M14 12v3M11 15v3M17 15v3M8 18v3M14 18v3','none','#F2E3D5'],['M10 21v-4h4v4z','#6b4e2a']],
+  anatroccolo:[['M9 9a4 4 0 1 1 6 3c3 0 6 2 6 5a5 5 0 0 1-5 4H9a6 6 0 0 1-3-11z','#9AA3AD'],['M15 7h4l-3 2z','#E9A23B'],['M13 7h.1','none','#222']],
+  cigno:[['M8 5a3 3 0 0 1 5 2c0 3-3 5-3 8h9a3 3 0 0 1-3 5H8a5 5 0 0 1-3-8c1-1 3-2 3-4z','#FFFFFF','#9AA3AD'],['M5 5h3v1.5H5z','#E9A23B']],
+  acqua:[['M1 18c3-2 5 2 8 0s5 2 8 0 5 2 6 0v6H1z','#6FB7E8']],
+  neve:[['M12 2v20M3 7l18 10M21 7L3 17','none','#8BB8DD']],
+  cuore:[['M12 21C5 15 2 11 4 7s7-3 8 1c1-4 6-5 8-1s-1 8-8 14z','#E86FA8']]};
+function disegna(g,nome,x,y,s){const L=D[nome];if(!L)return;g.save();g.translate(x,y);g.scale(s/24,s/24);g.lineCap='round';g.lineJoin='round';
+  for(const [p,f,st] of L){const P=new Path2D(p);if(f&&f!=='none'){g.fillStyle=f;g.fill(P);}g.lineWidth=f==='none'?1.8:1.1;if(st||f==='none'){g.strokeStyle=st||'#333';g.stroke(P);}else{g.strokeStyle='rgba(0,0,0,.35)';g.stroke(P);}}g.restore();}
+const svgDi=(nomi,vb)=>`<svg viewBox="${vb||'0 0 24 24'}" aria-hidden="true">${[].concat(nomi).map(n=>{const [nome,tx,ty,s]=Array.isArray(n)?n:[n,0,0,1];return `<g transform="translate(${tx} ${ty}) scale(${s})">${(D[nome]||[]).map(([p,f,st])=>`<path d="${p}" fill="${f==='none'?'none':f}" stroke="${st||(f==='none'?'#333':'rgba(0,0,0,.35)')}" stroke-width="${f==='none'?1.8:1.1}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</g>`;}).join('')}</svg>`;
+
+// ---------------------------------------------------------------- 1. alfabeto: 3 cartelloni sulla parete corta z- (sopra le pile di sedie)
+const ALF=[['A','albero','Albero'],['B','barca','Barca'],['C','casa','Casa'],['D','dado','Dado'],['E','erba','Erba'],['F','fiore','Fiore'],['G','gatto','Gatto'],['H','hotel','Hotel'],['I','isola','Isola'],['L','luna','Luna'],
+  ['M','mela','Mela'],['N','nave','Nave'],['O','ombrello','Ombrello'],['P','pesce','Pesce'],['Q','quadro','Quadro'],['R','razzo','Razzo'],['S','sole','Sole'],['T','tazza','Tazza'],['U','uva','Uva'],['V','vaso','Vaso'],['Z','zaino','Zaino'],
+  ['J','jeans','Jeans'],['K','koala','Koala'],['W','wafer','Wafer'],['X','xilofono','Xilofono'],['Y','yogurt','Yogurt']];
+const CORSIVO='"Snell Roundhand","Apple Chancery","Brush Script MT","Segoe Script",cursive';
+const TINTE=['#FDE7A8','#CFEFD8','#D6E6FA','#F9D7E6','#E4DAF6','#FFE0C2'];
+function cartellone(da,a,col,righe,W_,H_,titolo){const c=mkCanvas(W_,H_),g=c.getContext('2d'),cw=W_/col,top=titolo?70:10,ch=(H_-top-10)/righe;
+  g.fillStyle='#FFFDF6';g.fillRect(0,0,W_,H_);g.strokeStyle='#1B6D3F';g.lineWidth=14;g.strokeRect(7,7,W_-14,H_-14);
+  if(titolo){g.fillStyle='#1B6D3F';g.font='600 44px Lexend, sans-serif';g.textAlign='center';g.fillText(titolo,W_/2,54);}
+  for(let k=da;k<a;k++){const i=k-da,x=(i%col)*cw,y=top+Math.floor(i/col)*ch,[L,ic]=ALF[k];g.fillStyle=TINTE[k%TINTE.length];g.fillRect(x+12,y+6,cw-24,ch-12);
+    // disegno in alto al centro, lettere sotto: nelle caselle strette il disegno a destra copriva le lettere
+    disegna(g,ic,x+cw/2-ch*0.17,y+ch*0.06,ch*0.34);g.textAlign='left';
+    g.fillStyle='#14532E';g.font=`700 ${Math.round(ch*0.28)}px Lexend, sans-serif`;g.fillText(L,x+24,y+ch*0.68);const wM=g.measureText(L).width;
+    g.fillStyle='#7a5a07';g.font=`600 ${Math.round(ch*0.22)}px Lexend, sans-serif`;g.fillText(L.toLowerCase(),x+24+wM+ch*0.04,y+ch*0.68);
+    g.fillStyle='#24508F';g.font=`italic ${Math.round(ch*0.22)}px ${CORSIVO}`;g.fillText(L+L.toLowerCase(),x+24,y+ch*0.92);}
+  return c;}
+const POSTER=[{da:0,a:10,col:5,righe:2,w:2048,h:1024,W:3.0,H:1.5,x:-2.55,y:2.2,tit:'L\'alfabeto · prima parte'},{da:10,a:21,col:6,righe:2,w:2048,h:1024,W:3.3,H:1.5,x:0.85,y:2.2,tit:'L\'alfabeto · seconda parte'},
+  {da:21,a:26,col:5,righe:1,w:1024,h:512,W:1.6,H:0.8,x:3.55,y:2.55,tit:'Lettere straniere'}];
+const gAlf=new THREE.Group();gAlf.name='alfabeto';root.add(gAlf);
+POSTER.forEach(P=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(P.W,P.H),matT(cartellone(P.da,P.a,P.col,P.righe,P.w,P.h,P.tit)));GEO.push(m.geometry);m.position.set(P.x,P.y,ROOM.z0+0.025);m.userData.poster=P;gAlf.add(m);
+  const cornice=mesh(unisci([[B(P.W+0.06,P.H+0.06,0.02),'#C9A24A',[0,0,0]]]),matVC,gAlf);cornice.position.set(P.x,P.y,ROOM.z0+0.012);});
+let letteraSel=null;
+gAlf.userData.pick=h=>{const o=h&&h.object,P=o&&o.userData.poster;if(P&&h.uv){const top=(P.tit?70:10)/P.h,u=h.uv.x,v=1-h.uv.y;const col=Math.floor(u*P.col),row=Math.floor((v-top)/((1-top-10/P.h)/P.righe));
+  const k=P.da+Math.max(0,row)*P.col+Math.min(P.col-1,Math.max(0,col));if(v>top&&k<P.a){letteraSel=k;}}apri('alfabeto');};
+
+// ---------------------------------------------------------------- 2. abaco gigante sul pavimento (centinaia, decine, unità)
+const ABX=-2.3,ABZ=-6.2,gAb=new THREE.Group();gAb.name='abaco';gAb.position.set(ABX,0,ABZ);root.add(gAb);
+mesh(unisci([[B(1.25,0.12,0.36),'#B07A45',[0,0.06,0]],[B(1.25,0.03,0.38),'#8A5A2B',[0,0.135,0]],
+  ...[-0.4,0,0.4].map(x=>[CY(0.012,0.012,1.0,8),'#C9CED6',[x,0.65,0]])]),matVC,gAb);
+{const c=mkCanvas(512,128),g=c.getContext('2d');g.fillStyle='#FFFDF6';g.fillRect(0,0,512,128);g.font='700 64px Lexend, sans-serif';g.textAlign='center';
+  [['h','#2E9E5B'],['da','#C98A12'],['u','#3B7DD8']].forEach(([t,k],i)=>{g.fillStyle=k;g.fillText(t,92+i*164,88);});
+  const et=mesh(new THREE.PlaneGeometry(1.1,0.27),matT(c),gAb);et.position.set(0,0.065,0.181);}
+const matPal=['#2E9E5B','#E2A72E','#3B7DD8'].map(k=>{const m=new THREE.MeshLambertMaterial({color:new THREE.Color(k).convertSRGBToLinear()});MAT.push(m);return m;});
+const geoPal=new THREE.SphereGeometry(0.045,16,10);GEO.push(geoPal);
+const PALLE=[0,1,2].map(c=>Array.from({length:9},(_,i)=>{const m=new THREE.Mesh(geoPal,matPal[c]);m.scale.set(1.25,0.75,1.25);m.position.set(-0.4+c*0.4,0.19+i*0.068,0);gAb.add(m);return m;}));
+const AB={c:[1,2,3]};
+function posaAbaco(){PALLE.forEach((L,c)=>L.forEach((m,i)=>{m.visible=i<AB.c[c];}));}
+function abaco(col,d){if(col<0||col>2)return AB.c.slice();AB.c[col]=Math.max(0,Math.min(9,AB.c[col]+d));posaAbaco();suona('tic',{nota:['C5','E5','G5'][col]});if(aperto==='abaco')apri('abaco',true);return AB.c.slice();}
+const numAbaco=()=>AB.c[0]*100+AB.c[1]*10+AB.c[2];
+gAb.userData.pick=()=>apri('abaco');posaAbaco();
+
+// ---------------------------------------------------------------- 3. sette iMac sul tavolone (schermi da un atlante 2048×512, 4×2 riquadri)
+const ATT=[{t:'Disegno',r:'Ti ricordi? Abbiamo disegnato con il mouse: pennello, secchiello e tanti colori.',f:'disegno'},{t:'Tastiera',r:'Ti ricordi? Abbiamo scritto il nostro nome trovando le lettere sulla tastiera, con la barra spaziatrice fra le parole.',f:'tastiera'},
+  {t:'Coding a blocchi',r:'Ti ricordi? Abbiamo incastrato i blocchi colorati: ripeti, avanti, gira… e il personaggio si muoveva.',f:'blocchi'},{t:'Tabelline',r:'Ti ricordi? La tavola pitagorica: riga per colonna, e il numero si trova all\'incrocio.',f:'tabelline'},
+  {t:'Carta geografica',r:'Ti ricordi? Sulla carta il mare è azzurro, la pianura verde e i monti marroni. E c\'è la rosa dei venti.',f:'carta'},{t:'Robottino',r:'Ti ricordi? Abbiamo guidato il robottino sulla griglia con le frecce, passo dopo passo.',f:'robot'},
+  {t:'Scrittura',r:'Ti ricordi? Abbiamo scritto un testo: un titolo, l\'inizio, lo svolgimento e la fine.',f:'scrittura'}];
+const atl=mkCanvas(2048,512),ga=atl.getContext('2d');
+function schermo(i){const x=(i%4)*512,y=Math.floor(i/4)*256,g=ga;g.save();g.translate(x,y);g.beginPath();g.rect(0,0,512,256);g.clip();g.fillStyle='#F7F9FC';g.fillRect(0,0,512,256);
+  g.fillStyle='#DDE3EA';g.fillRect(0,0,512,22);['#F06B5F','#F5BF4F','#61C454'].forEach((k,j)=>{g.fillStyle=k;g.beginPath();g.arc(14+j*16,11,5,0,7);g.fill();});g.fillStyle='#333';g.font='600 14px Lexend, sans-serif';g.textAlign='center';g.fillText(ATT[i].t,256,16);g.textAlign='left';
+  const f=ATT[i].f;
+  if(f==='disegno'){['#E86FA8','#F4C542','#3FA35B','#3B7DD8','#F28C38','#8E5BC4'].forEach((k,j)=>{g.fillStyle=k;g.fillRect(8,30+j*36,26,30);});g.fillStyle='#fff';g.fillRect(44,30,460,218);disegna(g,'casa',90,60,150);disegna(g,'sole',330,40,110);disegna(g,'albero',380,120,120);}
+  else if(f==='tastiera'){g.fillStyle='#fff';g.fillRect(20,32,472,80);g.fillStyle='#14532E';g.font='600 34px Lexend, sans-serif';g.fillText('Mi chiamo Luca',36,84);g.fillRect(300,58,3,34);
+    const R=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];R.forEach((r,j)=>[...r].forEach((k,q)=>{const kx=40+j*16+q*44,ky=124+j*40;g.fillStyle='#fff';g.fillRect(kx,ky,38,34);g.strokeStyle='#B7BEC6';g.strokeRect(kx,ky,38,34);g.fillStyle='#333';g.font='600 18px Lexend, sans-serif';g.fillText(k,kx+12,ky+24);}));}
+  else if(f==='blocchi'){const BL=[['quando si clicca','#F4C542'],['ripeti 4 volte','#F28C38'],['avanti di 10','#3B7DD8'],['gira a destra','#3B7DD8'],['fine','#F28C38']];BL.forEach(([t,k],j)=>{g.fillStyle=k;const ix=j>1&&j<4?60:30;g.fillRect(ix,34+j*42,250,36);g.fillStyle='#fff';g.font='600 20px Lexend, sans-serif';g.fillText(t,ix+12,59+j*42);});
+    disegna(g,'gatto',360,80,110);}
+  else if(f==='tabelline'){g.font='600 15px Lexend, sans-serif';for(let r=1;r<=6;r++)for(let q=1;q<=10;q++){g.fillStyle=r===1||q===1?'#CFEFD8':(r===6&&q===8?'#F4C542':'#fff');g.fillRect(14+(q-1)*36,30+(r-1)*30,34,28);g.fillStyle='#333';g.fillText(String(r*q),20+(q-1)*36,50+(r-1)*30);}
+    g.fillStyle='#14532E';g.font='700 34px Lexend, sans-serif';g.fillText('6 × 8 = 48',140,240);}
+  else if(f==='carta'){g.fillStyle='#9FD3F0';g.fillRect(0,22,512,234);g.fillStyle='#8CC67A';g.beginPath();g.moveTo(170,40);g.bezierCurveTo(260,30,330,60,300,110);g.bezierCurveTo(280,150,350,190,330,240);g.lineTo(300,230);g.bezierCurveTo(260,170,230,140,200,120);g.bezierCurveTo(160,90,140,60,170,40);g.fill();
+    g.fillStyle='#B98A5A';g.beginPath();g.moveTo(180,60);g.lineTo(200,44);g.lineTo(225,62);g.lineTo(250,46);g.lineTo(280,64);g.closePath();g.fill();g.fillStyle='#8CC67A';g.beginPath();g.ellipse(390,210,40,22,0.3,0,7);g.fill();
+    g.strokeStyle='#14532E';g.lineWidth=3;g.beginPath();g.moveTo(450,40);g.lineTo(450,110);g.moveTo(415,75);g.lineTo(485,75);g.stroke();g.fillStyle='#14532E';g.font='700 18px Lexend, sans-serif';g.fillText('N',444,36);}
+  else if(f==='robot'){g.strokeStyle='#9AA3AD';g.lineWidth=2;for(let q=0;q<=6;q++){g.beginPath();g.moveTo(40+q*36,40);g.lineTo(40+q*36,220);g.stroke();}for(let r=0;r<=5;r++){g.beginPath();g.moveTo(40,40+r*36);g.lineTo(256,40+r*36);g.stroke();}
+    g.fillStyle='#3B7DD8';g.fillRect(48,192,22,22);disegna(g,'sole',190,50,30);['av','av','dx','av'].forEach((k,j)=>{g.fillStyle='#fff';g.fillRect(290+j*52,100,46,46);g.strokeStyle='#2E9E5B';g.strokeRect(290+j*52,100,46,46);g.fillStyle='#14532E';g.font='700 28px Lexend, sans-serif';g.fillText(k==='av'?'↑':'↱',303+j*52,134);});}
+  else {g.fillStyle='#fff';g.fillRect(30,32,452,216);g.strokeStyle='#C9D6E8';for(let r=0;r<6;r++){g.beginPath();g.moveTo(44,80+r*30);g.lineTo(468,80+r*30);g.stroke();}g.fillStyle='#14532E';g.font='700 24px Lexend, sans-serif';g.fillText('La mia gita',190,62);
+    g.font='18px Lexend, sans-serif';g.fillStyle='#333';['C\'era una volta una classe','che andò in gita al lago.','Abbiamo visto le anatre','e mangiato insieme.'].forEach((t,r)=>g.fillText(t,50,105+r*30));}
+  g.restore();}
+for(let i=0;i<7;i++)schermo(i);
+const texAtl=tex(atl),matSch=new THREE.MeshBasicMaterial({map:texAtl,toneMapped:false});MAT.push(matSch);
+// iMac 21,5" (2015): pannello in alluminio 0,528 × 0,45 con il mento, vetro nero, piede inclinato; tastiera bianca bassa
+const geoImac=unisci([[B(0.528,0.45,0.012),'#C9CDD2',[0,0.365,-0.006]],[B(0.524,0.36,0.003),'#121315',[0,0.41,0.0015]],[B(0.524,0.085,0.004),'#D7DADE',[0,0.183,0.001]],
+  [B(0.16,0.27,0.012),'#BFC3C8',[0,0.17,-0.07],[-0.32,0,0]],[B(0.19,0.008,0.17),'#BFC3C8',[0,0.004,-0.06]],[B(0.28,0.01,0.11),'#EEF0F2',[0,0.006,0.24]],[B(0.06,0.012,0.1),'#EEF0F2',[0.22,0.006,0.24]]]);GEO.push(geoImac);
+const gIm=new THREE.Group();gIm.name='imac';root.add(gIm);const IMAC=[];
+for(let i=0;i<7;i++){const x=-1.98+0.36+i*0.71,g=new THREE.Group();g.position.set(x,0.742,9.92);g.rotation.y=Math.PI;gIm.add(g);
+  const corpo=new THREE.Mesh(geoImac,matVC);g.add(corpo);const pg=new THREE.PlaneGeometry(0.5,0.29),uv=pg.attributes.uv,u0=(i%4)/4,v0=1-(Math.floor(i/4)+1)/2;
+  for(let k=0;k<uv.count;k++)uv.setXY(k,u0+uv.getX(k)/4,v0+uv.getY(k)/2);GEO.push(pg);const s=new THREE.Mesh(pg,matSch);s.position.set(0,0.42,0.0035);g.add(s);
+  g.userData.pick=()=>{imacSel=i;apri('imac');};IMAC.push(g);}
+let imacSel=0;
+
+// ---------------------------------------------------------------- 4. leggio con il libro delle fiabe (pagine che girano)
+const FIABE=[{t:'Cappuccetto Rosso',p:[
+  ['C\'era una volta una bambina con una mantellina rossa. Tutti la chiamavano Cappuccetto Rosso.',[['bambina',30,18,2],['albero',4,30,1.2],['fiore',62,46,0.9]]],
+  ['La mamma le diede un cestino con il pane e la marmellata da portare alla nonna, che abitava oltre il bosco.',[['cestino',22,16,2.3],['casa',62,40,1.2]]],
+  ['Nel bosco incontrò il lupo. «Dove vai?» le chiese. Lei glielo disse, e il lupo corse avanti per un\'altra strada.',[['lupo',8,22,1.9],['bambina',56,26,1.6],['albero',36,6,1]]],
+  ['Il lupo si travestì da nonna. Ma Cappuccetto guardò bene: che orecchie grandi, che occhi grandi… che bocca enorme!',[['lupo',20,12,2.6]]],
+  ['Arrivò il cacciatore: il lupo scappò via e la nonna tornò sana e salva. Da quel giorno Cappuccetto non diede più retta agli sconosciuti.',[['casa',8,20,2],['cuore',58,30,1.3]]]]},
+ {t:'I tre porcellini',p:[
+  ['Tre porcellini fratelli decisero di costruirsi ognuno la sua casa.',[['porcello',4,30,1.2],['porcello',32,30,1.2],['porcello',60,30,1.2]]],
+  ['Il primo la fece di paglia, in fretta, per andare subito a giocare.',[['paglia',10,14,2.2],['porcello',58,44,1.1]]],
+  ['Il secondo la fece di legno. Il terzo, con pazienza, la costruì con i mattoni.',[['legno',4,22,1.7],['mattoni',46,22,1.7]]],
+  ['Arrivò il lupo: soffiò, e la paglia volò via; soffiò ancora, e il legno cadde giù. I due porcellini corsero dal fratello.',[['lupo',4,24,1.6],['paglia',46,38,1.2],['legno',62,14,1]]],
+  ['Contro i mattoni il lupo soffiò e soffiò… ma la casa restò in piedi. Il lavoro fatto con cura ci protegge.',[['mattoni',18,8,2.4],['cuore',66,62,0.9]]]]},
+ {t:'Il brutto anatroccolo',p:[
+  ['Da un uovo grande e grigio nacque un anatroccolo diverso dai fratelli: più grosso e tutto grigio.',[['anatroccolo',22,16,2],['acqua',0,62,3.4]]],
+  ['Gli altri lo prendevano in giro e lui, triste, se ne andò lontano dallo stagno.',[['anatroccolo',50,30,1.3],['albero',6,14,1.6]]],
+  ['Passò un lungo inverno da solo, al freddo, tra le canne del lago ghiacciato.',[['neve',10,6,1.2],['neve',54,10,1],['anatroccolo',30,40,1.3]]],
+  ['In primavera si specchiò nell\'acqua e restò a bocca aperta: era diventato un cigno bianco e bellissimo!',[['cigno',20,6,2.3],['acqua',0,62,3.4],['sole',66,2,0.9]]],
+  ['Gli altri cigni lo accolsero come un fratello. Ognuno cresce a modo suo e nel suo tempo.',[['cigno',4,18,1.6],['cigno',44,22,1.5],['acqua',0,62,3.4]]]]}];
+const PAG=[];FIABE.forEach((F,fi)=>F.p.forEach((p,pi)=>PAG.push({fi,pi,t:p[0],ill:p[1],tit:F.t,n:F.p.length})));
+function pagina(c,k,lato){const g=c.getContext('2d');g.fillStyle='#FFFBEF';g.fillRect(0,0,512,512);g.fillStyle='rgba(120,90,30,.12)';g.fillRect(lato==='s'?492:0,0,20,512);
+  if(k<0||k>=PAG.length){g.fillStyle='#1B6D3F';g.font='700 40px Lexend, sans-serif';g.textAlign='center';g.fillText(k<0?'Le fiabe':'Fine',256,230);g.font='26px Lexend, sans-serif';g.fillStyle='#7a5a07';g.fillText(k<0?'della nostra aula':'Ti è piaciuta?',256,280);return;}
+  const P=PAG[k];if(lato==='s'){g.save();g.translate(56,70);g.scale(4,4);for(const [n,x,y,s] of P.ill)disegna(g,n,x,y,24*s);g.restore();g.fillStyle='#7a5a07';g.font='600 26px Lexend, sans-serif';g.textAlign='center';g.fillText(P.tit,256,48);return;}
+  g.fillStyle='#2b2b2b';g.font='30px Lexend, sans-serif';g.textAlign='left';const parole=P.t.split(' ');let riga='',y=86;for(const w of parole){const t=riga?riga+' '+w:w;if(g.measureText(t).width>430){g.fillText(riga,40,y);riga=w;y+=44;}else riga=t;}g.fillText(riga,40,y);
+  g.fillStyle='#7a5a07';g.font='22px Lexend, sans-serif';g.textAlign='right';g.fillText(`${P.pi+1} / ${P.n}`,470,480);}
+const cvL=mkCanvas(512,512),cvR=mkCanvas(512,512),cvF=mkCanvas(512,512),cvB=mkCanvas(512,512);
+const mL=matT(cvL),mR=matT(cvR),mF=matT(cvF),mBk=matT(cvB);
+const gLib=new THREE.Group();gLib.name='libro';gLib.position.set(3.55,0,1.6);gLib.rotation.y=Math.PI/2;root.add(gLib);
+mesh(unisci([[CY(0.025,0.03,1.0,10),'#6b4e2a',[0,0.5,0]],[CY(0.22,0.24,0.03,16),'#6b4e2a',[0,0.015,0]],[B(0.82,0.02,0.5),'#8A5A2B',[0,1.0,0.02],[-0.45,0,0]],[B(0.82,0.04,0.03),'#8A5A2B',[0,0.9,0.24],[-0.45,0,0]],
+  [B(0.78,0.018,0.5),'#1B6D3F',[0,1.02,0.02],[-0.45,0,0]]]),matVC,gLib);
+const piano=new THREE.Group();piano.position.set(0,1.035,0.02);piano.rotation.x=-0.45-Math.PI/2;gLib.add(piano);   // piano del libro inclinato come il leggio; la x del piano va verso la sinistra del lettore
+const gp=new THREE.PlaneGeometry(0.37,0.46);GEO.push(gp);
+const pL=new THREE.Mesh(gp,mL);pL.position.set(0.19,0,0.004);pL.rotation.z=Math.PI;piano.add(pL);
+const pR=new THREE.Mesh(gp,mR);pR.position.set(-0.19,0,0.004);pR.rotation.z=Math.PI;piano.add(pR);
+// foglio che gira: perno sul dorso, fronte (pagina destra vecchia) e retro (pagina sinistra nuova)
+const perno=new THREE.Group();perno.position.set(0,0,0.008);piano.add(perno);
+const gpf=new THREE.PlaneGeometry(0.37,0.46);gpf.rotateZ(Math.PI);gpf.translate(-0.185,0,0);GEO.push(gpf);
+// il foglio parte sulla pagina destra (x−) e ruota di π attorno al dorso (y del piano): il retro (BackSide, texture specchiata) finisce a sinistra
+const fF=new THREE.Mesh(gpf,mF);perno.add(fF);mBk.side=THREE.BackSide;mBk.map.wrapS=THREE.RepeatWrapping;mBk.map.repeat.x=-1;mBk.map.offset.x=1;const fB=new THREE.Mesh(gpf,mBk);perno.add(fB);perno.visible=false;
+const LIB={k:-1,giro:null};
+function scriviLibro(){pagina(cvL,LIB.k,'s');pagina(cvR,LIB.k,'d');mL.map.needsUpdate=mR.map.needsUpdate=true;}
+function sfoglia(d){const n=Math.max(-1,Math.min(PAG.length,LIB.k+d));if(n===LIB.k)return LIB.k;const vecchia=LIB.k;
+  if(d>0){pagina(cvF,vecchia,'d');pagina(cvB,n,'s');pagina(cvR,n,'d');}else{pagina(cvF,n,'d');pagina(cvB,vecchia,'s');pagina(cvL,n,'s');}
+  mF.map.needsUpdate=mBk.map.needsUpdate=mR.map.needsUpdate=mL.map.needsUpdate=true;LIB.k=n;LIB.giro={d,t:0};perno.visible=true;perno.rotation.y=d>0?0:Math.PI;suona('pagina');
+  if(PROVA_S||RIDOTTO_S)fineGiro();if(aperto==='libro')apri('libro',true);return LIB.k;}
+function fineGiro(){LIB.giro=null;perno.visible=false;scriviLibro();}
+function vaiFiaba(fi){const k=PAG.findIndex(p=>p.fi===fi);LIB.k=k;LIB.giro=null;perno.visible=false;scriviLibro();if(aperto==='libro')apri('libro',true);}
+const RIDOTTO_S=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
+scriviLibro();gLib.userData.pick=()=>apri('libro');
+
+// ---------------------------------------------------------------- 5. coding unplugged: griglia 5×5 di quadri da 40 cm con robottino e stella
+const CX0=1.0,CZ0=-6.6,CS=0.4,NC=5;
+{const c=mkCanvas(512,512),g=c.getContext('2d');for(let r=0;r<NC;r++)for(let q=0;q<NC;q++){g.fillStyle=(r+q)%2?'#FFF2C2':'#D9F0DF';g.fillRect(q*102.4,r*102.4,102.4,102.4);}g.strokeStyle='#1B6D3F';g.lineWidth=6;
+  for(let k=0;k<=NC;k++){g.beginPath();g.moveTo(k*102.4,0);g.lineTo(k*102.4,512);g.stroke();g.beginPath();g.moveTo(0,k*102.4);g.lineTo(512,k*102.4);g.stroke();}
+  const t=mesh(new THREE.PlaneGeometry(NC*CS,NC*CS),matT(c));t.rotation.x=-Math.PI/2;t.position.set(CX0+NC*CS/2,0.006,CZ0+NC*CS/2);}
+const gCod=new THREE.Group();gCod.name='coding';root.add(gCod);
+const robot=mesh(unisci([[B(0.22,0.16,0.22),'#3B7DD8',[0,0.1,0]],[B(0.16,0.1,0.14),'#E9EEF4',[0,0.23,0]],[B(0.03,0.03,0.01),'#14532E',[-0.04,0.24,0.075]],[B(0.03,0.03,0.01),'#14532E',[0.04,0.24,0.075]],
+  [CY(0.006,0.006,0.08,6),'#556',[0,0.32,0]],[new THREE.SphereGeometry(0.02,8,6),'#F4C542',[0,0.37,0]],[CY(0.04,0.04,0.03,12),'#333',[-0.12,0.04,0],[0,0,Math.PI/2]],[CY(0.04,0.04,0.03,12),'#333',[0.12,0.04,0],[0,0,Math.PI/2]],
+  [new THREE.ConeGeometry(0.04,0.07,4),'#F4C542',[0,0.1,0.14],[Math.PI/2,0,0]]]),matVC,gCod);
+const stellaShape=new THREE.Shape();for(let i=0;i<10;i++){const a=Math.PI/2+i*Math.PI/5,r=i%2?0.06:0.14;const x=Math.cos(a)*r,y=Math.sin(a)*r;i?stellaShape.lineTo(x,y):stellaShape.moveTo(x,y);}
+const stella=mesh(unisci([[new THREE.ExtrudeGeometry(stellaShape,{depth:0.03,bevelEnabled:false}),'#F4C542',[0,0,0]]]),matVC,gCod);
+const COD={r:0,q:0,dir:0,seq:[],star:[3,2],passo:-1,t:0,esito:null};   // dir 0 = verso +z (avanti), 1 = -x, 2 = -z, 3 = +x (girando a destra)
+const cella=(q,r)=>[CX0+(q+0.5)*CS,CZ0+(r+0.5)*CS];
+const DIRV=[[0,1],[-1,0],[0,-1],[1,0]];
+function posaRobot(){const [x,z]=cella(COD.q,COD.r);robot.position.set(x,0.006,z);robot.rotation.y=[0,-Math.PI/2,Math.PI,Math.PI/2][COD.dir];const [sx,sz]=cella(COD.star[0],COD.star[1]);stella.position.set(sx,0.25,sz);}
+function passoRobot(k){if(k==='A'){const v=DIRV[COD.dir],q=COD.q+v[0],r=COD.r+v[1];if(q>=0&&q<NC&&r>=0&&r<NC){COD.q=q;COD.r=r;}}else if(k==='D')COD.dir=(COD.dir+1)%4;else if(k==='S')COD.dir=(COD.dir+3)%4;posaRobot();}
+function codAgg(k){if(COD.passo>=0)return COD.seq.slice();if(k==='C')COD.seq=[];else if(k==='B')COD.seq.pop();else if(COD.seq.length<8)COD.seq.push(k);COD.esito=null;if(aperto==='coding')apri('coding',true);return COD.seq.slice();}
+function codVia(subito){if(!COD.seq.length)return null;COD.q=0;COD.r=0;COD.dir=0;COD.esito=null;posaRobot();
+  if(subito||PROVA_S){COD.seq.forEach(passoRobot);codFine();return COD.esito;}COD.passo=0;COD.t=0;if(aperto==='coding')apri('coding',true);return null;}
+function codFine(){COD.passo=-1;const ok=COD.q===COD.star[0]&&COD.r===COD.star[1];COD.esito=ok?'ok':'quasi';if(ok)suona('campana-scheda',{nota:'A5'});if(aperto==='coding')apri('coding',true);}
+function codStella(){const L=[[3,2],[1,3],[4,4],[2,4],[3,1],[4,2]];let s;do{s=L[Math.floor(Math.random()*L.length)];}while(s[0]===COD.star[0]&&s[1]===COD.star[1]);COD.star=s;COD.q=COD.r=COD.dir=0;COD.seq=[];COD.esito=null;posaRobot();if(aperto==='coding')apri('coding',true);}
+posaRobot();gCod.userData.pick=()=>apri('coding');
+const giraTile=mesh(new THREE.PlaneGeometry(NC*CS,NC*CS),new THREE.MeshBasicMaterial({visible:false}),gCod);giraTile.rotation.x=-Math.PI/2;giraTile.position.set(CX0+NC*CS/2,0.01,CZ0+NC*CS/2);MAT.push(giraTile.material);
+
+// ---------------------------------------------------------------- 6. zaino aperto con astuccio, quaderno e diario (vicino al tavolone, sul pavimento)
+const gZa=new THREE.Group();gZa.name='zaino';gZa.position.set(-2.95,0,8.45);gZa.rotation.y=Math.PI+0.35;root.add(gZa);
+mesh(unisci([[B(0.34,0.40,0.18),'#3B7DD8',[0,0.2,0]],[new THREE.CylinderGeometry(0.17,0.17,0.18,16,1,false,0,Math.PI),'#3B7DD8',[0,0.4,0],[Math.PI/2,0,Math.PI/2]],
+  [B(0.26,0.16,0.05),'#2E62B0',[0,0.14,0.11]],[B(0.12,0.03,0.06),'#F4C542',[0,0.22,0.12]],[B(0.04,0.42,0.02),'#24508F',[-0.1,0.24,-0.1]],[B(0.04,0.42,0.02),'#24508F',[0.1,0.24,-0.1]],
+  [B(0.2,0.26,0.02),'#F4C542',[-0.03,0.47,0.0],[0.2,0,0.1]],[B(0.2,0.26,0.02),'#E86FA8',[0.04,0.46,0.03],[0.1,0,-0.12]],[new THREE.TorusGeometry(0.05,0.008,6,12,Math.PI),'#24508F',[0,0.57,-0.02]]]),matVC,gZa);
+// astuccio: fondo e coperchio che si apre (perno sul lato lungo), dentro 6 matite colorate, gomma, temperino, righello
+const gAs=new THREE.Group();gAs.position.set(0.42,0,0.12);gZa.add(gAs);
+mesh(unisci([[B(0.24,0.03,0.09),'#1B6D3F',[0,0.015,0]],...['#E2A72E','#3B7DD8','#2E9E5B','#E86FA8','#8E5BC4','#F28C38'].map((k,i)=>[CY(0.005,0.005,0.17,6),k,[-0.005,0.035,-0.03+i*0.012],[0,0,Math.PI/2]]),
+  [B(0.03,0.012,0.02),'#F9D7E6',[0.09,0.035,0.03]],[B(0.02,0.012,0.018),'#C9CED6',[0.06,0.035,0.03]],[B(0.2,0.004,0.025),'#BFE3F7',[0,0.04,0.03]]]),matVC,gAs);
+const coper=new THREE.Group();coper.position.set(0,0.03,-0.045);gAs.add(coper);mesh(unisci([[B(0.24,0.012,0.09),'#24804D',[0,0.006,0.045]]]),matVC,coper);
+// quaderno a righe (aperto) e a quadretti, diario chiuso: pagine da un canvas 512×256
+const cvQ=mkCanvas(512,256);function quaderno(tipo){const g=cvQ.getContext('2d');g.fillStyle='#FFFFFF';g.fillRect(0,0,512,256);g.strokeStyle='#9CC3E6';g.lineWidth=2;
+  if(tipo==='righe'){for(let y=30;y<256;y+=28){g.beginPath();g.moveTo(0,y);g.lineTo(512,y);g.stroke();}g.fillStyle='#24508F';g.font=`italic 26px ${CORSIVO}`;g.fillText('Oggi abbiamo letto',30,80);g.fillText('una fiaba.',290,80);}
+  else{for(let k=0;k<=512;k+=16){g.beginPath();g.moveTo(k,0);g.lineTo(k,256);g.stroke();}for(let k=0;k<=256;k+=16){g.beginPath();g.moveTo(0,k);g.lineTo(512,k);g.stroke();}g.fillStyle='#14532E';g.font='600 24px Lexend, sans-serif';g.fillText('3 + 4 = 7',48,62);g.fillText('12 − 5 = 7',304,62);}
+  g.fillStyle='rgba(0,0,0,.08)';g.fillRect(250,0,12,256);}
+quaderno('righe');const mQ=matT(cvQ);
+const qd=mesh(new THREE.PlaneGeometry(0.42,0.21),mQ,gZa);qd.rotation.x=-Math.PI/2;qd.position.set(-0.05,0.012,0.36);
+mesh(unisci([[B(0.43,0.008,0.22),'#2E9E5B',[-0.05,0.004,0.36]],[B(0.16,0.03,0.22),'#C98A12',[-0.45,0.015,0.2],[0,0.3,0]],[B(0.06,0.032,0.03),'#F4C542',[-0.45,0.018,0.2],[0,0.3,0]]]),matVC,gZa);
+const ZA={aperto:false,a:0,quaderno:'righe'};
+function astuccio(on){ZA.aperto=on==null?!ZA.aperto:!!on;if(PROVA_S||RIDOTTO_S)ZA.a=ZA.aperto?1:0;suona('clack');if(aperto==='zaino')apri('zaino',true);return ZA.aperto;}
+function sfogliaQuaderno(){ZA.quaderno=ZA.quaderno==='righe'?'quadretti':'righe';quaderno(ZA.quaderno);mQ.map.needsUpdate=true;suona('pagina');if(aperto==='zaino')apri('zaino',true);return ZA.quaderno;}
+gZa.userData.pick=()=>apri('zaino');
+
+// ---------------------------------------------------------------- 7. violino con archetto su un tavolino (cassa a 8, ponticello, 4 corde, riccio)
+const gVi=new THREE.Group();gVi.name='violino';gVi.position.set(-3.55,0,3.0);gVi.rotation.y=0.5;root.add(gVi);
+mesh(unisci([[CY(0.32,0.32,0.03,24),'#E9DCC0',[0,0.70,0]],[CY(0.02,0.02,0.68,8),'#8A5A2B',[0,0.34,0]],[CY(0.18,0.2,0.025,20),'#8A5A2B',[0,0.012,0]]]),matVC,gVi);
+// sagoma della cassa (metà destra, specchiata): fasce alte 3 cm, lunghezza 35,5 cm, larghezza 16,5 / 11 / 20,5 cm
+const cs=new THREE.Shape(),hw=[[0,-0.1775],[0.06,-0.172],[0.1,-0.135],[0.1025,-0.08],[0.08,-0.04],[0.055,-0.005],[0.06,0.03],[0.08,0.065],[0.083,0.11],[0.06,0.16],[0,0.1775]];
+cs.moveTo(0,-0.1775);for(let i=1;i<hw.length;i++){const p=hw[i-1],q=hw[i];cs.quadraticCurveTo((p[0]+q[0])/2+(q[1]-p[1])*0.15,(p[1]+q[1])/2-(q[0]-p[0])*0.15,q[0],q[1]);}
+for(let i=hw.length-2;i>=0;i--){const p=hw[i+1],q=hw[i];cs.quadraticCurveTo(-((p[0]+q[0])/2+(p[1]-q[1])*0.15),(p[1]+q[1])/2-(p[0]-q[0])*0.15*-1,-q[0],q[1]);}
+const cassa=new THREE.ExtrudeGeometry(cs,{depth:0.03,bevelEnabled:true,bevelThickness:0.006,bevelSize:0.004,bevelSegments:2,curveSegments:6});
+const fFori=[-1,1].map(s=>[new THREE.TorusGeometry(0.012,0.0025,4,10,Math.PI*1.2),'#2a1608',[s*0.035,-0.01,0.0375],[0,0,s>0?0.5:2.6],[1,2.6,1]]);
+const geoVio=unisci([[cassa,'#B5551D',[0,0,0]],[B(0.18,0.004,0.004),'#2a1608',[0,0,0]],...fFori,
+  [B(0.026,0.13,0.018),'#C46A2C',[0,0.24,0.02]],[B(0.03,0.27,0.008),'#16110D',[0,0.17,0.042],[0.03,0,0]],[B(0.024,0.075,0.022),'#B5551D',[0,0.33,0.02]],
+  [new THREE.TorusGeometry(0.014,0.007,6,14,Math.PI*1.7),'#B5551D',[0,0.375,0.024],[0,Math.PI/2,0]],[new THREE.SphereGeometry(0.009,8,6),'#8A3E12',[0,0.383,0.024]],
+  ...[[-1,0.305],[-1,0.335],[1,0.305],[1,0.335]].map(([s,y])=>[CY(0.004,0.006,0.05,6),'#16110D',[s*0.03,y,0.02],[0,0,Math.PI/2]]),
+  [B(0.05,0.022,0.004),'#E8D2A6',[0,-0.035,0.048],[Math.PI/2,0,0]],[B(0.04,0.09,0.008),'#16110D',[0,-0.12,0.042]],[B(0.03,0.01,0.012),'#16110D',[0,-0.175,0.032]],
+  [CY(0.004,0.004,0.012,6),'#16110D',[0.075,0.07,0.04]],
+  ...[-0.009,-0.003,0.003,0.009].map((x,i)=>[CY(0.0007,0.0007,0.43,4),i===3?'#E8E8E8':'#C9B98F',[x*(1),0.1,0.05],[-0.035,0,0]])]);
+GEO.push(geoVio);
+const vio=new THREE.Mesh(geoVio,matVC);vio.position.set(-0.05,0.73,0);vio.rotation.set(-Math.PI/2,0,0.6);gVi.add(vio);
+const arco=mesh(unisci([[CY(0.004,0.0035,0.74,6),'#5A2E12',[0,0,0]],[B(0.012,0.006,0.7),'#F1ECE0',[0,0,0],[Math.PI/2,0,0],[1,1,1]],[B(0.02,0.022,0.04),'#16110D',[0,-0.33,0.012],[Math.PI/2,0,0]],[B(0.008,0.02,0.012),'#E8E8E8',[0,0.37,0.008]]]),matVC,gVi);
+arco.position.set(0.1,0.725,0.12);arco.rotation.set(-Math.PI/2,0,0.95);arco.children.length;
+const CORDE=[['Sol','G3',196.0],['Re','D4',293.66],['La','A4',440.0],['Mi','E5',659.26]];
+const VI={ultima:null,suonate:0};
+function violino(k){const ks=k==null?[0,1,2,3]:[k];VI.ultima=ks.map(i=>CORDE[i][0]).join(' ');VI.suonate+=ks.length;ks.forEach((i,j)=>suona('violino-corda',{f:CORDE[i][2],ritardo:j*0.95}));if(aperto==='violino')apri('violino',true);return VI.ultima;}
+gVi.userData.pick=()=>apri('violino');
+
+// ---------------------------------------------------------------- suoni (SUONI di P12, morbido: solo se c'è e se è attivo)
+const suoni=()=>typeof SUONI!=='undefined'&&SUONI.attivo&&SUONI.attivo();
+function suona(n,o){try{if(suoni())SUONI.play(n,o);}catch(e){console.error(e);}}
+try{if(typeof SUONI!=='undefined'&&SUONI.ricetta&&SUONI.prim){
+  // corda d'arco: dente di sega e triangolo passa-basso con vibrato lento che entra dopo l'attacco morbido; un po' di soffio d'arco
+  SUONI.ricetta('violino-corda',(c,u,t,o)=>{const P=SUONI.prim,f=(o&&o.f)||440,T=t+1.25,l=P.filtro(c,'lowpass',Math.min(4200,f*5),0.7,t),g=P.gain(c,0);
+    const a=P.osc(c,'sawtooth',f,t,T),b=P.osc(c,'triangle',f*1.002,t,T),ga=P.gain(c,0.55),gb=P.gain(c,0.45);a.connect(ga);b.connect(gb);ga.connect(l);gb.connect(l);
+    const vib=P.gain(c,0);P.lfo(c,5.4,1,vib.gain,t,T);vib.gain.setValueAtTime(0,t);vib.gain.linearRampToValueAtTime(f*0.006,t+0.5);const vo=P.osc(c,'sine',5.4,t,T);vo.connect(vib);vib.connect(a.frequency);vib.connect(b.frequency);
+    l.connect(g);g.connect(u);const fine=P.ar(g.gain,t,0.16,0.16,t+0.85,0.32);
+    const n=P.rumore(c,'rosa',t,T),fn=P.filtro(c,'bandpass',f*3,1.2,t),gn=P.gain(c,0);n.connect(fn);fn.connect(gn);gn.connect(u);P.ar(gn.gain,t,0.1,0.012,t+0.85,0.3);return fine-t;},{bus:'fx',prio:2,dur:1.3});
+}}catch(e){}
+
+// ---------------------------------------------------------------- oggetti, pannelli «Ti ricordi?», voli
+const OGG=[
+  {id:'alfabeto',nome:'Alfabeto',g:gAlf,c:[0.4,2.3,ROOM.z0+0.1],v:[6.2,0,1.5],lato:2.6},
+  {id:'abaco',nome:'Abaco',g:gAb,c:[ABX,0.55,ABZ],v:[2.4,0.25,1.4],lato:0.75},
+  {id:'coding',nome:'Coding',g:gCod,c:[CX0+1,0.1,CZ0+1],v:[3.4,0.15,0.85],lato:1.3},
+  {id:'libro',nome:'Fiabe',g:gLib,c:[3.55,1.05,1.6],v:[1.6,-Math.PI/2,1.0],lato:0.55},
+  {id:'violino',nome:'Violino',g:gVi,c:[-3.55,0.74,3.0],v:[1.25,0.3,0.75],lato:0.45},
+  {id:'zaino',nome:'Zaino',g:gZa,c:[-2.95,0.25,8.45],v:[1.7,Math.PI+0.2,1.05],lato:0.6},
+  {id:'imac',nome:'Computer',g:gIm,c:[0.52,1.0,9.9],v:[3.6,Math.PI,1.32],lato:1.6}];
+const O_=id=>OGG.find(o=>o.id===id);
+const matHit=new THREE.MeshBasicMaterial({visible:false});MAT.push(matHit);const geoHit=new THREE.BoxGeometry(1,1,1);GEO.push(geoHit);
+const HIT={abaco:[1.3,1.1,0.5],coding:[2,0.3,2],libro:[0.6,1.3,0.9],violino:[0.7,0.2,0.7],zaino:[1.1,0.7,0.8]};
+OGG.forEach(o=>{const d=HIT[o.id];if(!d)return;const m=new THREE.Mesh(geoHit,matHit);m.scale.set(...d);m.position.set(o.c[0],o.id==='violino'?0.76:o.id==='libro'?0.65:d[1]/2,o.c[2]);m.userData.pick=()=>apri(o.id);root.add(m);o.hit=m;});
+let aperto=null;const _t=new THREE.Vector3(),_a=new THREE.Vector3();
+function vola(o){const th=o.v[1],s=(innerWidth<1300?0.3:0.2)*o.v[0];_t.set(o.c[0]+Math.cos(th)*s,o.c[1],o.c[2]-Math.sin(th)*s);flyTo(_t,o.v[0],th,o.v[2]);}
+const ancora=o=>_a.set(o.c[0]+Math.cos(o.v[1])*o.lato,o.c[1],o.c[2]-Math.sin(o.v[1])*o.lato);
+const ric=t=>`<p class="sp-ric"><b>Ti ricordi?</b>${esc(t)}</p>`;
+const btn=(az,t,dis,cls)=>`<button class="btn ${cls||'ghost'}" type="button" data-sp="${az}"${dis?' disabled':''}>${t}</button>`;
+function contenuto(id){
+  if(id==='alfabeto'){const k=letteraSel,L=k==null?null:ALF[k];
+    return {title:'L\'alfabeto',badges:[['Italiano','gold'],['21 lettere + 5 straniere','']],after:ric('Abbiamo imparato le lettere in stampato maiuscolo, minuscolo e in corsivo, e per ognuna una parola che comincia così.')+
+      (L?`<div class="sp-let">${svgDi(L[1])}<div class="sp-fo"><b>${L[0]} ${L[0].toLowerCase()}</b> · <i>${L[0]}${L[0].toLowerCase()}</i><br>${esc(L[2])}</div></div>${k>=21?'<p>Questa lettera si usa soprattutto nelle parole che vengono da altre lingue.</p>':''}`:'<p>Clicca una lettera sul cartellone.</p>')+
+      `<div class="sp-az">${btn('alf-1','Lettera prima',k==null||k===0)}${btn('alf+1','Lettera dopo',k===ALF.length-1,'gold')}</div>`};}
+  if(id==='abaco'){const n=numAbaco();return {title:'L\'abaco',badges:[['Numeri','gold'],['Valore posizionale','']],after:ric('Ogni asta ha il suo posto: centinaia, decine, unità. Dieci palline su un\'asta diventano una pallina sull\'asta a sinistra.')+
+    `<p class="sp-big">${n}</p><p>${AB.c[0]} h · ${AB.c[1]} da · ${AB.c[2]} u = ${AB.c[0]*100} + ${AB.c[1]*10} + ${AB.c[2]}</p>`+
+    `<div class="sp-az">${['h','da','u'].map((t,c)=>btn('ab'+c+'+','+ 1 '+t,AB.c[c]>=9)+btn('ab'+c+'-','− 1 '+t,AB.c[c]<=0)).join('')}</div>`};}
+  if(id==='imac'){const A=ATT[imacSel];return {title:'Al computer: '+A.t.toLowerCase(),badges:[['Laboratorio di informatica','gold'],[`Computer ${imacSel+1} di 7`,'']],after:ric(A.r.replace(/^Ti ricordi\? /,''))+
+    `<div class="sp-az">${btn('im-1','Computer prima',imacSel===0)}${btn('im+1','Computer dopo',imacSel===6,'gold')}</div>`};}
+  if(id==='libro'){const P=PAG[LIB.k];return {title:'Il libro delle fiabe',badges:[[P?P.tit:'Copertina','gold'],[P?`Pagina ${P.pi+1} di ${P.n}`:'Apri il libro','']],after:ric('Abbiamo ascoltato e raccontato le fiabe: c\'è un inizio, un problema, un aiuto e una fine.')+
+    (P?`<p class="sp-pag">${esc(P.t)}</p>`:'<p>Gira la pagina per cominciare.</p>')+
+    `<div class="sp-az">${btn('lib-1','Pagina prima',LIB.k<0)}${btn('lib+1','Pagina dopo',LIB.k>=PAG.length,'gold')}</div><div class="sp-az">${FIABE.map((F,i)=>btn('fia'+i,esc(F.t))).join('')}</div>`};}
+  if(id==='coding'){const fr={A:IC.av,D:IC.dx,S:IC.sx},corre=COD.passo>=0;
+    return {title:'Coding senza computer',badges:[['Pensiero computazionale','gold'],[`${COD.seq.length} di 8 frecce`,'']],after:ric('Abbiamo dato le istruzioni al compagno-robot, una alla volta: avanti, gira a destra, gira a sinistra.')+
+    `<p>Porta il robottino sulla stella. Parte dall'angolo e guarda in avanti, lungo la freccia gialla.</p><div class="sp-seq" aria-label="Sequenza">${COD.seq.length?COD.seq.map((k,i)=>`<span class="${corre&&i===COD.passo?'on':''}">${fr[k]}</span>`).join(''):'<em>Componi da 4 a 8 frecce</em>'}</div>`+
+    `<div class="sp-az">${btn('codA',IC.av+' Avanti',corre||COD.seq.length>=8)}${btn('codS',IC.sx+' Sinistra',corre||COD.seq.length>=8)}${btn('codD',IC.dx+' Destra',corre||COD.seq.length>=8)}${btn('codB','Togli',corre||!COD.seq.length)}</div>`+
+    `<div class="sp-az">${btn('codVia','Via!',corre||COD.seq.length<1,'gold')}${btn('codStella','Nuova stella',corre)}</div>`+
+    (COD.esito==='ok'?'<p class="sp-ric"><b>Stella presa!</b> Le vostre istruzioni hanno portato il robottino fin lì.</p>':COD.esito==='quasi'?'<p class="sp-ric"><b>Quasi!</b>Guarda dove si è fermato e prova a cambiare una freccia.</p>':'')};}
+  if(id==='zaino')return {title:'Lo zaino',badges:[['Le mie cose di scuola','gold']],after:ric('Ogni mattina prepariamo lo zaino: astuccio, quaderno a righe per scrivere, a quadretti per i numeri, e il diario per i compiti.')+
+    `<p>Nell'astuccio: matite colorate, gomma, temperino e righello.</p><div class="sp-az">${btn('astuccio',ZA.aperto?'Chiudi l\'astuccio':'Apri l\'astuccio','', 'gold')}${btn('quaderno',ZA.quaderno==='righe'?'Sfoglia: quadretti':'Sfoglia: righe')}</div>`};
+  if(id==='violino')return {title:'Il violino',badges:[['Musica','gold'],['4 corde','']],after:ric('Il violino si suona con l\'archetto. Ha quattro corde: Sol, Re, La, Mi, dalla più grave alla più acuta.')+
+    `<div class="sp-cor">${CORDE.map((c,i)=>`<button class="btn ghost" type="button" data-sp="cor${i}">${c[0]}</button>`).join('')}</div><div class="sp-az">${btn('corde','Suona le 4 corde','','gold')}</div>`+
+    (VI.ultima?`<p>Hai suonato: <b>${VI.ultima}</b>${suoni()?'':' (accendi i suoni in alto per sentirle)'}</p>`:'')};
+  return {title:id};}
+function apri(id,soloTesto){const o=O_(id);if(!o||!dentro)return;if(!soloTesto&&!visita.on)vola(o);openPanel(contenuto(id),()=>ancora(o));aperto=id;panelState.onClose=()=>{aperto=null;};collega();aggDock();}
+function collega(){const info=$s('info');info.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>azione(b.dataset.sp));}
+function azione(a){
+  if(a==='alf-1'||a==='alf+1'){letteraSel=Math.max(0,Math.min(ALF.length-1,(letteraSel==null?-1:letteraSel)+(a==='alf+1'?1:-1)));apri('alfabeto',true);}
+  else if(/^ab\d[+-]$/.test(a))abaco(+a[2],a[3]==='+'?1:-1);
+  else if(a==='im-1'||a==='im+1'){imacSel=Math.max(0,Math.min(6,imacSel+(a==='im+1'?1:-1)));apri('imac',true);}
+  else if(a==='lib-1'||a==='lib+1')sfoglia(a==='lib+1'?1:-1);
+  else if(a.startsWith('fia'))vaiFiaba(+a.slice(3));
+  else if(a==='codVia')codVia();else if(a==='codStella')codStella();else if(a.startsWith('cod'))codAgg(a.slice(3));
+  else if(a==='astuccio')astuccio();else if(a==='quaderno')sfogliaQuaderno();
+  else if(a==='corde')violino();else if(a.startsWith('cor'))violino(+a.slice(3));}
+
+// ---------------------------------------------------------------- dock: un pulsante per oggetto e «Visita»
+const dock=document.createElement('div');dock.className='dock saperi';document.body.appendChild(dock);
+dock.innerHTML=`<div class="sp-row" role="group" aria-label="Oggetti dell'aula dei saperi">${OGG.map(o=>`<button class="btn ghost" type="button" data-spo="${o.id}" title="Vola su: ${o.nome}">${IC[o.id]}${o.nome}</button>`).join('')}<span class="sp-sep"></span><button class="btn gold" type="button" id="spVisita" aria-pressed="false">${IC.visita}Visita</button></div>`;
+dock.querySelectorAll('[data-spo]').forEach(b=>b.onclick=()=>{fermaVisita();apri(b.dataset.spo);});
+$s('spVisita').onclick=()=>{visita.on?fermaVisita():avviaVisita();};
+function aggDock(){dock.querySelectorAll('[data-spo]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.spo===aperto)));const v=$s('spVisita');v.setAttribute('aria-pressed',String(visita.on));}
+const visita={on:false,i:0,t:0};
+function avviaVisita(){visita.on=true;visita.i=0;visita.t=0;tappaVisita();}
+function tappaVisita(){const o=OGG[visita.i];vola(o);visita.on=false;apri(o.id,true);visita.on=true;aggDock();}
+function fermaVisita(){visita.on=false;aggDock();}
+
+// ---------------------------------------------------------------- il mondo
+let dentro=false;
+const W={id:'saperi',order:6,root,footprint:{x:0.4,z:0,w:1.2,d:1.2},tab:{title:'L\'aula dei saperi',sub:'Primaria · esplora',icon:ICON_SAPERI},
+  view:{target:new THREE.Vector3(0.2,0.8,-0.5),r:11.5,theta:-1.15,phi:1.12},surfaces:[],dock,resa:'aula'};
+W.build=()=>{posaAbaco();posaRobot();scriviLibro();};
+W.enter=()=>{dentro=true;};
+W.entered=()=>{};
+W.exit=()=>{dentro=false;fermaVisita();aperto=null;COD.passo=-1;if(LIB.giro)fineGiro();ZA.aperto=false;ZA.a=0;coper.rotation.x=0;letteraSel=null;};
+W.update=dt=>{if(!dentro)return;dt=Math.min(dt,0.1);
+  if(LIB.giro){LIB.giro.t+=dt/0.7;const u=Math.min(1,LIB.giro.t),s=u*u*(3-2*u);perno.rotation.y=LIB.giro.d>0?Math.PI*s:Math.PI*(1-s);perno.position.z=0.008+Math.sin(Math.PI*s)*0.06;if(u>=1)fineGiro();}
+  if(COD.passo>=0){COD.t+=dt;if(COD.t>0.55){COD.t=0;passoRobot(COD.seq[COD.passo]);COD.passo++;suona('tic',{nota:'D6'});if(COD.passo>=COD.seq.length)codFine();else if(aperto==='coding')apri('coding',true);}}
+  const za=ZA.aperto?1:0;if(Math.abs(ZA.a-za)>1e-3)ZA.a+=(za-ZA.a)*Math.min(1,dt*6);coper.rotation.x=-ZA.a*1.9;
+  stella.rotation.y+=dt*1.2;
+  if(visita.on){visita.t+=dt;if(visita.t>7){visita.t=0;visita.i=(visita.i+1)%OGG.length;tappaVisita();}}};
+W.pickables=()=>OGG.map(o=>o.hit||o.g);
+// per i collaudi: stato e azioni via API (stesse funzioni dei pulsanti)
+W.stato=()=>({dentro,aperto,abaco:AB.c.slice(),numero:numAbaco(),libro:{k:LIB.k,pagine:PAG.length,giro:!!LIB.giro,fiaba:PAG[LIB.k]?PAG[LIB.k].tit:null},
+  coding:{seq:COD.seq.slice(),robot:[COD.q,COD.r,COD.dir],stella:COD.star.slice(),esito:COD.esito},zaino:{astuccio:ZA.aperto,quaderno:ZA.quaderno},violino:Object.assign({corde:CORDE.map(c=>c[0])},VI),
+  lettera:letteraSel==null?null:ALF[letteraSel][0],imac:imacSel,visita:visita.on,oggetti:OGG.map(o=>({id:o.id,nome:o.nome,c:o.c}))});
+W.prova={apri,abaco,sfoglia,vaiFiaba,codAgg,codVia,codStella,astuccio,sfogliaQuaderno,violino,avviaVisita,fermaVisita,
+  lettera:k=>{letteraSel=k;apri('alfabeto');return ALF[k][0];},imac:i=>{imacSel=i;apri('imac');return ATT[i].t;},
+  // punto dello schermo (px) dove sta un oggetto, per i clic veri
+  schermo:id=>{const o=O_(id);_a.set(o.c[0],o.c[1],o.c[2]).project(camera);return [Math.round((_a.x*0.5+0.5)*innerWidth),Math.round((-_a.y*0.5+0.5)*innerHeight),_a.z];},
+  dispose:()=>{GEO.forEach(g=>g.dispose());MAT.forEach(m=>m.dispose());TEX.forEach(t=>t.dispose());}};
+AGG.api.saperi=W;
 registerWorld(W);return W;})();
 // @slot:P16
 /* ===== P17 · INTRO: regia del film d'avvio ===== */
