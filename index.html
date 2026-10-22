@@ -673,6 +673,11 @@ body.cine-fermo .ct,body.cine-fermo .ct-r,body.cine-fermo .cine-lb::before,body.
 .fg-az{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .fg-az .btn{font-size:14px;padding:6px 12px}
 #fgIntro .rcard,#fgDeb .rcard{border-top-color:var(--gold)}
+.fg-et{position:fixed;left:0;top:0;z-index:9;pointer-events:none;background:#0E4423;color:#FFE9A8;font-family:var(--head);font-size:17px;font-weight:600;padding:3px 10px;border-radius:8px;border:1.5px solid #E2C35A;white-space:nowrap;font-variant-numeric:tabular-nums}
+.fg-et[hidden]{display:none}
+.info .fg-ist{font-size:15px;color:#5f4706;background:var(--goldL);border-radius:8px;padding:5px 10px;margin:0 0 8px}
+.info .fg-mis{font-size:15px;color:var(--greenD);margin:0 0 6px;font-family:var(--head)}
+body.fg-strumento #c{cursor:crosshair}
 #fgIntro .fg-seme,#fgDeb .fg-seme{font-size:15px;color:var(--muted);margin:0 0 6px}
 #fgDeb ol.fg-rie{margin:0 0 12px;padding-left:22px;font-size:17px}
 #fgDeb ol.fg-rie li{margin:2px 0}
@@ -8982,182 +8987,127 @@ function nuovoSeme(){const a=new Uint32Array(1);crypto.getRandomValues(a);return
 const fmt=x=>String(Math.round(x*100)/100).replace('.',',');
 const leggiNum=s=>{s=String(s==null?'':s).trim().replace(/\s/g,'').replace(',','.');return s===''||!/^-?\d*\.?\d+$/.test(s)?NaN:+s;};
 
-// ---------------------------------------------------------------- disegni SVG (nessuna texture: sta tutto nel pannello)
-const CG='#1B6D3F',CO='#B8860B',CT='#1A2E1A',CF='#FBF3DC';
-const svg=(w,h,lab,inner)=>`<svg class="fg-fig" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(lab)}">${inner}</svg>`;
-const txt=(x,y,t,o)=>`<text x="${x}" y="${y}" font-family="Lexend,sans-serif" font-size="${(o&&o.s)||15}" fill="${(o&&o.c)||CT}" text-anchor="middle" dominant-baseline="middle"${o&&o.w?` font-weight="${o.w}"`:''}>${esc(t)}</text>`;
-const poly=(pts,o)=>`<polygon points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="${(o&&o.f)||CF}" stroke="${(o&&o.c)||CG}" stroke-width="${(o&&o.sw)||2.5}" stroke-linejoin="round"/>`;
-const linea=(a,b,o)=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${(o&&o.c)||CG}" stroke-width="${(o&&o.sw)||3}" stroke-linecap="round"${o&&o.d?' stroke-dasharray="7 6"':''}/>`;
-function griglia(x0,y0,n,m,s){let h='';for(let i=0;i<n;i++)for(let j=0;j<m;j++)h+=`<rect x="${x0+j*s}" y="${y0+i*s}" width="${s}" height="${s}" fill="${CF}" stroke="${CG}" stroke-width="2"/>`;return h;}
-// adatta una lista di punti dentro un riquadro (x0,y0,w,h), y verso l'alto nei dati e verso il basso nello schermo
-function adatta(P,x0,y0,w,h){let a=1e9,b=1e9,c=-1e9,d=-1e9;for(const p of P){a=Math.min(a,p[0]);c=Math.max(c,p[0]);b=Math.min(b,p[1]);d=Math.max(d,p[1]);}
-  const k=Math.min(w/Math.max(1e-6,c-a),h/Math.max(1e-6,d-b)),ox=x0+(w-(c-a)*k)/2,oy=y0+(h-(d-b)*k)/2;return P.map(p=>[ox+(p[0]-a)*k,oy+(d-p[1])*k]);}
-// angolo con il vertice in (x,y): un lato orizzontale e uno a «deg» gradi, arco o quadratino (retto)
-function angolo(x,y,deg,L,et){const r=deg*Math.PI/180,b=[x+L*Math.cos(r),y-L*Math.sin(r)],q=16;let h=linea([x,y],[x+L,y])+linea([x,y],b);
-  if(deg===90)h+=`<path d="M${x+q} ${y}V${y-q}H${x}" fill="none" stroke="${CO}" stroke-width="2.5"/>`;
-  else h+=`<path d="M${x+22} ${y}A22 22 0 0 0 ${(x+22*Math.cos(r)).toFixed(1)} ${(y-22*Math.sin(r)).toFixed(1)}" fill="none" stroke="${CO}" stroke-width="2.5"/>`;
-  h+=`<circle cx="${x}" cy="${y}" r="3.5" fill="${CG}"/>`;if(et)h+=txt(x+L/2,y+20,et,{w:600,s:17});return h;}
-// coppia di rette dentro un riquadro centrato in (cx,cy): 'par', 'perp', 'inc'
-function coppia(cx,cy,rel,rot,R){const u=a=>[Math.cos(a),Math.sin(a)],seg=(c,a,l)=>{const v=u(a);return [[c[0]-v[0]*l,c[1]-v[1]*l],[c[0]+v[0]*l,c[1]+v[1]*l]];};
-  let h='';if(rel==='par'){const n=u(rot+Math.PI/2),d=16;const s1=seg([cx+n[0]*d,cy+n[1]*d],rot,R),s2=seg([cx-n[0]*d,cy-n[1]*d],rot,R);h=linea(s1[0],s1[1])+linea(s2[0],s2[1],{c:CO});}
-  else{const b=rel==='perp'?Math.PI/2:0.62;const s1=seg([cx,cy],rot,R),s2=seg([cx,cy],rot+b,R);h=linea(s1[0],s1[1])+linea(s2[0],s2[1],{c:CO});
-    if(rel==='perp'){const a=u(rot),c=u(rot+b),q=10;h+=`<path d="M${(cx+a[0]*q).toFixed(1)} ${(cy+a[1]*q).toFixed(1)}L${(cx+a[0]*q+c[0]*q).toFixed(1)} ${(cy+a[1]*q+c[1]*q).toFixed(1)}L${(cx+c[0]*q).toFixed(1)} ${(cy+c[1]*q).toFixed(1)}" fill="none" stroke="${CT}" stroke-width="1.6"/>`;}}
-  return h;}
-const FORME={quadrato:[[0,0],[1,0],[1,1],[0,1]],rettangolo:[[0,0],[1.8,0],[1.8,1],[0,1]],rombo:[[0.8,0],[1.6,0.55],[0.8,1.1],[0,0.55]],
-  parallelogramma:[[0.45,1],[1.95,1],[1.5,0],[0,0]],trapezio:[[0.35,1],[1.25,1],[1.8,0],[0,0]],equilatero:[[0,0],[1,0],[0.5,Math.sqrt(3)/2]],
-  isoscele:[[0,0],[1,0],[0.5,1.25]],scaleno:[[0,0],[1.6,0],[0.35,0.9]],esagono:[0,1,2,3,4,5].map(i=>[Math.cos(i*Math.PI/3),Math.sin(i*Math.PI/3)])};
-
-// ---------------------------------------------------------------- generatori delle 6 tappe: ogni enigma ha domanda, disegno, risposta,
-// tre aiuti (suggerimento, secondo suggerimento, soluzione) e un perché per ogni risposta sbagliata (errore = informazione, mai rosso)
-const NOMI_ANG={acuto:'acuto',retto:'retto',ottuso:'ottuso'},DEF_ANG={acuto:'è minore di un angolo retto',retto:'misura 90°, come lo spigolo di un foglio',ottuso:'è maggiore di un angolo retto e minore di un angolo piatto'};
-const tipoAng=d=>d<90?'acuto':d===90?'retto':'ottuso';
-function T1(r,pk,mi){const v=Math.floor(r()*3);
-  if(v===0){const n=pk([2,3,4]),parti=[];let tot=0;for(let k=1;k<=n;k++){const c=(n-k+1)**2;tot+=c;parti.push(c+(k===1?' piccoli':' da '+k+' × '+k));}
-    const s=Math.min(34,120/n);return {v:'quadrati',tipo:'numero',giusta:tot,
-      domanda:`Guardate questo riquadro di ${n} × ${n} piastrelle del pavimento. Quanti quadrati vedete in tutto, contando anche quelli formati da più piastrelle?`,
-      fig:svg(300,150,`Riquadro di ${n} per ${n} piastrelle`,griglia(150-n*s/2,75-n*s/2,n,n,s)),
-      aiuti:['Non ci sono solo le piastrelle piccole: anche 2 × 2 piastrelle vicine formano un quadrato.',`Contate per grandezza: i quadrati piccoli, poi quelli da 2 × 2${n>2?', da 3 × 3':''}${n>3?', da 4 × 4':''}. Poi sommate.`,`Soluzione: ${parti.join(' + ')} = ${tot} quadrati.`],
-      fb:x=>x===n*n?'Avete contato solo le piastrelle piccole. Anche più piastrelle insieme possono formare un quadrato: cercate quelli più grandi.':
-        x<tot?'Ne mancano. Contate i quadrati di una grandezza alla volta, dal più piccolo al più grande, e poi sommate.':'Sono troppi. Un quadrato ha 4 lati uguali: un rettangolo allungato non vale. Contate di nuovo per grandezza.',
-      spiega:`${parti.join(' + ')} = ${tot}.`};}
-  if(v===1){const n=pk([3,4,5]),parti=[];let tot=0;for(let k=1;k<=n;k++){tot+=n-k+1;parti.push(n-k+1);}const s=Math.min(48,260/n);
-    return {v:'rettangoli',tipo:'numero',giusta:tot,domanda:`Lungo il muro c'è una fila di ${n} piastrelle una accanto all'altra. Quanti rettangoli vedete in tutto? Attenzione: anche un quadrato è un rettangolo.`,
-      fig:svg(300,110,`Fila di ${n} piastrelle`,griglia(150-n*s/2,55-s/2,1,n,s)),
-      aiuti:['Un rettangolo può essere fatto da 1, 2, 3 o più piastrelle vicine.',`Contate per lunghezza: rettangoli lunghi 1 piastrella, lunghi 2, lunghi 3… fino a ${n}.`,`Soluzione: ${parti.join(' + ')} = ${tot} rettangoli.`],
-      fb:x=>x===n?'Avete contato solo le piastrelle una per una: anche 2 o più piastrelle vicine formano un rettangolo.':x===n+1?'Avete aggiunto la fila intera, ma ci sono anche i rettangoli di 2, 3… piastrelle in mezzo.':
-        x<tot?'Ne mancano. Contate prima quelli lunghi 1, poi quelli lunghi 2, e così via.':'Sono troppi. Ogni rettangolo va contato una volta sola: procedete per lunghezza.',spiega:`${parti.join(' + ')} = ${tot}.`};}
-  // perimetro: tre rettangoli di piastrelle da 20 cm, un solo perimetro massimo e, se si può, non quello della figura più grande
-  const D=[[1,2],[1,3],[1,4],[1,5],[1,6],[2,2],[2,3],[2,4],[3,3],[2,5],[3,4]];let F=null;
-  for(let t=0;t<60;t++){const c=mi(D.length,3).map(i=>D[i]),p=c.map(d=>2*(d[0]+d[1])),a=c.map(d=>d[0]*d[1]),m=Math.max(...p);
-    if(p.filter(x=>x===m).length!==1)continue;F={c,p,a};if(a[p.indexOf(m)]!==Math.max(...a))break;}
-  if(!F){const c=[[1,4],[2,2],[1,3]];F={c,p:c.map(d=>2*(d[0]+d[1])),a:c.map(d=>d[0]*d[1])};}
-  const L=['A','B','C'],gi=F.p.indexOf(Math.max(...F.p)),s=16;let h='';
-  F.c.forEach((d,i)=>{const [a,b]=r()<0.5?[d[0],d[1]]:[d[1],d[0]],x=55+i*110-b*s/2,y=70-a*s/2;h+=griglia(x,y,a,b,s)+txt(55+i*110,140,L[i],{w:600,s:17});});
-  return {v:'perimetro',tipo:'scelta',giusta:gi,domanda:'Ogni piastrella ha il lato di 20 cm. Quale figura ha il perimetro maggiore?',fig:svg(330,155,'Tre figure fatte di piastrelle: A, B e C',h),
-    opzioni:L.map((l,i)=>({t:'Figura '+l,perche:`La figura ${l} ha un perimetro di ${F.p[i]*20} cm: ${F.p[i]} lati di piastrella da 20 cm. Il perimetro è il giro intorno, non quante piastrelle ci sono dentro.`})),
-    aiuti:['Il perimetro è la lunghezza del giro intorno alla figura, non lo spazio che occupa.','Contate i lati di piastrella sul bordo di ogni figura e moltiplicate per 20 cm.',`Soluzione: A ${F.p[0]*20} cm, B ${F.p[1]*20} cm, C ${F.p[2]*20} cm. La risposta è la figura ${L[gi]}.`],
-    spiega:`la figura ${L[gi]} ha il giro più lungo: ${F.p[gi]*20} cm.`};}
-function T2(r,pk,mi,mescola){const v=Math.floor(r()*3);
-  if(v===0){const deg={acuto:pk([30,40,50,60,70]),retto:90,ottuso:pk([110,120,130,140,150])},tipi=mescola(['acuto','retto','ottuso']),T=pk(['acuto','retto','ottuso']),L=['A','B','C'];
-    let h='';tipi.forEach((t,i)=>{h+=angolo(22+i*105,110,deg[t],78,L[i]);});const gi=tipi.indexOf(T);
-    return {v:'tipo',tipo:'scelta',giusta:gi,domanda:`Nei telai delle vetrate ci sono angoli di ogni tipo. Quale di questi tre angoli è ${NOMI_ANG[T]}?`,fig:svg(330,145,'Tre angoli: A, B e C',h),
-      opzioni:L.map((l,i)=>({t:'Angolo '+l,perche:`L'angolo ${l} è ${NOMI_ANG[tipi[i]]}: ${DEF_ANG[tipi[i]]}. Un angolo ${NOMI_ANG[T]} invece ${DEF_ANG[T]}: guardate di nuovo l'apertura.`})),
-      aiuti:['Prendete come confronto lo spigolo di un foglio: è un angolo retto.',`Un angolo ${NOMI_ANG[T]} ${DEF_ANG[T]}.`,`Soluzione: l'angolo ${L[gi]}.`],spiega:`l'angolo ${L[gi]} ${DEF_ANG[T]}.`};}
-  if(v===1){const n=pk([2,3,4,6]),cols=n===6?3:n,rows=n===6?2:1,w=210,hh=120,x0=60,y0=12;let h=`<rect x="${x0}" y="${y0}" width="${w}" height="${hh}" fill="#E6F0F5" stroke="${CG}" stroke-width="5"/>`;
-    for(let j=1;j<cols;j++)h+=linea([x0+j*w/cols,y0],[x0+j*w/cols,y0+hh],{sw:5});for(let i=1;i<rows;i++)h+=linea([x0,y0+i*hh/rows],[x0+w,y0+i*hh/rows],{sw:5});
-    return {v:'retti',tipo:'numero',giusta:4*n,domanda:`Il telaio di questa finestra divide il vetro in ${n} riquadri rettangolari. Quanti angoli retti hanno, in tutto, i riquadri di vetro?`,
-      fig:svg(330,145,`Finestra con ${n} riquadri`,h),aiuti:['Ogni riquadro di vetro è un rettangolo.','Un rettangolo ha 4 angoli retti. Contate i riquadri e ripetete.',`Soluzione: ${n} riquadri × 4 angoli retti = ${4*n}.`],
-      fb:x=>x===4?'4 sono gli angoli di un solo riquadro: ogni riquadro ha i suoi 4 angoli retti.':x===n?'Avete contato i riquadri: ora contate gli angoli di ciascuno.':x===4+2*(cols-1)+2*(rows-1)?'Avete contato gli angoli del telaio esterno e qualche incrocio: contate invece gli angoli di ogni riquadro di vetro.':'Contate gli angoli di un riquadro e poi ripetete per tutti i riquadri.',
-      spiega:`${n} riquadri × 4 = ${4*n} angoli retti.`};}
-  const deg=pk([25,35,45,60,90,120,135,150]),T=tipoAng(deg),O=['acuto','retto','ottuso'];
-  return {v:'ribalta',tipo:'scelta',giusta:O.indexOf(T),domanda:`Il vetro in alto si apre a ribalta. Fra il vetro aperto e il telaio c'è un angolo di ${deg}°. Che angolo è?`,
-    fig:svg(330,145,`Angolo di ${deg} gradi`,angolo(110,118,deg,95,deg+'°')),
-    opzioni:O.map(t=>({t:'Angolo '+t,perche:t==='acuto'?`Un angolo acuto è minore di 90°: ${deg}° ${deg>90?'è più di':'non è meno di'} 90°.`:t==='retto'?`Un angolo retto misura esattamente 90°: qui ce ne sono ${deg}.`:`Un angolo ottuso è maggiore di 90°: ${deg}° ${deg<90?'è meno di':'non è più di'} 90°.`})),
-    aiuti:['Confrontate la misura con 90°, l\'angolo retto.','Minore di 90°: acuto. Esattamente 90°: retto. Fra 90° e 180°: ottuso.',`Soluzione: ${deg}° è un angolo ${T}.`],spiega:`${deg}° è un angolo ${T}.`};}
-const NOMI_REL={par:'parallele',perp:'perpendicolari',inc:'incidenti ma non perpendicolari'};
-function perRel(scelta,vera){const D={par:'Due rette parallele non si incontrano mai e restano sempre alla stessa distanza',perp:'Due rette perpendicolari si incontrano formando 4 angoli retti',inc:'Due rette incidenti si incontrano in un punto'};
-  if(scelta==='inc'&&vera==='perp')return 'Si incontrano, è vero: ma formano 4 angoli retti, quindi c\'è un nome più preciso.';
-  return D[scelta]+(vera==='par'?': queste due non si incontrano mai.':vera==='perp'?': queste formano angoli retti, guardate il quadratino.':': queste si incontrano, ma gli angoli non sono retti.');}
-function T3(r,pk,mi,mescola){const v=Math.floor(r()*3),rot=()=>pk([0,0.35,0.8,1.2,-0.5]);
-  if(v===0){const R=pk(['par','perp','inc']),O=['par','perp','inc'],ctx={par:'i due spigoli verticali di un pilastro blu',perp:'lo spigolo del pilastro e la riga del pavimento ai suoi piedi',inc:'lo spigolo del pilastro e l\'ombra obliqua di una tapparella'};
-    return {v:'coppia',tipo:'scelta',giusta:O.indexOf(R),domanda:`Le due linee del disegno sono ${ctx[R]}. Come sono fra loro?`,fig:svg(300,150,'Due rette',coppia(150,75,R,R==='par'?Math.PI/2:R==='perp'?0:Math.PI/2,62)),
-      opzioni:O.map(o=>({t:NOMI_REL[o][0].toUpperCase()+NOMI_REL[o].slice(1),perche:perRel(o,R)})),
-      aiuti:['Prima domanda: le due linee si incontrano, o si incontrerebbero prolungandole?','Se si incontrano, guardate gli angoli: sono retti?',`Soluzione: sono ${NOMI_REL[R]}.`],spiega:`sono ${NOMI_REL[R]}.`};}
-  if(v===1){const rel=mescola(['par','perp','inc']),R=pk(['par','perp','inc']),L=['A','B','C'];let h='';rel.forEach((t,i)=>{h+=coppia(55+i*110,68,t,rot(),40)+txt(55+i*110,138,L[i],{w:600,s:17});});
-    const gi=rel.indexOf(R);return {v:'trova',tipo:'scelta',giusta:gi,domanda:`Sulle pareti, fra i pilastri blu, ci sono tante linee. Quale coppia è di rette ${NOMI_REL[R]}?`,fig:svg(330,155,'Tre coppie di rette: A, B e C',h),
-      opzioni:L.map((l,i)=>({t:'Coppia '+l,perche:`La coppia ${l} è di rette ${NOMI_REL[rel[i]]}. ${perRel(R,rel[i])}`})),
-      aiuti:['Cercate prima le due rette che non si incontrano mai.','Fra quelle che si incontrano, le perpendicolari hanno il quadratino dell\'angolo retto.',`Soluzione: la coppia ${L[gi]}.`],spiega:`la coppia ${L[gi]} è di rette ${NOMI_REL[R]}.`};}
-  const F=[['Due rette perpendicolari sono anche incidenti.',true,'Si incontrano in un punto, quindi sono incidenti; in più formano 4 angoli retti.'],
-    ['Due rette parallele, se le prolunghiamo molto, prima o poi si incontrano.',false,'Le rette parallele restano sempre alla stessa distanza: non si incontrano mai.'],
-    ['Gli spigoli verticali di due pilastri blu diversi sono paralleli.',true,'Sono tutti e due verticali: restano sempre alla stessa distanza.'],
-    ['Due rette incidenti formano sempre 4 angoli retti.',false,'Solo le perpendicolari formano 4 angoli retti; le altre incidenti formano 2 angoli acuti e 2 ottusi.'],
-    ['Lo spigolo di un pilastro e il bordo del pavimento sono perpendicolari.',true,'Lo spigolo è verticale e il bordo del pavimento è orizzontale: si incontrano ad angolo retto.']],f=pk(F);
-  return {v:'vero',tipo:'scelta',giusta:f[1]?0:1,domanda:`Sul pilastro qualcuno ha scritto: «${f[0]}» È vero o falso?`,fig:svg(300,150,'Un pilastro e il pavimento',`<rect x="128" y="10" width="44" height="122" fill="#3C6FB0" stroke="${CG}" stroke-width="2"/>`+linea([20,132],[280,132],{c:CO})+linea([150,10],[150,132],{c:'#fff',sw:1.5,d:true})),
-    opzioni:[{t:'Vero',perche:'Non è così: '+f[2]},{t:'Falso',perche:'Invece è vero: '+f[2]}],
-    aiuti:['Pensate a un esempio vero nell\'aula: i pilastri, il pavimento, le righe delle piastrelle.','Ripassate le parole: parallele (mai incontro), incidenti (si incontrano), perpendicolari (si incontrano ad angolo retto).',`Soluzione: è ${f[1]?'vero':'falso'}. ${f[2]}`],spiega:f[2]};}
-function T4(r,pk){const v=Math.floor(r()*3),vero=r()<0.5;
-  const tav=(a,b,et)=>svg(330,140,`Rettangolo di ${fmt(a)} per ${fmt(b)} metri`,`<rect x="76" y="${70-Math.min(80,b/a*230)/2}" width="230" height="${Math.min(80,b/a*230)}" fill="#E7C891" stroke="${CG}" stroke-width="3"/>`+txt(191,70+Math.min(80,b/a*230)/2+16,fmt(a)+' m',{w:600})+txt(38,70,fmt(b)+' m',{w:600,s:14})+(et?txt(191,70,et,{s:13,c:'#5f4706'}):''));
-  if(v===0){const [a,b]=vero?[5,1.05]:[pk([2,2.5,3,3.5,4]),pk([0.5,1,1.5])],P=2*(a+b);
-    return {v:'perimetro',tipo:'numero',unita:'m',giusta:P,domanda:vero?'Il tavolone di pino è lungo 5 m e largo 1,05 m. Volete metterci intorno un nastro dorato. Quanti metri di nastro servono?':`Una tovaglia rettangolare è lunga ${fmt(a)} m e larga ${fmt(b)} m. Quanti metri di nastro servono per fare tutto il bordo?`,
-      fig:tav(a,b,vero?'tavolone':'tovaglia'),aiuti:['Il nastro fa il giro completo: è il perimetro.','Il rettangolo ha 4 lati: due lunghi e due corti. Sommateli tutti.',`Soluzione: ${fmt(a)} + ${fmt(b)} + ${fmt(a)} + ${fmt(b)} = ${fmt(P)} m.`],
-      fb:x=>Math.abs(x-(a+b))<0.005?'Avete sommato due lati soli: il nastro fa il giro completo, cioè 4 lati.':Math.abs(x-a*b)<0.005?'Questa è l\'area, cioè lo spazio coperto. Il nastro va intorno: serve il perimetro.':'Sommate i 4 lati: lungo + corto + lungo + corto. Attenzione alla virgola.',
-      spiega:`2 × (${fmt(a)} + ${fmt(b)}) = ${fmt(P)} m.`};}
-  if(v===1){const a=pk([2,3,4,5]),b=pk([0.5,1.5,2,2.5]),A=a*b;
-    return {v:'area',tipo:'numero',unita:'m²',giusta:A,domanda:`Sul tavolone c'è un telo rettangolare lungo ${a} m e largo ${fmt(b)} m. Quanti metri quadrati copre?`,fig:tav(a,b,'telo'),
-      aiuti:['La superficie coperta è l\'area.','Area del rettangolo = base × altezza.',`Soluzione: ${a} × ${fmt(b)} = ${fmt(A)} m².`],
-      fb:x=>Math.abs(x-2*(a+b))<0.005?'Questo è il perimetro, il giro intorno. L\'area è lo spazio coperto: base × altezza.':Math.abs(x-(a+b))<0.005?'Avete sommato le misure: per l\'area si moltiplicano.':'Moltiplicate base per altezza; controllate la virgola.',
-      spiega:`${a} × ${fmt(b)} = ${fmt(A)} m².`};}
-  const a=pk([2,3,4,5]),b=pk([1,1.5,2]),P=2*(a+b);
-  return {v:'lato',tipo:'numero',unita:'m',giusta:b,domanda:`Un rettangolo di carta sul tavolone ha il perimetro di ${fmt(P)} m. Il lato lungo misura ${a} m. Quanto misura il lato corto?`,fig:tav(a,b,'lato corto = ?').replace('>'+fmt(b)+' m<','>? m<'),
-    aiuti:['Nel perimetro ci sono due lati lunghi e due lati corti.',`Togliete i due lati lunghi: ${fmt(P)} − ${a} − ${a}. Quello che resta sono due lati corti.`,`Soluzione: (${fmt(P)} − ${2*a}) : 2 = ${fmt(b)} m.`],
-    fb:x=>Math.abs(x-(P-a))<0.005?'Avete tolto un solo lato lungo: nel perimetro ce ne sono due.':Math.abs(x-(P/2))<0.005?'Metà perimetro è lato lungo + lato corto: togliete ancora il lato lungo.':Math.abs(x-(P-2*a))<0.005?'Questi sono due lati corti insieme: dividete per 2.':'Togliete dal perimetro i due lati lunghi e dividete per 2 quello che resta.',
-    spiega:`(${fmt(P)} − ${2*a}) : 2 = ${fmt(b)} m.`};}
-function T5(r,pk,mi,mescola){const v=Math.floor(r()*4);
-  if(v===0){const T=pk(['equilatero','isoscele','scaleno']);let s;
-    if(T==='equilatero'){const a=pk([4,5,6]);s=[a,a,a];}else if(T==='isoscele'){const a=pk([5,6,7]),b=pk([4,8]);s=[a,a,b];}else s=pk([[4,5,6],[5,6,8],[4,6,7],[3,5,7]]);
-    s=mescola(s);const [a,b,c]=s,x=(b*b+c*c-a*a)/(2*c),y=Math.sqrt(Math.max(0,b*b-x*x)),P=adatta([[0,0],[c,0],[x,y]],70,14,190,112);
-    const mid=(p,q)=>[(p[0]+q[0])/2,(p[1]+q[1])/2],G=[(P[0][0]+P[1][0]+P[2][0])/3,(P[0][1]+P[1][1]+P[2][1])/3],et=(p,q,l)=>{const m=mid(p,q),d=[m[0]-G[0],m[1]-G[1]],n=Math.hypot(d[0],d[1])||1;return txt(m[0]+d[0]/n*16,m[1]+d[1]/n*14,l+' cm',{w:600,s:14});};
-    const O=['equilatero','isoscele','scaleno'],D={equilatero:'ha 3 lati uguali',isoscele:'ha 2 lati uguali e uno diverso',scaleno:'ha 3 lati tutti diversi'};
-    return {v:'lati',tipo:'scelta',giusta:O.indexOf(T),domanda:'Sul fondale del teatrino è disegnato questo triangolo. Guardate le misure dei lati: che triangolo è?',
-      fig:svg(330,145,'Triangolo con le misure dei lati',poly(P)+et(P[0],P[1],c)+et(P[1],P[2],a)+et(P[2],P[0],b)),
-      opzioni:O.map(o=>({t:'Triangolo '+o,perche:`Un triangolo ${o} ${D[o]}: qui i lati misurano ${s.join(', ')} cm.`})),
-      aiuti:['Confrontate le tre misure: quante sono uguali?','3 uguali: equilatero. 2 uguali: isoscele. Tutte diverse: scaleno.',`Soluzione: ${s.join(', ')} cm, quindi triangolo ${T}.`],spiega:`il triangolo ${T} ${D[T]}.`};}
-  if(v===1){const T=pk(['acutangolo','rettangolo','ottusangolo']);let A,B;
-    if(T==='rettangolo'){A=90;B=pk([30,35,40,50,55,60]);}else if(T==='ottusangolo'){A=pk([100,110,120,130]);B=pk([20,25,30]);}else{A=pk([60,65,70,75]);B=pk([50,55,60]);}
-    const C=180-A-B,ang=mescola([A,B,C]),ra=ang.map(x=>x*Math.PI/180),bb=Math.sin(ra[1])/Math.sin(ra[2]),P=adatta([[0,0],[1,0],[bb*Math.cos(ra[0]),bb*Math.sin(ra[0])]],70,16,190,108);
-    const G=[(P[0][0]+P[1][0]+P[2][0])/3,(P[0][1]+P[1][1]+P[2][1])/3],et=(p,l)=>{const d=[G[0]-p[0],G[1]-p[1]],n=Math.hypot(d[0],d[1])||1;return txt(p[0]+d[0]/n*24,p[1]+d[1]/n*18,l+'°',{w:600,s:13,c:'#5f4706'});};
-    const O=['acutangolo','rettangolo','ottusangolo'],D={acutangolo:'ha 3 angoli acuti',rettangolo:'ha un angolo retto',ottusangolo:'ha un angolo ottuso'};
-    return {v:'angoli',tipo:'scelta',giusta:O.indexOf(T),domanda:'Questo triangolo sta sopra il sipario. Guardate gli angoli: che triangolo è?',fig:svg(330,145,'Triangolo con le misure degli angoli',poly(P)+et(P[0],ang[0])+et(P[1],ang[1])+et(P[2],ang[2])),
-      opzioni:O.map(o=>({t:'Triangolo '+o,perche:`Un triangolo ${o} ${D[o]}: qui gli angoli misurano ${ang.join('°, ')}°.`})),
-      aiuti:['Cercate l\'angolo più grande e confrontatelo con 90°.','Minore di 90°: acuto. 90°: retto. Più di 90°: ottuso. Il triangolo prende il nome dal suo angolo più grande.',`Soluzione: l'angolo più grande misura ${Math.max(A,B,C)}°, quindi triangolo ${T}.`],spiega:`il triangolo ${T} ${D[T]}.`};}
-  if(v===2){const Q=['quadrato','rettangolo','rombo','parallelogramma','trapezio'],P={quadrato:'4 lati uguali e 4 angoli retti',rettangolo:'4 angoli retti e i lati opposti uguali, ma non tutti e 4 uguali',
-      rombo:'4 lati uguali, ma gli angoli non sono retti',parallelogramma:'i lati opposti paralleli e uguali, ma niente angoli retti e lati vicini diversi',trapezio:'solo due lati paralleli'};
-    const T=pk(Q),altri=mescola(Q.filter(q=>q!==T)).slice(0,3),O=mescola([T,...altri]);
-    return {v:'quadrilatero',tipo:'scelta',giusta:O.indexOf(T),domanda:`Una figura del teatrino ha ${P[T]}. Che figura è?`,fig:svg(330,140,'Un quadrilatero',poly(adatta(FORME[T],95,14,140,110))),
-      opzioni:O.map(o=>({t:o[0].toUpperCase()+o.slice(1),perche:`Il ${o} ha ${P[o]}. La figura del teatrino invece ha ${P[T]}.`})),
-      aiuti:['Guardate prima gli angoli: sono retti?','Poi i lati: sono tutti uguali? Quali sono paralleli?',`Soluzione: è un ${T}.`],spiega:`il ${T} ha ${P[T]}.`};}
-  const A=pk([40,50,60,70,80]),B=pk([30,35,45,55]),C=180-A-B;
-  return {v:'mancante',tipo:'numero',unita:'°',giusta:C,domanda:`Un triangolo del sipario ha un angolo di ${A}° e uno di ${B}°. Quanto misura il terzo angolo?`,
-    fig:svg(330,140,'Triangolo con un angolo da trovare',(()=>{const ra=[A,B,C].map(x=>x*Math.PI/180),bb=Math.sin(ra[1])/Math.sin(ra[2]),P=adatta([[0,0],[1,0],[bb*Math.cos(ra[0]),bb*Math.sin(ra[0])]],80,16,170,104);
-      return poly(P)+txt(P[0][0]+26,P[0][1]-10,A+'°',{w:600,s:13,c:'#5f4706'})+txt(P[1][0]-26,P[1][1]-10,B+'°',{w:600,s:13,c:'#5f4706'})+txt(P[2][0],P[2][1]+22,'?',{w:700,s:16,c:'#5f4706'});})()),
-    aiuti:['Gli angoli interni di un triangolo, sommati, fanno sempre 180°.',`Sommate i due angoli che conoscete (${A}° + ${B}°) e togliete il risultato da 180°.`,`Soluzione: 180° − ${A}° − ${B}° = ${C}°.`],
-    fb:x=>Math.abs(x-(A+B))<0.5?'Questa è la somma dei due angoli: ora toglietela da 180°.':Math.abs(x-(360-A-B))<0.5?'In un triangolo la somma degli angoli è 180°, non 360° (quella è per i quadrilateri).':'La somma dei tre angoli di un triangolo è 180°: 180° − '+A+'° − '+B+'°.',spiega:`180° − ${A}° − ${B}° = ${C}°.`};}
-function T6(r,pk,mi,mescola){const v=Math.floor(r()*3);
-  if(v===0){const F=pk([['quadrato',4],['rettangolo',2],['equilatero',3],['isoscele',1],['scaleno',0],['rombo',2],['esagono',6],['parallelogramma',0]]),[nome,n]=F;
-    const det={quadrato:'il quadrato',rettangolo:'il rettangolo',equilatero:'il triangolo equilatero',isoscele:'il triangolo isoscele',scaleno:'il triangolo scaleno',rombo:'il rombo',esagono:'l\'esagono regolare',parallelogramma:'il parallelogramma'}[nome];
-    return {v:'assi',tipo:'numero',giusta:n,domanda:`Sulla porta c'è un cartello a forma di ${det.replace(/^(il |l')/,'')}. Quanti assi di simmetria ha?`,fig:svg(330,140,'Una figura',poly(adatta(FORME[nome],105,12,120,116))),
-      aiuti:['Un asse di simmetria divide la figura in due parti che combaciano, piegando lungo la linea.','Provate a piegare la figura in verticale, in orizzontale e lungo le diagonali.',`Soluzione: ${det} ha ${n===0?'nessun asse':n===1?'1 asse':n+' assi'} di simmetria.`],
-      fb:x=>nome==='rettangolo'&&x===4?'Le diagonali del rettangolo non sono assi: piegando lungo una diagonale le due parti non combaciano.':nome==='parallelogramma'&&x>0?'Provate a piegare il parallelogramma: in nessun modo le due metà combaciano.':
-        x>n?'Sono troppi: un asse vale solo se, piegando, le due parti combaciano perfettamente.':'Ne mancano: provate a piegare la figura in tutti i modi, anche in diagonale.',spiega:`${det} ha ${n===0?'0 assi':n===1?'1 asse':n+' assi'} di simmetria.`};}
-  if(v===1){const giuV=r()<0.5,x0=110,y0=10,w=100,h=126,L=['A','B','C'],cand=mescola([giuV?'mezzoV':'mezzoO','diag',giuV?'fuoriV':'fuoriO']);
-    const seg={mezzoV:[[x0+w/2,y0-4],[x0+w/2,y0+h+4]],mezzoO:[[x0-4,y0+h/2],[x0+w+4,y0+h/2]],diag:[[x0,y0],[x0+w,y0+h]],fuoriV:[[x0+w*0.72,y0-4],[x0+w*0.72,y0+h+4]],fuoriO:[[x0-4,y0+h*0.3],[x0+w+4,y0+h*0.3]]};
-    const tinta=['#1B6D3F','#B8860B','#3C6FB0'];let g=`<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#F3D35B" stroke="${CG}" stroke-width="2.5"/>`;
-    cand.forEach((c,i)=>{const s=seg[c];g+=linea(s[0],s[1],{c:tinta[i],d:true,sw:3.5});const p=c==='diag'?[s[1][0]+10,s[1][1]-4]:c.endsWith('V')?[s[0][0],s[0][1]-0.5]:[s[1][0]+12,s[1][1]];g+=txt(p[0]+(c.endsWith('V')?0:4),p[1]+(c.endsWith('V')?-0:0),L[i],{w:700,s:15,c:tinta[i]});});
-    const gi=cand.findIndex(c=>c.startsWith('mezzo')),P={diag:'Piegando un rettangolo lungo la diagonale le due parti non combaciano: provate con un foglio.',fuoriV:'Questa linea non passa a metà: le due parti sono di grandezza diversa.',fuoriO:'Questa linea non passa a metà: le due parti sono di grandezza diversa.'};
-    return {v:'linea',tipo:'scelta',giusta:gi,domanda:'La porta è un rettangolo. Quale linea tratteggiata è un asse di simmetria?',fig:svg(330,150,'Un rettangolo con tre linee tratteggiate',g),
-      opzioni:L.map((l,i)=>({t:'Linea '+l,perche:P[cand[i]]||''})),aiuti:['Un asse di simmetria divide la figura in due parti uguali che combaciano piegando.','Il rettangolo ha due assi: uno verticale e uno orizzontale, tutti e due esattamente a metà.',`Soluzione: la linea ${L[gi]}.`],
-      spiega:`la linea ${L[gi]} divide la porta in due metà che combaciano.`};}
-  const SI=['A','M','T','U','V','W','Y','H','O','X'],NO=['F','G','J','L','N','P','R','S','Z'],s=pk(SI),n=mi(NO.length,2).map(i=>NO[i]),O=mescola([s,...n]),L=O;
-  return {v:'lettere',tipo:'scelta',giusta:O.indexOf(s),domanda:'Sulla porta qualcuno ha scritto tre lettere. Quale ha un asse di simmetria verticale (dall\'alto in basso)?',
-    fig:svg(330,130,'Tre lettere: '+O.join(', '),O.map((l,i)=>`<text x="${60+i*105}" y="70" font-family="Lexend,Helvetica,sans-serif" font-size="78" font-weight="500" fill="${CG}" text-anchor="middle" dominant-baseline="middle">${l}</text>`).join('')),
-    opzioni:L.map(l=>({t:'Lettera '+l,perche:`Piegando la lettera ${l} a metà, dall'alto in basso, le due parti non combaciano.`})),
-    aiuti:['Immaginate uno specchio verticale messo in mezzo alla lettera.','La metà di sinistra deve essere uguale alla metà di destra, rovesciata.',`Soluzione: la lettera ${s}.`],spiega:`la lettera ${s} ha le due metà uguali.`};}
+// ---------------------------------------------------------------- generatori delle 6 tappe: enigmi D'AZIONE (misurare, cercare, cliccare, tracciare)
+// Ogni enigma: strumento ('metro'|'angolo'|'vertici'|'asse'), punti di aggancio (coordinate dell'aula), segni d'oro da disegnare,
+// tipo di risposta ('numero': si scrive il risultato della misura o del calcolo; 'scelta': dopo le misure; 'azione': la verifica è
+// geometrica sul gesto), tre aiuti (suggerimento, secondo suggerimento, soluzione) e un perché per ogni errore (in ambra, mai rosso).
+const V3=(x,y,z)=>[x,y,z],cm=x=>Math.round(x*100),fmt2=x=>String(Math.round(x*100)/100).replace('.',',');
+const DEF_ANG={acuto:'è minore di un angolo retto',retto:'misura 90°, come lo spigolo di un foglio',ottuso:'è maggiore di un angolo retto'};
+const tipoAng=d=>Math.abs(d-90)<1.5?'retto':d<90?'acuto':'ottuso';
+// 1. pavimento: riquadro d'oro allineato ai blocchi da 60 cm (la trama del pavimento parte da ROOM.x0 e da ROOM.z1)
+function T1(r,pk){const v=Math.floor(r()*3);let a=pk([1,2,3]),b=pk([1,2,3]);if(v===0&&a===b)b=a===3?2:a+1;
+  const x0=ROOM.x0+0.6*10,z0=ROOM.z1-0.6*15,w=0.6*a,h=0.6*b,y=0.006,P=[V3(x0,y,z0),V3(x0+w,y,z0),V3(x0+w,y,z0+h),V3(x0,y,z0+h)];
+  const seg=[[P[0],P[1]],[P[1],P[2]],[P[2],P[3]],[P[3],P[0]]],base={strumento:'metro',punti:P,segni:seg,centro:V3(x0+w/2,0,z0+h/2)};
+  const lati=`${cm(w)} cm e ${cm(h)} cm`;
+  if(v===0){const L=cm(Math.max(w,h));return Object.assign(base,{v:'lato',tipo:'numero',unita:'cm',giusta:L,tol:Math.max(3,L*0.05),
+    domanda:'Prendete il metro: cliccate un angolo del riquadro d\'oro sul pavimento, poi un altro angolo. Quanto misura il lato più lungo?',
+    aiuti:['Cliccate due punti d\'oro che stanno sullo stesso lato lungo.','Il metro misura in centimetri: leggete il cartellino sulla linea.',`Soluzione: il lato più lungo misura ${L} cm.`],
+    fb:x=>Math.abs(x-cm(Math.min(w,h)))<3?'Questo è il lato corto: misurate quello più lungo.':Math.abs(x-cm(Math.hypot(w,h)))<4?'Avete misurato in diagonale: misurate lungo il bordo.':'Misurate di nuovo da un angolo all\'altro dello stesso lato e leggete il cartellino.',
+    spiega:`il lato più lungo misura ${L} cm.`});}
+  if(v===1){const Pm=cm(2*(w+h));return Object.assign(base,{v:'perimetro',tipo:'numero',unita:'cm',giusta:Pm,tol:Math.max(3,Pm*0.05),
+    domanda:'Misurate con il metro i lati del riquadro d\'oro. Qual è il suo perimetro, in centimetri?',
+    aiuti:['Il perimetro è il giro intorno: servono tutti e 4 i lati.','Misurate un lato lungo e uno corto: gli altri due sono uguali a questi.',`Soluzione: i lati misurano ${lati}; ${cm(w)} + ${cm(h)} + ${cm(w)} + ${cm(h)} = ${Pm} cm.`],
+    fb:x=>Math.abs(x-cm(w+h))<4?'Avete sommato due lati soli: il giro completo ha 4 lati.':Math.abs(x-cm(w)*cm(h))<10?'Questa è l\'area: per il perimetro si sommano i lati.':'Misurate un lato lungo e uno corto, poi sommate tutti e 4 i lati.',
+    spiega:`${cm(w)} + ${cm(h)} + ${cm(w)} + ${cm(h)} = ${Pm} cm.`});}
+  const A=Math.round(w*h*100)/100;return Object.assign(base,{v:'area',tipo:'numero',unita:'m²',giusta:A,tol:Math.max(0.02,A*0.05),
+    domanda:'Misurate i due lati del riquadro d\'oro e calcolate quanti metri quadrati copre (100 cm = 1 m).',
+    aiuti:['L\'area del rettangolo è base × altezza.','Prima trasformate le misure in metri: 60 cm = 0,6 m.',`Soluzione: ${fmt2(w)} × ${fmt2(h)} = ${fmt2(A)} m².`],
+    fb:x=>Math.abs(x-2*(w+h))<0.05?'Questo è il perimetro, in metri: per l\'area si moltiplica.':Math.abs(x-cm(w)*cm(h))<10?'Avete moltiplicato i centimetri: trasformate prima in metri.':'Base × altezza, con le misure in metri.',
+    spiega:`${fmt2(w)} × ${fmt2(h)} = ${fmt2(A)} m².`});}
+// 2. vetrate: un filo d'oro va dall'angolo in basso a un punto del bordo alto e forma un angolo acuto e uno ottuso; gli angoli del telaio sono retti
+function T2(r,pk){const W=pk([EXT.win[2],EXT.win[3],EXT.win[4]]),z0=W[0]+0.05,z1=W[1]-0.05,y0=EXT.wy[0]+0.05,y1=EXT.wy[1]-0.05,X=EXT.x-0.06,f=pk([0.3,0.42,0.55]);
+  const BL=V3(X,y0,z0),BR=V3(X,y0,z1),TR=V3(X,y1,z1),TL=V3(X,y1,z0),T=V3(X,y1,z0+f*(z1-z0)),ac=Math.round(Math.atan2(y1-y0,f*(z1-z0))*180/Math.PI);
+  const ang=[{v:BL,a:BR,b:T,deg:ac},{v:T,a:BL,b:TR,deg:180-ac},{v:TR,a:T,b:BR,deg:90},{v:BR,a:TR,b:BL,deg:90}];
+  const K=pk(['acuto','ottuso','retto']);
+  return {v:K,strumento:'angolo',tipo:'azione',angoli:ang,punti:ang.map(a=>a.v),segni:[[BL,BR],[BR,TR],[TR,TL],[TL,BL],[BL,T]],centro:V3(X,1.75,(z0+z1)/2),
+    domanda:`Caccia all'angolo: un filo d'oro attraversa la vetrata. Cliccate un angolo ${K} (sui punti d'oro).`,
+    aiuti:[K==='retto'?'Gli angoli retti sono quelli del telaio, come gli spigoli di un foglio.':'Guardate dove il filo d\'oro tocca il telaio: lì gli angoli non sono retti.',`Un angolo ${K} ${DEF_ANG[K]}.`,
+      `Soluzione: ${K==='acuto'?'l\'angolo in basso, dove parte il filo':K==='ottuso'?'l\'angolo in alto, fra il filo e il bordo alto verso destra':'uno degli angoli del telaio a destra'}.`],
+    verifica:a=>{const t=tipoAng(a.deg);return t===K?{ok:true}:{ok:false,perche:`Questo angolo misura ${a.deg}°: è ${t}. Un angolo ${K} ${DEF_ANG[K]}: guardate di nuovo.`};},
+    spiega:`avete trovato un angolo ${K}.`};}
+// 3. pilastri blu: righello fra due pilastri, in basso e in alto; poi che cosa si nota
+function T3(r,pk){const k=pk([1,2,3]),c1=COR.pil[k-1]??COR.pil[0],c2=COR.pil[k],X=COR.x+0.14,za=c1+PIL.w/2,zb=c2-PIL.w/2,d=cm(zb-za);
+  const P=[V3(X,0.15,za),V3(X,0.15,zb),V3(X,2.6,za),V3(X,2.6,zb)];
+  const O=['parallele','incidenti','perpendicolari'],D={parallele:'restano sempre alla stessa distanza e non si incontrano',incidenti:'si incontrano in un punto',perpendicolari:'si incontrano formando angoli retti'};
+  return {v:'pilastri'+k,strumento:'metro',tipo:'scelta',punti:P,segni:[],centro:V3(COR.x+0.14,1.4,(za+zb)/2),giusta:0,
+    opzioni:O.map(o=>({t:'Sono '+o,perche:`Le rette ${o} ${D[o]}. Guardate le vostre due misure: ${d} cm in basso e ${d} cm in alto.`})),
+    domanda:'Righello: misurate la distanza fra i due pilastri blu in basso, poi in alto (punti d\'oro). Che cosa notate? Gli spigoli dei pilastri…',
+    richiede:M=>{const ok=basso=>M.some(m=>Math.abs(m.d*100-d)<4&&(basso?m.a[1]<1&&m.b[1]<1:m.a[1]>2&&m.b[1]>2));return ok(true)&&ok(false)?null:'Prima misurate con il metro la distanza fra i pilastri sia in basso sia in alto.';},
+    aiuti:['Cliccate i due punti d\'oro in basso, poi i due in alto.','Confrontate le due misure: se la distanza resta uguale, le linee non si incontrano mai.',`Soluzione: ${d} cm in basso e ${d} cm in alto: sono parallele.`],
+    spiega:`la distanza è ${d} cm in basso e in alto: gli spigoli sono paralleli.`};}
+// 4. tavolone: lunghezza e larghezza si misurano sugli spigoli del piano, poi si calcola
+function T4(r,pk){const x0=-1.98,x1=3.02,z0=9.26,z1=10.31,y=0.745,P=[V3(x0,y,z0),V3(x1,y,z0),V3(x1,y,z1),V3(x0,y,z1)],L=x1-x0,H=z1-z0,v=Math.floor(r()*3);
+  const base={strumento:'metro',tipo:'numero',punti:P,segni:[],centro:V3((x0+x1)/2,y,(z0+z1)/2),v:['perimetro','area','differenza'][v]};
+  if(v===0){const G=Math.round(2*(L+H)*100)/100;return Object.assign(base,{unita:'m',giusta:G,tol:0.25,domanda:'Misurate con il metro la lunghezza e la larghezza del piano del tavolone (punti d\'oro sugli spigoli). Quanti metri di nastro servono per fargli il giro?',
+    aiuti:['Il nastro fa il giro: serve il perimetro.','Misurate un lato lungo e uno corto; 100 cm = 1 m.',`Soluzione: ${fmt2(L)} + ${fmt2(H)} + ${fmt2(L)} + ${fmt2(H)} = ${fmt2(G)} m.`],
+    fb:x=>Math.abs(x-(L+H))<0.1?'Avete sommato due lati soli: il giro ha 4 lati.':Math.abs(x-L*H)<0.15?'Questa è l\'area: il nastro va intorno.':Math.abs(x-2*(L+H)*100)<20?'Il risultato è in centimetri: scrivetelo in metri.':'Sommate i 4 lati: lungo + corto + lungo + corto.',spiega:`2 × (${fmt2(L)} + ${fmt2(H)}) = ${fmt2(G)} m.`});}
+  if(v===1){const G=Math.round(L*H*100)/100;return Object.assign(base,{unita:'m²',giusta:G,tol:0.15,domanda:'Misurate lunghezza e larghezza del piano del tavolone (punti d\'oro). Quanti metri quadrati misura il piano?',
+    aiuti:['L\'area è lo spazio coperto: base × altezza.','Scrivete le misure in metri prima di moltiplicare.',`Soluzione: ${fmt2(L)} × ${fmt2(H)} = ${fmt2(G)} m².`],
+    fb:x=>Math.abs(x-2*(L+H))<0.2?'Questo è il perimetro: per l\'area si moltiplica.':Math.abs(x-cm(L)*cm(H))<100?'Avete moltiplicato i centimetri: usate i metri.':'Base × altezza, con le misure in metri.',spiega:`${fmt2(L)} × ${fmt2(H)} = ${fmt2(G)} m².`});}
+  const G=cm(L)-cm(H);return Object.assign(base,{unita:'cm',giusta:G,tol:5,domanda:'Misurate lunghezza e larghezza del piano del tavolone (punti d\'oro). Di quanti centimetri è più lungo che largo?',
+    aiuti:['Servono due misure: il lato lungo e il lato corto.','Fate una sottrazione: lungo − corto.',`Soluzione: ${cm(L)} − ${cm(H)} = ${G} cm.`],
+    fb:x=>Math.abs(x-(cm(L)+cm(H)))<6?'Avete sommato: la differenza è una sottrazione.':'Misurate il lato lungo e quello corto e sottraete.',spiega:`${cm(L)} − ${cm(H)} = ${G} cm.`});}
+// 5. teatrino: figura d'oro sul pannello basso (quadrato con diagonali e asse verticale); si cliccano i vertici di una figura
+const geo2=(p,q)=>[q[0]-p[0],q[1]-p[1]],dot2=(a,b)=>a[0]*b[0]+a[1]*b[1],len2=a=>Math.hypot(a[0],a[1]),cr2=(a,b)=>a[0]*b[1]-a[1]*b[0];
+function classificaFigura(Q){   // Q: punti 2D (x,y) nel piano del pannello
+  const n=Q.length,lati=[],angRetti=[];for(let i=0;i<n;i++){lati.push(len2(geo2(Q[i],Q[(i+1)%n])));const a=geo2(Q[i],Q[(i+n-1)%n]),b=geo2(Q[i],Q[(i+1)%n]);angRetti.push(Math.abs(dot2(a,b))<1e-3*len2(a)*len2(b)*10);}
+  const area=Math.abs(Q.reduce((s,p,i)=>s+cr2(p,Q[(i+1)%n]),0))/2,uguali=(x,y)=>Math.abs(x-y)<0.01;
+  const par=(i,j)=>Math.abs(cr2(geo2(Q[i],Q[(i+1)%n]),geo2(Q[j],Q[(j+1)%n])))<1e-3;
+  return {n,lati,angRetti,area,iso:n===3&&(uguali(lati[0],lati[1])||uguali(lati[1],lati[2])||uguali(lati[0],lati[2])),ret:angRetti.some(Boolean),tutti:angRetti.every(Boolean),coppie:n===4?(par(0,2)?1:0)+(par(1,3)?1:0):0};}
+// i 4 punti si ordinano intorno al loro centro: l'ordine dei clic non conta
+function ordina(Q){const c=[Q.reduce((s,p)=>s+p[0],0)/Q.length,Q.reduce((s,p)=>s+p[1],0)/Q.length];return Q.slice().sort((a,b)=>Math.atan2(a[1]-c[1],a[0]-c[0])-Math.atan2(b[1]-c[1],b[0]-c[0]));}
+function T5(r,pk){const Z=ROOM.z1-0.66,xa=-4.85,xb=-4.25,ya=0.35,yb=0.95,xm=(xa+xb)/2,ym=(ya+yb)/2;
+  const N2=[[xa,ya],[xb,ya],[xb,yb],[xa,yb],[xm,ym],[xm,yb],[xm,ya]],P=N2.map(p=>V3(p[0],p[1],Z)),[A,B,C,D,O,M,N]=P;
+  const K=pk(['triangolo rettangolo','triangolo isoscele','trapezio','rettangolo']),n=K.startsWith('triangolo')?3:4;
+  const SOL={'triangolo rettangolo':'per esempio i due angoli in basso e quello in alto a destra','triangolo isoscele':'per esempio i due angoli in basso e il punto al centro','trapezio':'per esempio i due angoli in basso, il punto in alto al centro e l\'angolo in alto a sinistra','rettangolo':'per esempio i due angoli di sinistra e i due punti al centro, in alto e in basso'};
+  const DEF={'triangolo rettangolo':'ha un angolo retto','triangolo isoscele':'ha due lati uguali','trapezio':'ha solo due lati paralleli','rettangolo':'ha 4 angoli retti'};
+  return {v:K,strumento:'vertici',tipo:'azione',nv:n,punti:P,piano2:N2,segni:[[A,B],[B,C],[C,D],[D,A],[A,C],[B,D],[M,N]],centro:V3(xm,ym,Z),
+    domanda:`Figure nascoste: sul teatrino c'è un disegno d'oro. Cliccate i ${n} vertici di un ${K}.`,
+    aiuti:[`Un ${K} ${DEF[K]}.`,n===3?'Usate anche il punto dove si incrociano le diagonali.':'Usate anche i punti a metà dei lati in alto e in basso.',`Soluzione: ${SOL[K]}.`],
+    verifica:sel=>{const Q=n===4?ordina(sel.map(i=>N2[i])):sel.map(i=>N2[i]),f=classificaFigura(Q);
+      if(f.area<1e-3)return {ok:false,perche:'I punti scelti stanno su una stessa linea: non formano una figura. Scegliete punti non allineati.'};
+      if(K==='triangolo rettangolo')return f.ret?{ok:true}:{ok:false,perche:'Questo triangolo non ha un angolo retto. Cercate un angolo come lo spigolo di un foglio.'};
+      if(K==='triangolo isoscele')return f.iso?{ok:true}:{ok:false,perche:'I tre lati di questo triangolo sono tutti diversi. Un isoscele ha due lati uguali.'};
+      if(K==='rettangolo')return f.tutti?{ok:true}:{ok:false,perche:'Non tutti gli angoli di questa figura sono retti: un rettangolo ne ha 4.'};
+      return f.coppie===1?{ok:true}:{ok:false,perche:f.coppie===2?'Questa figura ha due coppie di lati paralleli: è un parallelogramma (o un rettangolo). Il trapezio ne ha una sola.':'Questa figura non ha lati paralleli. Un trapezio ha due lati paralleli.'};},
+    spiega:`è proprio un ${K}: ${DEF[K]}.`};}
+// 6. porta: si traccia l'asse di simmetria con due clic (porta sul corridoio, oppure un riquadro d'oro accanto alla porta)
+function T6(r,pk){const X=COR.x+0.03,d=COR.door2,v=Math.floor(r()*3);let F;
+  if(v===0)F={nome:'della porta',z0:d[0],z1:d[1],y0:0,y1:COR.dh2,o:'v'};
+  else{const w=pk([0.6,0.7,0.8]),h=pk([0.4,0.5]),zc=-9.15,yc=1.35;F={nome:'del riquadro d\'oro accanto alla porta',z0:zc-w/2,z1:zc+w/2,y0:yc-h/2,y1:yc+h/2,o:v===1?'v':'h'};}
+  const P4=[V3(X,F.y0,F.z0),V3(X,F.y0,F.z1),V3(X,F.y1,F.z1),V3(X,F.y1,F.z0)],zc=(F.z0+F.z1)/2,yc=(F.y0+F.y1)/2;
+  const verso=F.o==='v'?'verticale':'orizzontale',dove=F.o==='v'?'un punto in alto e uno in basso':'un punto a sinistra e uno a destra';
+  return {v:(v===0?'porta':'riquadro')+'-'+F.o,strumento:'asse',tipo:'azione',figura:F,piano:X,punti:[],segni:v===0?[]:[[P4[0],P4[1]],[P4[1],P4[2]],[P4[2],P4[3]],[P4[3],P4[0]]],centro:V3(X,yc,zc),
+    domanda:`Tracciate l'asse di simmetria ${verso} ${F.nome}: cliccate ${dove}.`,
+    aiuti:['L\'asse divide la figura in due metà uguali che combaciano piegando.',F.o==='v'?'L\'asse verticale passa esattamente a metà della larghezza.':'L\'asse orizzontale passa esattamente a metà dell\'altezza.',`Soluzione: una linea ${verso} che passa per il centro, a ${F.o==='v'?cm((F.z1-F.z0)/2)+' cm da ciascun lato':cm((F.y1-F.y0)/2)+' cm dal bordo alto e da quello basso'}.`],
+    verifica:(p,q)=>{const lung=F.o==='v'?Math.abs(p[1]-q[1]):Math.abs(p[2]-q[2]),stor=F.o==='v'?Math.abs(p[2]-q[2]):Math.abs(p[1]-q[1]),est=F.o==='v'?F.y1-F.y0:F.z1-F.z0;
+      if(lung<est*0.35)return {ok:false,perche:`I due punti sono troppo vicini: cliccate ${dove}, lontani fra loro.`};
+      if(stor>lung*0.09)return {ok:false,perche:`La linea è storta: l'asse ${verso} deve essere ${F.o==='v'?'dritto come un filo a piombo':'dritto come il pavimento'}.`};
+      const off=F.o==='v'?(p[2]+q[2])/2-zc:(p[1]+q[1])/2-yc,tol=Math.max(0.04,(F.o==='v'?F.z1-F.z0:F.y1-F.y0)*0.07);
+      if(Math.abs(off)>tol)return {ok:false,perche:`La linea non passa a metà: le due parti sono diverse (${cm(Math.abs(off))} cm di troppo da una parte). Usate il metro per trovare il centro.`};
+      return {ok:true};},
+    spiega:`l'asse ${verso} divide ${F.nome.replace(/^della /,'la ').replace(/^del /,'il ')} in due metà uguali.`};}
+// regola del lucchetto (dal seme): le cifre non si scrivono sempre nell'ordine delle tappe
+const REGOLE=[{t:'nell\'ordine delle tappe, dalla tappa 1 alla tappa 6',f:c=>c.slice()},{t:'al contrario: prima la cifra della tappa 6, per ultima quella della tappa 1',f:c=>c.slice().reverse()},
+  {t:'dalla cifra più piccola alla più grande',f:c=>c.slice().sort((a,b)=>a-b)}];
 // tappe sugli oggetti veri: vista della camera, punto dell'anello, fila di plafoniere che si accende
 const TAPPE=[
-  {nome:'Il pavimento',gen:T1,vista:[0.9,0,1.5,3.4,-0.43,0.78],anello:[0.9,0.06,1.5,0.42],fila:3,msg:'Il pavimento conta in silenzio i suoi quadrati…'},
-  {nome:'Le vetrate',gen:T2,vista:[5.0,1.7,2.04,4.2,-Math.PI/2,1.42],anello:[5.2,1.75,2.04,0.55],fila:2,msg:'La luce passa dai vetri, ma gli angoli restano nell\'ombra…'},
-  {nome:'I pilastri blu',gen:T3,vista:[-5.0,1.5,0.55,4.0,Math.PI/2,1.36],anello:[-5.05,1.5,0.55,0.42],fila:4,msg:'I pilastri blu stanno dritti da sempre. Si incontreranno mai?'},
-  {nome:'Il tavolone',gen:T4,vista:[0.52,0.74,9.6,3.6,Math.PI,0.98],anello:[0.52,0.82,9.785,0.5],fila:6,msg:'Sul tavolone qualcuno ha lasciato delle misure…'},
-  {nome:'Il teatrino',gen:T5,vista:[-4.4,1.15,9.9,3.6,Math.PI-0.4,1.3],anello:[-4.55,1.3,10.0,0.55],fila:5,msg:'Dietro il sipario, le figure aspettano il loro nome…'},
-  {nome:'La porta',gen:T6,vista:[-5.2,1.05,-7.65,3.4,Math.PI/2,1.38],anello:[-5.25,1.05,-7.65,0.6],fila:1,msg:'La porta conosce le sue due metà. Il lucchetto aspetta sei cifre.'}];
-function genera(seme){const RL=RACCOLTA_LOGICA,r=RL.mulberry32(RL.cyrb53(String(seme)+'|fuga'));
-  const pk=a=>a[Math.floor(r()*a.length)],mescola=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
-  const mi=(n,k)=>mescola([...Array(n).keys()]).slice(0,k);
+  {nome:'Il pavimento',gen:T1,vista:[0.9,0,2.2,3.6,-0.43,0.72],anello:[1.215,0.3,2.1,0.42],fila:3,msg:'Il pavimento nasconde le sue misure…'},
+  {nome:'Le vetrate',gen:T2,vista:[5.0,1.75,2.04,5.4,-Math.PI/2,1.42],anello:[5.2,2.95,2.04,0.4],lato:1.5,fila:2,msg:'Nei telai qualcuno ha teso un filo d\'oro…'},
+  {nome:'I pilastri blu',gen:T3,vista:[-5.0,1.4,-1.3,5.6,Math.PI/2+0.25,1.36],anello:[-5.05,2.9,-1.3,0.4],fila:4,msg:'I pilastri blu stanno dritti da sempre. Si incontreranno mai?'},
+  {nome:'Il tavolone',gen:T4,vista:[0.52,0.74,9.6,3.9,Math.PI,0.9],anello:[0.52,1.1,9.785,0.45],fila:6,msg:'Il tavolone non dice quanto è lungo…'},
+  {nome:'Il teatrino',gen:T5,vista:[-4.55,0.9,9.6,2.6,Math.PI-0.15,1.45],anello:[-4.55,1.25,9.85,0.4],fila:5,msg:'Sul teatrino brillano linee d\'oro: dentro ci sono figure nascoste…'},
+  {nome:'La porta',gen:T6,vista:[-5.2,1.1,-8.2,5.0,Math.PI/2+0.2,1.4],anello:[-5.25,2.4,-7.65,0.35],fila:1,msg:'La porta conosce le sue due metà. Il lucchetto aspetta sei cifre.'}];
+function genera(seme){const RL=RACCOLTA_LOGICA,r=RL.mulberry32(RL.cyrb53(String(seme)+'|fuga2'));
+  const pk=a=>a[Math.floor(r()*a.length)];
   const codice=[];for(let i=0;i<6;i++)codice.push(Math.floor(r()*10));
-  return {seme:String(seme),codice,enigmi:TAPPE.map(t=>t.gen(r,pk,mi,mescola))};}
+  const enigmi=TAPPE.map(t=>t.gen(r,pk)),regola=Math.floor(r()*3);
+  // la tappa 3 usa la coppia di pilastri del generatore: la vista segue il centro dell'enigma
+  return {seme:String(seme),codice,enigmi,regola,atteso:REGOLE[regola].f(codice).join('')};}
 
-// ---------------------------------------------------------------- scena: anello d'oro, scatola da cliccare, luce del corridoio
-// un solo programma (MeshBasic additivo, toneMapped false) per anello e luci: compilato con il mondo (mondo:costruito)
+
+// ---------------------------------------------------------------- scena: anello d'oro, scatola da cliccare, luce del corridoio, segni degli strumenti
+// MeshBasic additivi (toneMapped false) e LineBasic: tutti visibili alla compilazione del mondo (mondo:costruito), poi nascosti se non servono
 const root=new THREE.Group();root.name='fuga';
 const matOro=new THREE.MeshBasicMaterial({color:0xD4A017,transparent:true,opacity:0.7,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false});
 const anello=new THREE.Mesh(new THREE.TorusGeometry(1,0.045,8,56),matOro);anello.renderOrder=5;root.add(anello);
@@ -9167,10 +9117,26 @@ const matPozza=matCor.clone();
 const d2=COR.door2,zc=(d2[0]+d2[1])/2,lw=d2[1]-d2[0];
 const luceCor=new THREE.Mesh(new THREE.PlaneGeometry(lw,COR.dh2),matCor);luceCor.rotation.y=Math.PI/2;luceCor.position.set(COR.x-0.35,COR.dh2/2,zc);root.add(luceCor);
 const pozza=new THREE.Mesh(new THREE.PlaneGeometry(2.2,lw*1.15),matPozza);pozza.rotation.x=-Math.PI/2;pozza.position.set(COR.x+1.15,0.012,zc);root.add(pozza);
+// segni: linee d'oro sempre davanti (depthTest false) per il disegno della tappa (segni), la misura o l'asse (traccia), l'arco dell'angolo
+const matLin=new THREE.LineBasicMaterial({color:0xE2C35A,transparent:true,opacity:0.95,depthTest:false,depthWrite:false,toneMapped:false});
+const matTr=new THREE.LineBasicMaterial({color:0xFFE9A8,transparent:true,opacity:1,depthTest:false,depthWrite:false,toneMapped:false});
+function linee(n,mat,seg){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(n*3),3));const l=seg?new THREE.LineSegments(g,mat):new THREE.Line(g,mat);l.frustumCulled=false;l.renderOrder=6;root.add(l);return l;}
+const segni=linee(64,matLin,true),traccia=linee(8,matTr,false),arco=linee(40,matTr,false);
+function scrivi(l,P){const a=l.geometry.attributes.position;let n=0;for(const p of P){if(n>=a.count)break;a.setXYZ(n++,p[0],p[1],p[2]);}a.needsUpdate=true;l.geometry.setDrawRange(0,n);l.visible=n>1;}
+const matPunto=new THREE.MeshBasicMaterial({color:0xD4A017,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false});
+const geoPunto=new THREE.SphereGeometry(1,12,8),PUNTI=[];for(let i=0;i<10;i++){const m=new THREE.Mesh(geoPunto,matPunto.clone());m.renderOrder=7;m.scale.setScalar(0.03);root.add(m);PUNTI.push(m);}
+const matFig=new THREE.MeshBasicMaterial({color:0x2E9E5B,transparent:true,opacity:0.45,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false,side:THREE.DoubleSide});
+const figura=new THREE.Mesh(new THREE.BufferGeometry(),matFig);figura.geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(18),3));figura.frustumCulled=false;figura.renderOrder=5;root.add(figura);
+const etEl=document.createElement('div');etEl.id='fgEt';etEl.className='fg-et';etEl.hidden=true;document.body.appendChild(etEl);
+const _e=new THREE.Vector3();let etPos=null;
+function cartellino(t,p){if(!t){etEl.hidden=true;etPos=null;return;}etEl.textContent=t;etEl.hidden=false;etPos=p;posCartellino();}
+function posCartellino(){if(!etPos||etEl.hidden)return;_e.set(etPos[0],etPos[1],etPos[2]).project(camera);if(_e.z>1){etEl.style.opacity='0';return;}etEl.style.opacity='1';
+  etEl.style.transform=`translate(${Math.round((_e.x*0.5+0.5)*innerWidth)}px,${Math.round((-_e.y*0.5+0.5)*innerHeight)-34}px) translateX(-50%)`;}
+
 
 // ---------------------------------------------------------------- stato della partita
 let S=null;
-function avvia(seme){const g=genera(seme);S={seme:g.seme,codice:g.codice,enigmi:g.enigmi,tappa:0,fase:'intro',risolte:[0,0,0,0,0,0].map(()=>false),aiuti:[0,0,0,0,0,0],
+function avvia(seme){const g=genera(seme);S={seme:g.seme,codice:g.codice,enigmi:g.enigmi,regola:g.regola,atteso:g.atteso,misure:[],tappa:0,fase:'intro',risolte:[0,0,0,0,0,0].map(()=>false),aiuti:[0,0,0,0,0,0],
   tentativi:[0,0,0,0,0,0],fb:[null,null,null,null,null,null],tLuc:0,fbLuc:null,tempo:0,crono:false,luci:false,uscita:false};aggDock();return S;}
 const nRisolte=()=>S?S.risolte.filter(Boolean).length:0,nAiuti=()=>S?S.aiuti.reduce((a,b)=>a+b,0):0;
 
@@ -9216,6 +9182,7 @@ function aggiornaClima(dt){const k=1-Math.exp(-dt*(S&&S.uscita?1.1:2.2));
     else if(q<0.75)suona('ronzio',{dur:9,vol:0.5});else suona('giunto',{vol:0.25,pan:Math.random()*1.2-0.6});}}}
   // anello: segue la camera (sempre di fronte), respiro lento dell'opacità (fermo con prefers-reduced-motion)
   if(anello.visible){anello.quaternion.copy(camera.quaternion);if(!RIDOTTO&&!PROVA)matOro.opacity=0.55+0.2*Math.sin(performance.now()/900);}
+  posCartellino();
   if(S&&S.crono&&(S.fase==='gioco'||S.fase==='lucchetto')){S.tempo+=dt;const el=$f('fgTempo');if(el){const t=Math.floor(S.tempo),s=t%60+'';const tx=Math.floor(t/60)+':'+(s.length<2?'0'+s:s);if(el.textContent!==tx)el.textContent=tx;}}}
 
 // messaggi enigmatici in corsivo oro, in alto al centro
@@ -9227,6 +9194,7 @@ const dock=document.createElement('div');dock.className='dock fuga';document.bod
 dock.innerHTML=`<div class="fg-row"><div class="fg-lock" role="group" aria-label="Lucchetto: cifre trovate">${ICON_LUCCHETTO}${[0,1,2,3,4,5].map(i=>`<span class="fg-c" id="fgC${i}" title="Cifra ${i+1}: tappa ${i+1}">·</span>`).join('')}</div>
 <div class="fg-t"><b id="fgN"></b><span id="fgTit"></span></div>
 <button class="btn" id="fgEnigma" type="button">Enigma</button>
+<button class="btn ghost" id="fgMetro" type="button" aria-pressed="false" title="Metro: misura fra due punti (clic, poi clic; Esc annulla)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="vertical-align:-3px;margin-right:4px"><rect x="2.5" y="8" width="19" height="8" rx="1.5"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/></svg>Metro</button>
 <span class="fg-aiu">Aiuti usati: <b id="fgAiu">0</b></span>
 <button class="btn ghost" id="fgLuci" type="button" aria-pressed="false" title="Accende l'aula senza perdere i progressi">Luci accese</button>
 <button class="btn ghost" id="fgCrono" type="button" aria-pressed="false" title="Cronometro facoltativo: solo per voi, non dà punti">Cronometro</button><span class="fg-tempo" id="fgTempo" hidden>0:00</span></div>`;
@@ -9237,30 +9205,81 @@ function aggDock(){if(!S)return;for(let i=0;i<6;i++){const c=$f('fgC'+i);if(!c)c
   $f('fgCrono').setAttribute('aria-pressed',S.crono?'true':'false');$f('fgTempo').hidden=!S.crono;}
 $f('fgEnigma').onclick=()=>{if(!S)return;if(S.fase==='intro')apriIntro();else if(S.fase==='fine')apriDeb();else apriTappa();};
 $f('fgLuci').onclick=()=>luci(!S.luci);
+// metro del dock: misura libera sul pavimento e sui punti d'oro della tappa; di nuovo il pulsante per tornare allo strumento della tappa
+$f('fgMetro').onclick=()=>{if(!S||S.fase==='intro')return;if(T.modo==='metro'&&T.libero){strumentoTappa();return;}strumento('metro');T.libero=true;toast('Metro: cliccate due punti. Esc annulla.',2200);};
 $f('fgCrono').onclick=()=>{S.crono=!S.crono;aggDock();};
 function luci(on){if(!S)return;S.luci=!!on;bersagli();velo();profiloResa(1.2);aggDock();if(on){C.fl=null;toast('Luci accese: i progressi restano. Potete tornare al buio quando volete.',3200);}}
 
+// ---------------------------------------------------------------- strumenti: metro, caccia all'angolo, vertici, asse
+// Il clic sulla tela, con uno strumento attivo, si aggancia al punto d'oro più vicino sullo schermo (entro 44 px: va bene anche col dito
+// sulla LIM) oppure, dove serve, a un piano (pavimento per il metro libero, parete per l'asse). onPointerDown restituisce true solo se il
+// clic è servito allo strumento: allora la camera non gira; un clic lontano dai punti lascia trascinare la vista come sempre.
+const NOMI_STR={metro:'Metro',angolo:'Caccia all\'angolo',vertici:'Figure nascoste',asse:'Asse di simmetria'};
+const T={modo:null,a:null,sel:[]};   // modo attivo, primo punto del metro o dell'asse, vertici scelti
+const _p=new THREE.Vector3(),_ray=new THREE.Raycaster(),_n=new THREE.Vector2(),_pl=new THREE.Plane(),_h=new THREE.Vector3();
+const E_=()=>S&&S.fase==='gioco'?S.enigmi[S.tappa]:null;
+function puntiAttivi(){const E=E_();if(!E)return [];if(T.modo==='angolo')return E.angoli?E.punti:[];if(T.modo==='asse')return [];
+  if(T.modo==='metro')return E.strumento==='metro'?E.punti:E.strumento==='vertici'||E.strumento==='angolo'?E.punti:[];return E.punti||[];}
+function mostraPunti(){const P=puntiAttivi();PUNTI.forEach((m,i)=>{const p=P[i];m.visible=!!p&&!!T.modo;if(p){m.position.set(p[0],p[1],p[2]);m.material.color.setHex(T.sel.includes(i)?0x7CFFB0:0xD4A017);}});}
+function strumento(modo){T.modo=modo||null;T.a=null;T.sel=[];scrivi(traccia,[]);scrivi(arco,[]);figura.visible=false;cartellino(null);mostraPunti();
+  const b=$f('fgMetro');if(b)b.setAttribute('aria-pressed',T.modo==='metro'?'true':'false');document.body.classList.toggle('fg-strumento',!!T.modo);}
+function vicino(e){const P=puntiAttivi();let best=-1,bd=44;P.forEach((p,i)=>{_p.set(p[0],p[1],p[2]).project(camera);if(_p.z>1)return;const x=(_p.x*0.5+0.5)*innerWidth,y=(-_p.y*0.5+0.5)*innerHeight,d=Math.hypot(x-e.clientX,y-e.clientY);if(d<bd){bd=d;best=i;}});return best;}
+function sulPiano(e,normale,cost){_n.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);_ray.setFromCamera(_n,camera);_pl.set(normale,cost);return _ray.ray.intersectPlane(_pl,_h)?[_h.x,_h.y,_h.z]:null;}
+const _nY=new THREE.Vector3(0,1,0),_nX=new THREE.Vector3(1,0,0);
+// un clic dello strumento su un punto dell'aula: p = [x,y,z], i = indice del punto d'oro (o -1)
+function clicStrumento(p,i){const E=E_();
+  if(T.modo==='metro'){if(!T.a||T.b){T.a=p;T.b=null;scrivi(traccia,[p,p]);cartellino('clicca il secondo punto',p);suona('tic',{nota:'A5'});return;}
+    T.b=p;const d=Math.hypot(p[0]-T.a[0],p[1]-T.a[1],p[2]-T.a[2]);scrivi(traccia,[T.a,p]);cartellino(Math.round(d*100)+' cm',[(T.a[0]+p[0])/2,(T.a[1]+p[1])/2,(T.a[2]+p[2])/2]);
+    if(S){S.misure.push({a:T.a,b:p,d});if(S.misure.length>40)S.misure.shift();}suona('tic',{nota:'D6'});if(E&&E.richiede&&C.dentro&&panelState)apriTappa();return;}
+  if(!E)return;
+  if(T.modo==='angolo'){const A=E.angoli[i];if(!A)return;disegnaArco(A);cartellino(A.deg+'°',A.v);rispondi({angolo:A});return;}
+  if(T.modo==='vertici'){if(T.sel.length>=E.nv){T.sel=[];figura.visible=false;}if(T.sel.includes(i))return;T.sel.push(i);mostraPunti();const P=T.sel.map(k=>E.punti[k]);
+    scrivi(traccia,T.sel.length===E.nv?P.concat([P[0]]):P);suona('tic',{nota:'A5'});
+    if(T.sel.length===E.nv){riempi(E.nv===4?ordina3(P,E):P);rispondi({vertici:T.sel.slice()});}return;}
+  if(T.modo==='asse'){if(!T.a||T.b){T.a=p;T.b=null;scrivi(traccia,[p,p]);cartellino('clicca il secondo punto',p);suona('tic',{nota:'A5'});return;}
+    T.b=p;scrivi(traccia,[T.a,p]);cartellino(null);rispondi({asse:[T.a,p]});}}
+function ordina3(P,E){const c=E.centro;return P.slice().sort((a,b)=>Math.atan2(a[1]-c[1],a[0]-c[0])-Math.atan2(b[1]-c[1],b[0]-c[0]));}
+function riempi(P){const a=figura.geometry.attributes.position;const tri=P.length===3?[P[0],P[1],P[2]]:[P[0],P[1],P[2],P[0],P[2],P[3]];tri.forEach((p,k)=>a.setXYZ(k,p[0],p[1],p[2]));a.needsUpdate=true;figura.geometry.setDrawRange(0,tri.length);figura.visible=true;}
+function disegnaArco(A){const v=A.v,u=[A.a[0]-v[0],A.a[1]-v[1],A.a[2]-v[2]],w=[A.b[0]-v[0],A.b[1]-v[1],A.b[2]-v[2]],nu=Math.hypot(...u),nw=Math.hypot(...w),R=0.22,P=[];
+  for(let k=0;k<=24;k++){const t=k/24;// interpolazione sferica fra le due direzioni
+    const th=Math.acos(Math.max(-1,Math.min(1,(u[0]*w[0]+u[1]*w[1]+u[2]*w[2])/(nu*nw)))),s=Math.sin(th)||1,c1=Math.sin((1-t)*th)/s,c2=Math.sin(t*th)/s;
+    P.push([v[0]+R*(c1*u[0]/nu+c2*w[0]/nw),v[1]+R*(c1*u[1]/nu+c2*w[1]/nw),v[2]+R*(c1*u[2]/nu+c2*w[2]/nw)]);}
+  scrivi(arco,[A.a,v,A.b]);scrivi(traccia,P);}
+function pointerStrumento(e){if(!T.modo||!C.dentro||!S||e.button>0)return false;const E=E_();
+  if(T.modo==='asse'&&E&&E.figura){const p=sulPiano(e,_nX,-E.piano),F=E.figura;if(!p||p[1]<F.y0-0.35||p[1]>F.y1+0.35||p[2]<F.z0-0.35||p[2]>F.z1+0.35)return false;clicStrumento(p,-1);return true;}
+  const i=vicino(e);if(i>=0){const P=puntiAttivi();clicStrumento(P[i],i);return true;}
+  // metro libero sul pavimento (scelto dal dock) quando non c'è un punto d'oro vicino
+  if(T.modo==='metro'&&T.libero){const p=sulPiano(e,_nY,0);if(p&&p[0]>ROOM.x0&&p[0]<ROOM.x1&&p[2]>ROOM.z0&&p[2]<ROOM.z1){clicStrumento([p[0],0.004,p[2]],-1);return true;}}
+  return false;}
+function strumentoTappa(){const E=E_();if(!E||S.risolte[S.tappa]){strumento(null);return;}strumento(E.strumento);T.libero=false;}
+
 // ---------------------------------------------------------------- tappe: volo, anello, pannello con l'enigma
 const _a=new THREE.Vector3(),_t=new THREE.Vector3();
-function posaTappa(i){if(i>5){anello.visible=false;scatola.position.set(0,-50,0);return;}const t=TAPPE[i],a=t.anello;anello.visible=true;anello.position.set(a[0],a[1],a[2]);anello.scale.setScalar(a[3]*0.55);
-  scatola.position.set(a[0],a[1],a[2]);}
+const centroTappa=i=>{const E=S&&S.enigmi[Math.min(i,5)];return E&&E.centro?E.centro:TAPPE[Math.min(i,5)].vista;};
+function posaTappa(i){if(i>5){anello.visible=false;scatola.position.set(0,-50,0);scrivi(segni,[]);return;}const t=TAPPE[i],a=t.anello,c=centroTappa(i);anello.visible=false;anello.position.set(c[0],a[1],c[2]);   // i segni e i punti d'oro indicano già l'oggetto: l'anello resta solo come riferimento
+  anello.scale.setScalar(a[3]*0.55);
+  scatola.position.set(c[0],c[1],c[2]);const E=S.enigmi[i],P=[];(E.segni||[]).forEach(s=>{P.push(s[0],s[1]);});scrivi(segni,P);}
 // il bersaglio si sposta un po' a destra della camera: l'oggetto resta a sinistra del centro e il pannello (a destra dell'ancora) non lo copre
-function volaTappa(i){const v=i>5?TAPPE[5].vista:TAPPE[i].vista,s=i>5?0:(innerWidth<1300?0.15:0.08)*v[3];_t.set(v[0]+Math.cos(v[4])*s,v[1],v[2]-Math.sin(v[4])*s);flyTo(_t,v[3],v[4],v[5]);}
-// ancora del pannello: appena a destra dell'anello (verso destra della camera della tappa), così il pannello non copre l'anello
-const ancora=()=>{const i=Math.min(S.tappa,5),a=TAPPE[i].anello,th=TAPPE[i].vista[4],d=a[3]*0.8;return _a.set(a[0]+Math.cos(th)*d,a[1],a[2]-Math.sin(th)*d);};
+function volaTappa(i){const v=i>5?TAPPE[5].vista:TAPPE[i].vista,c=i>5?v:centroTappa(i),s=i>5?0:(innerWidth<1300?0.26:0.14)*v[3];_t.set(c[0]+Math.cos(v[4])*s,i>5?v[1]:v[1],c[2]-Math.sin(v[4])*s);flyTo(_t,v[3],v[4],v[5]);}
+// ancora del pannello: a destra dell'oggetto (verso destra della camera della tappa), così il pannello non lo copre
+const ancora=()=>{const i=Math.min(S.tappa,5),a=TAPPE[i].anello,c=centroTappa(i),th=TAPPE[i].vista[4],d=TAPPE[i].lato||0.55;return _a.set(c[0]+Math.cos(th)*d,a[1]-0.2,c[2]-Math.sin(th)*d);};
 let tApri=null;
-function vaiTappa(i,senzaVolo){S.tappa=i;posaTappa(S.fase==='lucchetto'?5:i);aggDock();if(!senzaVolo)volaTappa(i);
+function vaiTappa(i,senzaVolo){S.tappa=i;posaTappa(S.fase==='lucchetto'?6:i);aggDock();if(!senzaVolo)volaTappa(i);strumentoTappa();
   if(S.fase==='gioco')msg(TAPPE[i].msg);clearTimeout(tApri);tApri=setTimeout(()=>{if(C.dentro&&S&&(S.fase==='gioco'||S.fase==='lucchetto'))apriTappa();},PROVA?0:1300);}
+const ISTR={metro:'Metro: cliccate un punto d\'oro, poi un altro. La misura compare sulla linea.',angolo:'Cliccate un punto d\'oro: compare l\'angolo con la sua ampiezza.',
+  vertici:'Cliccate i punti d\'oro uno dopo l\'altro: la figura si colora.',asse:'Cliccate due punti sulla parete: compare la linea.'};
 function opzioniHtml(E,i){const fatto=S.risolte[i];
-  if(E.tipo==='scelta')return `<div class="fg-ops" role="group" aria-label="Risposte">${E.opzioni.map((o,k)=>`<button class="btn ghost" type="button" data-fg-o="${k}"${fatto?' disabled':''}>${esc(o.t)}</button>`).join('')}</div>`;
+  if(E.tipo==='azione')return '';
+  if(E.tipo==='scelta'){const manca=E.richiede&&E.richiede(S.misure);return (manca&&!fatto?`<p class="fg-ist">${esc(manca)}</p>`:'')+`<div class="fg-ops" role="group" aria-label="Risposte">${E.opzioni.map((o,k)=>`<button class="btn ghost" type="button" data-fg-o="${k}"${fatto||manca?' disabled':''}>${esc(o.t)}</button>`).join('')}</div>`;}
   return `<div class="fg-ops"><input class="fg-num" id="fgNum" type="text" inputmode="decimal" autocomplete="off" aria-label="Risposta"${fatto?' disabled':''}>${E.unita?`<span style="align-self:center">${esc(E.unita)}</span>`:''}<button class="btn" type="button" data-fg="controlla"${fatto?' disabled':''}>Controlla</button></div>`;}
 function apriTappa(){if(!S||!C.dentro)return;if(S.fase==='intro'){apriIntro();return;}if(S.fase==='fine'){apriDeb();return;}if(S.fase==='lucchetto'){apriLucchetto();return;}
-  const i=S.tappa,E=S.enigmi[i],fb=S.fb[i],na=S.aiuti[i];
+  const i=S.tappa,E=S.enigmi[i],fb=S.fb[i],na=S.aiuti[i];if(!S.risolte[i]&&T.modo!==E.strumento&&!(T.modo==='metro'&&T.libero))strumentoTappa();
   const aiuti=E.aiuti.slice(0,na).map((a,k)=>`<p class="fg-ai"><b>${k<2?'Suggerimento '+(k+1):'Soluzione'}</b>${esc(a)}</p>`).join('');
+  const ms=E.strumento==='metro'&&S.misure.length?`<p class="fg-mis">Le vostre misure: ${S.misure.slice(-4).map(m=>Math.round(m.d*100)+' cm').join(' · ')}</p>`:'';
   const az=S.risolte[i]?`<button class="btn gold" type="button" data-fg="avanti">${i<5?'Avanti: tappa '+(i+2):'Al lucchetto'}</button>`:
     (na<3?`<button class="btn ghost" type="button" data-fg="aiuto">${na<2?'Chiedi un suggerimento':'Mostra la soluzione'} (${na+1} di 3)</button>`:'');
-  openPanel({title:`Tappa ${i+1} · ${TAPPE[i].nome}`,badges:[['Fuga dall\'aula','gold'],[`Aiuti qui: ${na} di 3`,'']],
-    after:`<div class="fg-p"><p class="fg-q">${esc(E.domanda)}</p>${E.fig||''}${opzioniHtml(E,i)}<div class="fg-fb${fb?' '+fb.c:''}" role="status" aria-live="polite">${fb?fb.h:''}</div>${aiuti}<div class="fg-az">${az}</div></div>`},ancora);
+  openPanel({title:`Tappa ${i+1} · ${TAPPE[i].nome}`,badges:[[NOMI_STR[E.strumento],'gold'],[`Aiuti qui: ${na} di 3`,'']],
+    after:`<div class="fg-p"><p class="fg-q">${esc(E.domanda)}</p>${S.risolte[i]?'':`<p class="fg-ist">${esc(ISTR[E.strumento])} Esc annulla.</p>`}${ms}${opzioniHtml(E,i)}<div class="fg-fb${fb?' '+fb.c:''}" role="status" aria-live="polite">${fb?fb.h:''}</div>${aiuti}<div class="fg-az">${az}</div></div>`},ancora);
   collega();}
 function collega(){const info=$f('info');info.querySelectorAll('[data-fg-o]').forEach(b=>b.onclick=()=>rispondi(+b.dataset.fgO));
   const n=$f('fgNum'),c=info.querySelector('[data-fg="controlla"]');if(c)c.onclick=()=>rispondi(leggiNum(n.value));if(n){n.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();rispondi(leggiNum(n.value));}};}
@@ -9269,24 +9288,31 @@ function collega(){const info=$f('info');info.querySelectorAll('[data-fg-o]').fo
   const l=info.querySelector('[data-fg="lucchetto"]');if(l)l.onclick=()=>provaCodice($f('fgLk').value);
   const lk=$f('fgLk');if(lk)lk.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();provaCodice(lk.value);}};}
 function chiediAiuto(){const i=S.tappa;if(S.risolte[i]||S.aiuti[i]>=3)return;S.aiuti[i]++;aggDock();apriTappa();}
-// risposta: indice per le scelte, numero per le domande aperte. Errore = informazione sul compito, in ambra; giusto: cifra, in verde
+// risposta: indice (scelta), numero (misura o calcolo, con tolleranza) o gesto (azione, verifica geometrica). Errore in ambra con il perché
 function rispondi(val){if(!S||S.fase!=='gioco')return false;const i=S.tappa,E=S.enigmi[i];if(S.risolte[i])return true;
-  if(E.tipo==='numero'&&!isFinite(val)){S.fb[i]={c:'ambra',h:'Scrivete un numero (per i decimali va bene la virgola).'};apriTappa();return false;}
-  S.tentativi[i]++;const giusto=E.tipo==='scelta'?val===E.giusta:Math.abs(val-E.giusta)<0.005;
-  if(giusto){S.risolte[i]=true;S.fb[i]={c:'ok',h:`Esatto: ${esc(E.spiega)}<br>Cifra trovata: <span class="fg-cif">${S.codice[i]}</span> · è la cifra n. ${i+1} del lucchetto.`};
+  if(E.tipo==='numero'&&!isFinite(val)){S.fb[i]={c:'ambra',h:'Scrivete un numero (per i decimali va bene la virgola).'};if(C.dentro)apriTappa();return false;}
+  if(E.tipo==='scelta'&&E.richiede&&E.richiede(S.misure)){S.fb[i]={c:'ambra',h:esc(E.richiede(S.misure))};if(C.dentro)apriTappa();return false;}
+  S.tentativi[i]++;let giusto,perche='';
+  if(E.tipo==='azione'){const r=val&&val.angolo?E.verifica(val.angolo):val&&val.vertici?E.verifica(val.vertici):val&&val.asse?E.verifica(val.asse[0],val.asse[1]):{ok:false,perche:'Usate lo strumento sull\'oggetto.'};giusto=r.ok;perche=r.perche||'';}
+  else if(E.tipo==='scelta'){giusto=val===E.giusta;perche=(E.opzioni[val]&&E.opzioni[val].perche)||'Guardate di nuovo le misure.';}
+  else{giusto=Math.abs(val-E.giusta)<=(E.tol||0.005)+1e-9;if(!giusto)perche=E.fb(val);}
+  if(giusto){S.risolte[i]=true;S.fb[i]={c:'ok',h:`Esatto: ${esc(E.spiega)}<br>Cifra trovata: <span class="fg-cif">${S.codice[i]}</span> · è la cifra della tappa ${i+1}.`};
+    if(E.tipo!=='azione')strumento(null);else{T.modo=null;mostraPunti();document.body.classList.remove('fg-strumento');}
     bersagli();suona('interruttore');suona('conferma',{ritardo:0.25});aggDock();}
-  else{const p=E.tipo==='scelta'?(E.opzioni[val]&&E.opzioni[val].perche)||'Guardate di nuovo il disegno.':E.fb(val);S.fb[i]={c:'ambra',h:'Non ancora. '+esc(p)};suona('neutro');}
+  else{S.fb[i]={c:'ambra',h:'Non ancora. '+esc(perche)};suona('neutro');}
   if(C.dentro)apriTappa();return giusto;}
-function avanti(){const i=S.tappa;if(!S.risolte[i])return;if(i<5){vaiTappa(i+1);}else{S.fase='lucchetto';aggDock();posaTappa(5);msg('Sei cifre, nell\'ordine delle tappe. La porta ascolta…');apriLucchetto();}}
+function avanti(){const i=S.tappa;if(!S.risolte[i])return;strumento(null);if(i<5){vaiTappa(i+1);}else{S.fase='lucchetto';aggDock();posaTappa(6);msg('Sei cifre e una regola. La porta ascolta…');apriLucchetto();}}
 function apriLucchetto(){if(!C.dentro)return;const fb=S.fbLuc;
   openPanel({title:'Il lucchetto della porta',badges:[['Fuga dall\'aula','gold'],[`Tentativi: ${S.tLuc}`,'']],
-    after:`<div class="fg-p"><p class="fg-q">Scrivete le 6 cifre del lucchetto, nell'ordine delle tappe: la cifra della tappa 1 per prima.</p><div class="fg-ops"><input class="fg-num lk" id="fgLk" type="text" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="Codice di 6 cifre"><button class="btn gold" type="button" data-fg="lucchetto">Apri</button></div><div class="fg-fb${fb?' '+fb.c:''}" role="status" aria-live="polite">${fb?fb.h:''}</div></div>`},ancora);
+    after:`<div class="fg-p"><p class="fg-q">Sul lucchetto c'è scritto: <b>scrivete le 6 cifre ${esc(REGOLE[S.regola].t)}</b>.</p><p class="fg-ist">Le cifre trovate sono nel riquadro in basso, in ordine di tappa.</p><div class="fg-ops"><input class="fg-num lk" id="fgLk" type="text" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="Codice di 6 cifre"><button class="btn gold" type="button" data-fg="lucchetto">Apri</button></div><div class="fg-fb${fb?' '+fb.c:''}" role="status" aria-live="polite">${fb?fb.h:''}</div></div>`},ancora);
   collega();const lk=$f('fgLk');if(lk&&!PROVA)try{lk.focus({preventScroll:true});}catch(e){}}
 function provaCodice(s){if(!S||S.fase!=='lucchetto')return false;s=String(s||'').replace(/\D/g,'');
-  if(s.length!==6){S.fbLuc={c:'ambra',h:'Servono esattamente 6 cifre: guardate il lucchetto nel riquadro in basso.'};apriLucchetto();return false;}
-  S.tLuc++;const ok=s===S.codice.join('');
-  if(!ok){let n=0;for(let i=0;i<6;i++)if(+s[i]===S.codice[i])n++;S.fbLuc={c:'ambra',h:`Il lucchetto non si apre: ${n} cifr${n===1?'a è':'e sono'} al posto giusto. Controllate l'ordine: tappa 1, tappa 2… fino alla tappa 6.`};suona('neutro');apriLucchetto();return false;}
+  if(s.length!==6){S.fbLuc={c:'ambra',h:'Servono esattamente 6 cifre.'};apriLucchetto();return false;}
+  S.tLuc++;const ok=s===S.atteso;
+  if(!ok){let n=0;for(let i=0;i<6;i++)if(s[i]===S.atteso[i])n++;const tappe=s===S.codice.join('');
+    S.fbLuc={c:'ambra',h:tappe&&S.regola!==0?'Queste sono le cifre nell\'ordine delle tappe, ma la regola del lucchetto chiede un altro ordine: rileggetela.':`Il lucchetto non si apre: ${n} cifr${n===1?'a è':'e sono'} al posto giusto. Rileggete la regola e controllate l'ordine.`};suona('neutro');apriLucchetto();return false;}
   esci_();return true;}
+
 // finale: la porta si apre piano, luce calda dal corridoio, tutte le plafoniere si accendono una fila dopo l'altra, «Siete usciti!»
 function esci_(){S.fase='fine';S.uscita=true;closePanel();aggDock();anello.visible=false;velo();suona('maniglia');setTimeout(()=>suona('porta'),350);
   portaA(haPorta()?PORTA.APERTA:-Math.PI/2,PROVA?0:4.2);C.corT=1;if(PROVA){C.cor=1;matCor.opacity=0.85;matPozza.opacity=0.32;luceCor.visible=pozza.visible=true;}
@@ -9321,17 +9347,30 @@ function profiloResa(dur){if(typeof RESA!=='undefined'&&RESA.profilo&&C.dentro){
 W.build=()=>{avvia(PQ.get('seed')||nuovoSeme());posaTappa(0);luceCor.visible=pozza.visible=true;};   // visibili alla compilazione del mondo, poi spente
 W.enter=()=>{posaTappa(S.fase==='lucchetto'?5:S.fase==='fine'?6:S.tappa);if(S.fase!=='fine'){matCor.opacity=matPozza.opacity=0;C.cor=C.corT=0;}entraClima();aggDock();};
 W.entered=()=>{luceCor.visible=pozza.visible=C.cor>0.002;if(!S)return;if(S.fase==='intro')apriIntro();else if(S.fase==='fine')apriDeb();else vaiTappa(S.tappa);};
-W.exit=()=>{clearTimeout(tApri);intro.classList.remove('open');deb.classList.remove('open');esciClima();};
+W.exit=()=>{clearTimeout(tApri);strumento(null);intro.classList.remove('open');deb.classList.remove('open');esciClima();};
 W.update=dt=>{if(C.dentro)aggiornaClima(Math.min(dt,0.1));};
-W.pickables=()=>S&&S.fase!=='intro'&&S.fase!=='fine'?[scatola]:[];
+W.pickables=()=>S&&!T.modo&&S.fase!=='intro'&&S.fase!=='fine'?[scatola]:[];
+W.onPointerDown=e=>{try{return pointerStrumento(e);}catch(err){console.error(err);return false;}};
+// Esc annulla la misura (o la traccia) in corso; il doppio clic con uno strumento attivo non fa volare la camera
+AGG.su('esc',()=>{if(!C.dentro||!T.modo||(!T.a&&!T.sel.length))return false;const m=T.modo,l=T.libero;strumento(m);T.libero=l;return true;},20);
+renderer.domElement.addEventListener('dblclick',e=>{if(C.dentro&&T.modo)e.stopImmediatePropagation();},true);
 // per i collaudi: stato della partita e risposte via API (stesse funzioni dei pulsanti)
-W.stato=()=>S&&{seme:S.seme,codice:S.codice.join(''),fase:S.fase,tappa:S.tappa,risolte:S.risolte.slice(),aiuti:S.aiuti.slice(),tentativi:S.tentativi.slice(),luci:S.luci,uscita:S.uscita,
-  enigmi:S.enigmi.map((e,i)=>({tappa:TAPPE[i].nome,v:e.v,tipo:e.tipo,domanda:e.domanda,giusta:e.giusta,opzioni:e.opzioni?e.opzioni.map(o=>o.t):null})),
+W.stato=()=>S&&{seme:S.seme,codice:S.codice.join(''),atteso:S.atteso,regola:S.regola,misure:S.misure.map(m=>Math.round(m.d*1000)/10),strumento:T.modo,fase:S.fase,tappa:S.tappa,risolte:S.risolte.slice(),aiuti:S.aiuti.slice(),tentativi:S.tentativi.slice(),luci:S.luci,uscita:S.uscita,
+  enigmi:S.enigmi.map((e,i)=>({tappa:TAPPE[i].nome,v:e.v,tipo:e.tipo,strumento:e.strumento,domanda:e.domanda,giusta:e.giusta,opzioni:e.opzioni?e.opzioni.map(o=>o.t):null,punti:e.punti,centro:e.centro,figura:e.figura||null,angoli:e.angoli?e.angoli.map(a=>({v:a.v,deg:a.deg})):null})),
   clima:{luce:haResa()?RESA.U.uAulaLuce.value.toArray():null,file:C.file.slice(),porta:haPorta()?PORTA.stato():null,velo:typeof VELO!=='undefined'?VELO.stato().proprietari:null,dentro:C.dentro}};
-W.prova={inizia,rispondi,avanti,provaCodice,luci,nuova,aiuto:chiediAiuto,genera,
+W.prova={inizia,rispondi,avanti,provaCodice,luci,nuova,aiuto:chiediAiuto,genera,classificaFigura,
   giusta:()=>{const E=S.enigmi[S.tappa];return E.giusta;},
+  // clic simulato dello strumento attivo su un punto dell'aula (stessa funzione del puntatore); i = indice del punto d'oro
+  clic:(p,i)=>{clicStrumento(p,i==null?-1:i);return W.stato().misure;},strumento:(m,libero)=>{strumento(m);T.libero=!!libero;},
+  // gesto giusto della tappa: misure sui punti d'oro, angolo del tipo chiesto, vertici giusti, asse sul centro; poi la risposta
+  azione(){const E=S.enigmi[S.tappa],P=E.punti;strumentoTappa();
+    if(E.strumento==='metro'){if(E.v.startsWith('pilastri')){clicStrumento(P[0],0);clicStrumento(P[1],1);clicStrumento(P[2],2);clicStrumento(P[3],3);return rispondi(E.giusta);}
+      clicStrumento(P[0],0);clicStrumento(P[1],1);clicStrumento(P[1],1);clicStrumento(P[2],2);return rispondi(E.giusta);}
+    if(E.strumento==='angolo'){let k=-1;E.angoli.forEach((a,j)=>{if(tipoAng(a.deg)===E.v)k=j;});clicStrumento(E.angoli[k].v,k);return S.risolte[S.tappa];}
+    if(E.strumento==='vertici'){const SOL={'triangolo rettangolo':[0,1,2],'triangolo isoscele':[0,1,4],'trapezio':[0,1,5,3],'rettangolo':[0,6,5,3]}[E.v];SOL.forEach(k=>clicStrumento(P[k],k));return S.risolte[S.tappa];}
+    const F=E.figura,X=E.piano,zc=(F.z0+F.z1)/2,yc=(F.y0+F.y1)/2;if(F.o==='v'){clicStrumento([X,F.y1-0.1,zc],-1);clicStrumento([X,F.y0+0.1,zc],-1);}else{clicStrumento([X,yc,F.z0+0.08],-1);clicStrumento([X,yc,F.z1-0.08],-1);}return S.risolte[S.tappa];},
   sbagliata:()=>{const E=S.enigmi[S.tappa];return E.tipo==='scelta'?(E.giusta+1)%E.opzioni.length:E.giusta+7;},
-  risolviTutte(){if(S.fase==='intro')inizia();for(let i=0;i<6;i++){rispondi(W.prova.giusta());avanti();}return S.fase;}};
+  risolviTutte(){if(S.fase==='intro')inizia();for(let i=0;i<6;i++){W.prova.azione();avanti();}return S.fase;}};
 AGG.api.fuga=W;
 registerWorld(W);return W;})();
 // @slot:P16
