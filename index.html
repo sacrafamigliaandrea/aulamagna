@@ -714,6 +714,7 @@ body.fg-strumento #c{cursor:crosshair}
 @media (max-width:1240px){.tab .sub{display:none}}
 @media (max-width:1208px){.tab:not(.on)>span{display:none}.tab:not(.on){padding:7px}}
 @media (max-width:1180px){.sp-row{gap:5px}.sp-row .btn{padding:6px 8px;font-size:13px}.sp-row .btn svg{display:none}}
+@media (max-width:1080px){.sp-row{gap:4px}.sp-row .btn{padding:5px 7px}.sp-sep{display:none}}
 /* @slot:css */
 </style>
 </head>
@@ -9409,7 +9410,7 @@ const PQ=new URLSearchParams(location.search),$s=id=>document.getElementById(id)
 const PROVA_S=PQ.get('prova')==='1';
 const SV=(p,a)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${a||''}>${p}</svg>`;
 const ICON_SAPERI=SV('<path d="M4 5.5C6.5 4 9.5 4 12 6c2.5-2 5.5-2 8-.5V19c-2.5-1.5-5.5-1.5-8 .5-2.5-2-5.5-2-8-.5z"/><path d="M12 6v13.5"/>');
-const IC={alfabeto:SV('<path d="M4 19L9 5l5 14M6 14h6M16 12h4M18 10v8"/>'),abaco:SV('<path d="M4 4v16M20 4v16M3 20h18M4 8h16M4 13h16"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="13" r="1.6" fill="currentColor"/>'),
+const IC={storia:SV('<path d="M3 20h18L12 4z"/><path d="M8 12h8M6 16h12"/>'),solare:SV('<circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="12" rx="9" ry="4"/><circle cx="20" cy="10.5" r="1.3" fill="currentColor"/>'),alfabeto:SV('<path d="M4 19L9 5l5 14M6 14h6M16 12h4M18 10v8"/>'),abaco:SV('<path d="M4 4v16M20 4v16M3 20h18M4 8h16M4 13h16"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="13" r="1.6" fill="currentColor"/>'),
   imac:SV('<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M10 16l-1 4h6l-1-4"/>'),libro:ICON_SAPERI,coding:SV('<path d="M4 4h16v16H4zM4 12h16M12 4v16"/><path d="M7 8l2-1.5M7 8l2 1.5"/>'),
   zaino:SV('<path d="M7 8a5 5 0 0 1 10 0v12H7z"/><path d="M9 13h6v4H9zM10 4.5V3h4v1.5"/>'),violino:SV('<path d="M9 21c-3 0-3-4-1-5-2-1-2-4 1-5h1V3h2v8h1c3 1 3 4 1 5 2 1 2 5-1 5z"/><path d="M11 13v6"/>'),
   visita:SV('<path d="M8 5l11 7-11 7z"/>'),av:SV('<path d="M12 19V5M6 11l6-6 6 6"/>'),dx:SV('<path d="M6 19v-7a4 4 0 0 1 4-4h8M14 4l4 4-4 4"/>'),sx:SV('<path d="M18 19v-7a4 4 0 0 0-4-4H6M10 4L6 8l4 4"/>')};
@@ -9672,6 +9673,52 @@ const VI={ultima:null,suonate:0};
 function violino(k){const ks=k==null?[0,1,2,3]:[k];VI.ultima=ks.map(i=>CORDE[i][0]).join(' ');VI.suonate+=ks.length;ks.forEach((i,j)=>suona('violino-corda',{f:CORDE[i][2],ritardo:j*0.95}));if(aperto==='violino')apri('violino',true);return VI.ultima;}
 gVi.userData.pick=()=>apri('violino');
 
+// ---------------------------------------------------------------- 8. storia: piramide di Cheope (base 230,3 m, alta 146,6 m → qui base 1,8 m, alta 1,15 m) con la camera del re
+const PIR={x:1.6,z:4.6,b:1.8,h:1.8*146.6/230.3,dentro:false};
+const cvPir=mkCanvas(256,256);{const g=cvPir.getContext('2d');g.fillStyle='#E3CFA2';g.fillRect(0,0,256,256);const N=24,hh=256/N;
+  for(let r=0;r<N;r++){g.fillStyle=r%2?'#DCC596':'#E8D6AC';g.fillRect(0,r*hh,256,hh-1.5);g.fillStyle='rgba(120,95,55,.45)';g.fillRect(0,r*hh+hh-1.5,256,1.5);
+    for(let q=(r%2)*8;q<256;q+=16)g.fillRect(q,r*hh,1.2,hh-1.5);}}
+const matPir=new THREE.MeshLambertMaterial({map:tex(cvPir),transparent:true,opacity:1});MAT.push(matPir);
+const gSt=new THREE.Group();gSt.name='storia';gSt.position.set(PIR.x,0,PIR.z);root.add(gSt);
+const geoPir=new THREE.ConeGeometry(PIR.b/Math.SQRT2,PIR.h,4,1,true);geoPir.rotateY(Math.PI/4);geoPir.translate(0,PIR.h/2,0);
+const piramide=mesh(geoPir,matPir,gSt);
+// dentro: camera del re (granito scuro), grande galleria in salita e corridoio discendente; visibili solo con «Guarda dentro»
+const interno=mesh(unisci([[B(0.22,0.12,0.11),'#5A4636',[0.04,0.5,0]],[B(0.03,0.03,0.42),'#B98A5A',[0,0.32,0.17],[-0.6,0,0]],[B(0.025,0.025,0.6),'#B98A5A',[0,0.17,0.62],[0.45,0,0]],[B(0.1,0.06,0.07),'#8A7A6A',[0,0.3,0]]]),matVC,gSt);
+const cvCart=mkCanvas(512,128);{const g=cvCart.getContext('2d');g.fillStyle='#FFFDF6';g.fillRect(0,0,512,128);g.strokeStyle='#C9A24A';g.lineWidth=8;g.strokeRect(4,4,504,120);g.fillStyle='#14532E';g.font='600 38px Lexend, sans-serif';g.textAlign='center';g.fillText('La piramide di Cheope',256,56);g.fillStyle='#7a5a07';g.font='28px Lexend, sans-serif';g.fillText('Egizi · circa 2560 a.C.',256,100);}
+const cart=mesh(unisci([[CY(0.012,0.012,0.6,6),'#6b4e2a',[0,0.3,0]]]),matVC,gSt);cart.position.set(-0.75,0,-1.2);
+const cartT=mesh(new THREE.PlaneGeometry(0.6,0.15),matT(cvCart),gSt);cartT.position.set(-0.75,0.62,-1.19);cartT.rotation.y=Math.PI;
+function guardaDentro(on){PIR.dentro=on==null?!PIR.dentro:!!on;matPir.opacity=PIR.dentro?0.45:1;matPir.depthWrite=!PIR.dentro;interno.visible=PIR.dentro;if(aperto==='storia')apri('storia',true);return PIR.dentro;}
+gSt.userData.pick=()=>apri('storia');
+const TAPPE_ST=[['Neolitico','circa 10 000 anni fa','i primi villaggi e i campi coltivati'],['Sumeri','circa 3200 a.C.','la scrittura cuneiforme sulle tavolette'],['Egizi','circa 2560 a.C.','la piramide di Cheope e i geroglifici'],['Greci','circa 500 a.C.','le città-stato e le Olimpiadi'],['Romani','753 a.C. – 476 d.C.','le strade, gli acquedotti, il latino']];
+function lineaTempo(sel){return `<svg class="sp-fig" viewBox="0 0 400 74" role="img" aria-label="Linea del tempo"><line x1="20" y1="30" x2="384" y2="30" stroke="#1B6D3F" stroke-width="3"/><path d="M384 24l12 6-12 6z" fill="#1B6D3F"/>${TAPPE_ST.map((t,i)=>{const x=36+i*80;return `<circle cx="${x}" cy="30" r="${i===sel?10:7}" fill="${i===sel?'#E2A72E':'#fff'}" stroke="#1B6D3F" stroke-width="2.5"/><text x="${x}" y="58" text-anchor="middle" font-size="13" font-family="Lexend, sans-serif" fill="#14532E" font-weight="${i===sel?700:400}">${t[0]}</text>`;}).join('')}</svg>`;}
+let tappaSt=2;
+
+// ---------------------------------------------------------------- 9. scienze: sistema solare sospeso sotto il soffitto (y 2,45; le plafoniere sono incassate a 3,02)
+const SOL={x:0,y:2.45,z:-0.3,moto:!(PROVA_S||RIDOTTO_S),vel:1,t:0,sel:-1};
+const PIANETI=[['Mercurio','#A8A29A',0.05,0.75,'È il pianeta più vicino al Sole e il più piccolo.'],['Venere','#E8C77A',0.075,1.05,'È avvolto da nuvole spesse: è il pianeta più caldo.'],
+  ['Terra','#3B7DD8',0.08,1.4,'È la nostra casa: gira intorno al Sole in un anno e su sé stessa in un giorno. Ha una Luna.'],['Marte','#C8643A',0.06,1.8,'È il pianeta rosso: la sua terra è piena di ruggine.'],
+  ['Giove','#C98E5A',0.19,2.4,'È il pianeta più grande, con una grande macchia che è una tempesta.'],['Saturno','#E3C98A',0.15,2.95,'Ha anelli bellissimi, fatti di ghiaccio e di sassi.'],
+  ['Urano','#8FD3E0',0.11,3.45,'È azzurro e gira tutto inclinato, quasi sdraiato.'],['Nettuno','#3E5FCF',0.105,3.9,'È il più lontano dal Sole: lì fa freddissimo.']];
+const gSo=new THREE.Group();gSo.name='solare';gSo.position.set(SOL.x,SOL.y,SOL.z);root.add(gSo);
+const sole=mesh(new THREE.SphereGeometry(0.34,20,14),new THREE.MeshBasicMaterial({color:0xFFB21F,toneMapped:false}),gSo);MAT.push(sole.material);sole.userData.pick=()=>{SOL.sel=-1;apri('solare');};
+const cvAl=mkCanvas(128,128);{const g=cvAl.getContext('2d'),r=g.createRadialGradient(64,64,10,64,64,64);r.addColorStop(0,'rgba(255,214,110,0.9)');r.addColorStop(0.45,'rgba(255,190,80,0.35)');r.addColorStop(1,'rgba(255,180,60,0)');g.fillStyle=r;g.fillRect(0,0,128,128);}
+const alone=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(cvAl),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));alone.scale.set(2.3,2.3,1);gSo.add(alone);MAT.push(alone.material);
+const geoSf=new THREE.SphereGeometry(1,14,10);GEO.push(geoSf);
+const PL=PIANETI.map((P,i)=>{const m=new THREE.Mesh(geoSf,new THREE.MeshLambertMaterial({color:new THREE.Color(P[1]).convertSRGBToLinear(),emissive:new THREE.Color(P[1]).convertSRGBToLinear(),emissiveIntensity:0.25}));MAT.push(m.material);
+  m.scale.setScalar(P[2]);m.name=P[0];m.userData.pick=()=>{SOL.sel=i;apri('solare');};gSo.add(m);return {m,a:i*0.8+0.3,w:0.55/Math.pow(P[3],1.5),r:P[3]};});
+// Terra con la Luna, Saturno con gli anelli (figli del pianeta: seguono l'orbita)
+const luna=new THREE.Mesh(geoSf,new THREE.MeshLambertMaterial({color:0xD9D6CF}));MAT.push(luna.material);luna.scale.setScalar(0.3);luna.position.set(2.0,0,0);PL[2].m.add(luna);
+const anelli=new THREE.Mesh(new THREE.RingGeometry(1.35,2.3,40,1),new THREE.MeshLambertMaterial({color:0xCDB57A,side:THREE.DoubleSide,transparent:true,opacity:0.85}));GEO.push(anelli.geometry);MAT.push(anelli.material);anelli.rotation.x=-Math.PI/2+0.45;PL[5].m.add(anelli);
+// orbite: una sola LineSegments fuori dal gruppo cliccabile (le linee hanno una soglia di raycast larga)
+{const P=[];PIANETI.forEach(p=>{const r=p[3];for(let k=0;k<64;k++){const a=k/64*Math.PI*2,b=(k+1)/64*Math.PI*2;P.push(Math.cos(a)*r,0,Math.sin(a)*r,Math.cos(b)*r,0,Math.sin(b)*r);}});
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));GEO.push(g);const l=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xE2C35A,transparent:true,opacity:0.5,toneMapped:false}));MAT.push(l.material);l.position.set(SOL.x,SOL.y,SOL.z);root.add(l);}
+const cvNo=mkCanvas(512,64);{const g=cvNo.getContext('2d');g.fillStyle='rgba(20,83,46,0.88)';g.fillRect(0,0,512,64);g.fillStyle='#FFE9A8';g.font='600 26px Lexend, sans-serif';g.textAlign='center';g.fillText('Distanze e dimensioni non in scala',256,42);}
+const nota=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(cvNo),depthWrite:false,toneMapped:false}));MAT.push(nota.material);nota.scale.set(2.0,0.25,1);nota.position.set(SOL.x,SOL.y-0.62,SOL.z);root.add(nota);
+function posaPianeti(){PL.forEach((p,i)=>{p.m.position.set(Math.cos(p.a)*p.r,0.05*Math.sin(SOL.t*0.8+i*1.3),-Math.sin(p.a)*p.r);});}
+function moto(on){SOL.moto=on==null?!SOL.moto:!!on;if(aperto==='solare')apri('solare',true);return SOL.moto;}
+function piuVeloce(){SOL.vel=SOL.vel>=4?1:SOL.vel*2;if(aperto==='solare')apri('solare',true);return SOL.vel;}
+posaPianeti();gSo.userData.pick=()=>{SOL.sel=-1;apri('solare');};
+
 // ---------------------------------------------------------------- suoni (SUONI di P12, morbido: solo se c'è e se è attivo)
 const suoni=()=>typeof SUONI!=='undefined'&&SUONI.attivo&&SUONI.attivo();
 function suona(n,o){try{if(suoni())SUONI.play(n,o);}catch(e){console.error(e);}}
@@ -9689,13 +9736,15 @@ const OGG=[
   {id:'alfabeto',nome:'Alfabeto',g:gAlf,c:[0.4,2.3,ROOM.z0+0.1],v:[6.2,0,1.5],lato:2.6},
   {id:'abaco',nome:'Abaco',g:gAb,c:[ABX,0.55,ABZ],v:[2.4,0.25,1.4],lato:0.75},
   {id:'coding',nome:'Coding',g:gCod,c:[CX0+1,0.1,CZ0+1],v:[3.4,0.15,0.85],lato:1.3},
+  {id:'solare',nome:'Sistema solare',g:gSo,c:[SOL.x,SOL.y,SOL.z],v:[7.6,-1.25,1.5],lato:3.2},
+  {id:'storia',nome:'Storia',g:gSt,c:[PIR.x,0.6,PIR.z],v:[4.2,Math.PI-0.5,1.25],lato:1.5},
   {id:'libro',nome:'Fiabe',g:gLib,c:[3.55,1.05,1.6],v:[1.6,-Math.PI/2,1.0],lato:0.55},
   {id:'violino',nome:'Violino',g:gVi,c:[-3.55,0.74,3.0],v:[1.25,0.3,0.75],lato:0.45},
   {id:'zaino',nome:'Zaino',g:gZa,c:[-2.95,0.25,8.45],v:[1.7,Math.PI+0.2,1.05],lato:0.6},
-  {id:'imac',nome:'Computer',g:gIm,c:[0.52,1.0,9.9],v:[3.6,Math.PI,1.32],lato:1.6}];
+  {id:'imac',nome:'Computer',g:gIm,c:[0.52,1.0,9.9],v:[3.6,Math.PI,1.32],lato:0.9}];
 const O_=id=>OGG.find(o=>o.id===id);
 const matHit=new THREE.MeshBasicMaterial({visible:false});MAT.push(matHit);const geoHit=new THREE.BoxGeometry(1,1,1);GEO.push(geoHit);
-const HIT={abaco:[1.3,1.1,0.5],coding:[2,0.3,2],libro:[0.6,1.3,0.9],violino:[0.7,0.2,0.7],zaino:[1.1,0.7,0.8]};
+const HIT={abaco:[1.3,1.1,0.5],coding:[2,0.3,2],libro:[0.6,1.3,0.9],violino:[0.7,0.2,0.7],storia:[1.8,1.2,1.8],zaino:[1.1,0.7,0.8]};
 OGG.forEach(o=>{const d=HIT[o.id];if(!d)return;const m=new THREE.Mesh(geoHit,matHit);m.scale.set(...d);m.position.set(o.c[0],o.id==='violino'?0.76:o.id==='libro'?0.65:d[1]/2,o.c[2]);m.userData.pick=()=>apri(o.id);root.add(m);o.hit=m;});
 let aperto=null;const _t=new THREE.Vector3(),_a=new THREE.Vector3();
 function vola(o){const th=o.v[1],s=(innerWidth<1300?0.3:0.2)*o.v[0];_t.set(o.c[0]+Math.cos(th)*s,o.c[1],o.c[2]-Math.sin(th)*s);flyTo(_t,o.v[0],th,o.v[2]);}
@@ -9726,6 +9775,13 @@ function contenuto(id){
   if(id==='violino')return {title:'Il violino',badges:[['Musica','gold'],['4 corde','']],after:ric('Il violino si suona con l\'archetto. Ha quattro corde: Sol, Re, La, Mi, dalla più grave alla più acuta.')+
     `<div class="sp-cor">${CORDE.map((c,i)=>`<button class="btn ghost" type="button" data-sp="cor${i}">${c[0]}</button>`).join('')}</div><div class="sp-az">${btn('corde','Suona le 4 corde','','gold')}</div>`+
     (VI.ultima?`<p>Hai suonato: <b>${VI.ultima}</b>${suoni()?'':' (accendi i suoni in alto per sentirle)'}</p>`:'')};
+  if(id==='storia'){const T=TAPPE_ST[tappaSt];return {title:'Gli Egizi e le piramidi',badges:[['Storia','gold'],['Giza · circa 2560 a.C.','']],after:ric('Sulla linea del tempo mettiamo i fatti in ordine. Gli Egizi costruirono le piramidi di Giza come tombe dei faraoni e scrivevano con i geroglifici.')+
+    lineaTempo(tappaSt)+`<p><b>${esc(T[0])}</b> · ${esc(T[1])}: ${esc(T[2])}.</p><div class="sp-az">${btn('st-1','Prima',tappaSt===0)}${btn('st+1','Dopo',tappaSt===TAPPE_ST.length-1)}${btn('dentro',PIR.dentro?'Torna fuori':'Guarda dentro','','gold')}</div>`+
+    (PIR.dentro?'<p>Dentro c\'è la camera del re, in granito, raggiunta da una lunga galleria in salita.</p>':'')};}
+  if(id==='solare'){const P=SOL.sel>=0?PIANETI[SOL.sel]:null;return {title:P?P[0]:'Il sistema solare',badges:[['Scienze','gold'],['Distanze e dimensioni non in scala','']],after:
+    ric(P?P[4]:'Il Sole è una stella. Gli 8 pianeti gli girano intorno: Mercurio, Venere, Terra, Marte, Giove, Saturno, Urano, Nettuno.')+
+    (P?`<p>È il ${['primo','secondo','terzo','quarto','quinto','sesto','settimo','ottavo'][SOL.sel]} pianeta in ordine di distanza dal Sole.</p>`:'<p>Clicca un pianeta per sapere chi è.</p>')+
+    `<div class="sp-az">${btn('moto',SOL.moto?'Ferma':'Fai girare','','gold')}${btn('veloce','Più veloce (×'+(SOL.vel>=4?1:SOL.vel*2)+')')}</div>`};}
   return {title:id};}
 function apri(id,soloTesto){const o=O_(id);if(!o||!dentro)return;if(!soloTesto&&!visita.on)vola(o);openPanel(contenuto(id),()=>ancora(o));aperto=id;panelState.onClose=()=>{aperto=null;};collega();aggDock();}
 function collega(){const info=$s('info');info.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>azione(b.dataset.sp));}
@@ -9737,6 +9793,8 @@ function azione(a){
   else if(a.startsWith('fia'))vaiFiaba(+a.slice(3));
   else if(a==='codVia')codVia();else if(a==='codStella')codStella();else if(a.startsWith('cod'))codAgg(a.slice(3));
   else if(a==='astuccio')astuccio();else if(a==='quaderno')sfogliaQuaderno();
+  else if(a==='st-1'||a==='st+1'){tappaSt=Math.max(0,Math.min(TAPPE_ST.length-1,tappaSt+(a==='st+1'?1:-1)));apri('storia',true);}
+  else if(a==='dentro')guardaDentro();else if(a==='moto')moto();else if(a==='veloce')piuVeloce();
   else if(a==='corde')violino();else if(a.startsWith('cor'))violino(+a.slice(3));}
 
 // ---------------------------------------------------------------- dock: un pulsante per oggetto e «Visita»
@@ -9756,20 +9814,21 @@ const W={id:'saperi',order:6,root,footprint:{x:0.4,z:0,w:1.2,d:1.2},tab:{title:'
   view:{target:new THREE.Vector3(0.2,0.8,-0.5),r:11.5,theta:-1.15,phi:1.12},surfaces:[],dock,resa:'aula'};
 W.build=()=>{posaAbaco();posaRobot();scriviLibro();};
 W.enter=()=>{dentro=true;};
-W.entered=()=>{};
-W.exit=()=>{dentro=false;fermaVisita();aperto=null;COD.passo=-1;if(LIB.giro)fineGiro();ZA.aperto=false;ZA.a=0;coper.rotation.x=0;letteraSel=null;};
+W.entered=()=>{interno.visible=PIR.dentro;};   // la camera del re è visibile alla compilazione del mondo, poi segue «Guarda dentro»
+W.exit=()=>{dentro=false;fermaVisita();aperto=null;COD.passo=-1;if(LIB.giro)fineGiro();ZA.aperto=false;ZA.a=0;coper.rotation.x=0;letteraSel=null;guardaDentro(false);SOL.sel=-1;};
 W.update=dt=>{if(!dentro)return;dt=Math.min(dt,0.1);
   if(LIB.giro){LIB.giro.t+=dt/0.7;const u=Math.min(1,LIB.giro.t),s=u*u*(3-2*u);perno.rotation.y=LIB.giro.d>0?Math.PI*s:Math.PI*(1-s);perno.position.z=0.008+Math.sin(Math.PI*s)*0.06;if(u>=1)fineGiro();}
   if(COD.passo>=0){COD.t+=dt;if(COD.t>0.55){COD.t=0;passoRobot(COD.seq[COD.passo]);COD.passo++;suona('tic',{nota:'D6'});if(COD.passo>=COD.seq.length)codFine();else if(aperto==='coding')apri('coding',true);}}
   const za=ZA.aperto?1:0;if(Math.abs(ZA.a-za)>1e-3)ZA.a+=(za-ZA.a)*Math.min(1,dt*6);coper.rotation.x=-ZA.a*1.9;
   stella.rotation.y+=dt*1.2;
+  SOL.t+=dt;if(SOL.moto)PL.forEach(p=>{p.a+=dt*p.w*SOL.vel;});if(SOL.moto||!PROVA_S)posaPianeti();PL[2].m.rotation.y+=SOL.moto?dt*2*SOL.vel:0;
   if(visita.on){visita.t+=dt;if(visita.t>7){visita.t=0;visita.i=(visita.i+1)%OGG.length;tappaVisita();}}};
-W.pickables=()=>OGG.map(o=>o.hit||o.g);
+W.pickables=()=>OGG.map(o=>o.hit||o.g);   // il sistema solare: gruppo con Sole, alone e pianeti (le orbite stanno fuori)
 // per i collaudi: stato e azioni via API (stesse funzioni dei pulsanti)
 W.stato=()=>({dentro,aperto,abaco:AB.c.slice(),numero:numAbaco(),libro:{k:LIB.k,pagine:PAG.length,giro:!!LIB.giro,fiaba:PAG[LIB.k]?PAG[LIB.k].tit:null},
   coding:{seq:COD.seq.slice(),robot:[COD.q,COD.r,COD.dir],stella:COD.star.slice(),esito:COD.esito},zaino:{astuccio:ZA.aperto,quaderno:ZA.quaderno},violino:Object.assign({corde:CORDE.map(c=>c[0])},VI),
-  lettera:letteraSel==null?null:ALF[letteraSel][0],imac:imacSel,visita:visita.on,oggetti:OGG.map(o=>({id:o.id,nome:o.nome,c:o.c}))});
-W.prova={apri,abaco,sfoglia,vaiFiaba,codAgg,codVia,codStella,astuccio,sfogliaQuaderno,violino,avviaVisita,fermaVisita,
+  lettera:letteraSel==null?null:ALF[letteraSel][0],storia:{dentro:PIR.dentro,tappa:TAPPE_ST[tappaSt][0]},solare:{moto:SOL.moto,vel:SOL.vel,sel:SOL.sel>=0?PIANETI[SOL.sel][0]:null,angoli:PL.map(p=>+p.a.toFixed(4))},imac:imacSel,visita:visita.on,oggetti:OGG.map(o=>({id:o.id,nome:o.nome,c:o.c}))});
+W.prova={guardaDentro,moto,piuVeloce,pianetaSchermo:i=>{PL[i].m.getWorldPosition(_a).project(camera);return [Math.round((_a.x*0.5+0.5)*innerWidth),Math.round((-_a.y*0.5+0.5)*innerHeight)];},apri,abaco,sfoglia,vaiFiaba,codAgg,codVia,codStella,astuccio,sfogliaQuaderno,violino,avviaVisita,fermaVisita,
   lettera:k=>{letteraSel=k;apri('alfabeto');return ALF[k][0];},imac:i=>{imacSel=i;apri('imac');return ATT[i].t;},
   // punto dello schermo (px) dove sta un oggetto, per i clic veri
   schermo:id=>{const o=O_(id);_a.set(o.c[0],o.c[1],o.c[2]).project(camera);return [Math.round((_a.x*0.5+0.5)*innerWidth),Math.round((-_a.y*0.5+0.5)*innerHeight),_a.z];},
