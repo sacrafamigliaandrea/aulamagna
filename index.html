@@ -715,6 +715,25 @@ body.fg-strumento #c{cursor:crosshair}
 @media (max-width:1208px){.tab:not(.on)>span{display:none}.tab:not(.on){padding:7px}}
 @media (max-width:1180px){.sp-row{gap:5px}.sp-row .btn{padding:6px 8px;font-size:13px}.sp-row .btn svg{display:none}}
 @media (max-width:1080px){.sp-row{gap:4px}.sp-row .btn{padding:5px 7px}.sp-sep{display:none}}
+/* P27 · Tempo: la storia dell'uomo */
+.tl-modo{position:absolute;left:18px;top:-15px;display:flex;border:1px solid var(--brd);border-radius:999px;background:#fff;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:1}
+.tl-modo button{border:0;background:#fff;padding:3px 12px;font-family:var(--head);font-size:13px;font-weight:600;color:var(--greenD);cursor:pointer;white-space:nowrap;line-height:20px}
+.tl-modo button+button{border-left:1px solid var(--brd)}
+.tl-modo button.on{background:var(--green);color:#fff;cursor:default}
+.tl-modo button:not(.on):hover{background:var(--goldL)}
+.dock.tl.storia>.tl-row:not(.st-x),.dock.tl.storia>.tl-track:not(.st-x),.dock.tl.storia>.tl-note:not(.st-x){display:none}
+.dock.tl:not(.storia)>.st-x{display:none}
+.st-x .tl-read{min-width:200px}
+.st-x .tl-stopname{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-x .tl-ticks span{white-space:nowrap}
+.st-x .tl-stops button{width:14px;height:14px}
+.st-x .tl-ticks span:first-child{transform:none}
+.st-x .tl-ticks span.fine{transform:translateX(-100%)}
+.tl-row .tl-zoom{display:none;border:1.5px solid var(--gold);background:var(--goldL);color:#7a5a07;border-radius:10px;padding:4px 10px;font-family:var(--head);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.tl-row .tl-zoom.on{display:inline-block}
+.dock.tl.zoom-on #tlStop{display:none}
+.tl-row .tl-zoom:hover{background:#fff}
+.st-cls{font-size:12px}
 /* @slot:css */
 </style>
 </head>
@@ -6377,7 +6396,7 @@ function openAsteroid(){const e=DATI_TEMPO.estinzione;
 function openHuman(){const u=DATI_TEMPO.umani;const hum=animals.find(a=>a.human);
   openPanel({title:'Homo sapiens',sci:'«uomo sapiente»',badges:[['Cenozoico'],['da circa '+Math.round(u.homo_sapiens_anni).toLocaleString('it-IT')+' anni fa','gold']],
     text:u.testo,doc:{nota:u.nota,fonti:u.fonti},fig:`<p class="tl-stopname">Anche i nostri denti raccontano che cosa mangiamo</p>${teethSVG('umani')}`,
-    note:'Sulla linea del tempo l\'uomo occupa solo gli ultimi '+(u.homo_sapiens_anni/1e6/T0*LEN*100).toFixed(1).replace('.',',')+' cm prima di «Oggi». Da qui comincia la storia che si studia in terza.'},
+    note:'Sulla linea del tempo l\'uomo occupa solo gli ultimi '+(u.homo_sapiens_anni/1e6/T0*LEN*100).toFixed(1).replace('.',',')+' cm prima di «Oggi». Da qui comincia la storia che si studia in terza.',actions:[{label:'Ingrandisci il tempo: la storia dell\'uomo',cls:'gold',fn:()=>STORIA.vai(true)}]},
     ()=>hum&&hum.app>0.5?labelAnchor(hum):new THREE.Vector3(STRIP.x1,0.05,zOf(0.3)));}
 
 // ---------- pannello di controllo (dock) ----------
@@ -6484,6 +6503,393 @@ W.update=(dt,t)=>{
   cursor.position.z=zOf(tNow);updateFlora(dt,false);updateAnimals(dt,t);updateMeteor(dt);
   fire.visible=tNow<=0.31;if(fire.visible){const f=1+0.25*Math.sin(t*17)+0.15*Math.sin(t*29);fire.userData.f1.scale.set(1,f,1);fire.userData.f2.scale.set(1,2-f,1);}
   updateDock();};
+/* ===== P27 · STORIA DELL'UOMO: seconda scala del tempo, carta del Mediterraneo, modellini delle civiltà ===== */
+const STORIA=(()=>{
+  const Y0=-10000,Y1=476,YL=Y1-Y0;
+  const zY=y=>ZA+(y-Y0)/YL*LEN,yZ=z=>clamp(Y0+(z-ZA)/LEN*YL,Y0,Y1);
+  // carta: x da −5 (lat 22) a 3,8 (lat 46), z da −10 a 10; 1° di latitudine = 0,3667 m, 1° di longitudine = 0,3667·cos 34° (stessa scala in km: 1 m ≈ 303 km)
+  const MX0=-5,MX1=3.8,MZ0=-10,MZ1=10,KX=(MX1-MX0)/24,KZ=KX*Math.cos(34*Math.PI/180),KM=111.2/KX;
+  const llx=lat=>MX1-(46-lat)*KX,llz=lon=>(lon-20)*KZ;
+  const fmtY=y=>{y=Math.round(y);return y<0?(-y).toLocaleString('it-IT')+' a.C.':y===0?'anno 0':y.toLocaleString('it-IT')+' d.C.';};
+  let modo=0,k=0,costruita=false,yNow=-9000,yGoal=-9000,play=false,pWait=0,giaLivello=false,dinoG=null,mapMesh,stripS,cursorS,cursLab;
+  let HG=null,GX=128,GZ=64;const SG=new THREE.Group();SG.name='storia';SG.visible=false;
+  // vista d'insieme: come GEOMETRIA, dall'alto senza soffitto (setTopView); il bersaglio un po' a sud lascia la carta sopra il dock
+  const VIEW_ST={target:new THREE.Vector3(-1.0,0,0),r:14,theta:-Math.PI/2,phi:0.27},VIEW_D=W.view;
+  // ---------- tappe (testi per 8-11 anni; date «circa» dove incerte; fonti nel campo doc) ----------
+  const TR='https://www.treccani.it/enciclopedia/',BR='https://www.britannica.com/';
+  const TAPPE=[
+    {id:'neolitico',y:-9000,nome:'I primi villaggi',titolo:'I primi villaggi e i campi',data:'circa 9000 a.C.',cl:'3ª',ll:[38.4,35.9],
+      testo:['Nella Mezzaluna fertile gli uomini imparano a coltivare il grano e l\'orzo e ad allevare capre e pecore.','Non devono più spostarsi per cercare il cibo: costruiscono case vicino ai campi e nascono i primi villaggi.','È il Neolitico, la «nuova età della pietra»: si usano pietre levigate, si fanno vasi di argilla e si tessono le stoffe.'],
+      dom:'Guarda il villaggio: che cosa c\'è intorno alle case?',ris:'I campi coltivati. Chi coltiva deve restare vicino ai campi tutto l\'anno: per questo nascono case che durano a lungo.',
+      nota:'Date indicative: l\'agricoltura nella Mezzaluna fertile compare fra circa 9500 e 8500 a.C. Il modellino è generico (case rotonde come ad Abu Hureyra, sull\'Eufrate, e a Gerico), non la ricostruzione di un sito.',fonti:[TR+'neolitico/',BR+'event/Neolithic']},
+    {id:'scrittura',y:-3200,nome:'La scrittura',titolo:'I Sumeri inventano la scrittura',data:'circa 3200 a.C.',cl:'3ª',ll:[45.6,31.3],
+      testo:['In Mesopotamia, la «terra fra due fiumi», il Tigri e l\'Eufrate, i Sumeri costruiscono le prime città, come Uruk.','Per ricordare raccolti e scambi incidono segni su tavolette di argilla morbida con una cannuccia appuntita: è la scrittura cuneiforme.','Con la scrittura finisce la Preistoria e comincia la Storia.'],
+      dom:'Guarda la tavoletta: perché i segni hanno la forma di piccoli chiodi?',ris:'Perché la cannuccia, premuta nell\'argilla, lascia un segno largo da una parte e sottile dall\'altra, come un cuneo. «Cuneiforme» vuol dire «a forma di cuneo».',
+      nota:'Le tavolette più antiche di Uruk risalgono a circa 3300-3200 a.C.; la data è approssimata. Quasi negli stessi secoli nasce la scrittura in Egitto.',fonti:[TR+'sumeri/',TR+'scrittura/',BR+'topic/cuneiform']},
+    {id:'piramidi',y:-2560,nome:'Le piramidi',titolo:'Le piramidi di Giza e la Sfinge',data:'circa 2600-2500 a.C.',cl:'3ª',ll:[31.13,29.98],
+      testo:['Lungo il Nilo vivono gli Egizi. Ogni anno il fiume si alza e lascia sui campi un fango nero e fertile, il limo.','I faraoni Cheope, Chefren e Micerino fanno costruire tre grandi piramidi come tombe. Quella di Cheope era alta circa 146 metri.','Davanti alle piramidi veglia la Sfinge, con il corpo di leone e la testa di un faraone.'],
+      dom:'Le tre piramidi sono in fila: quale è la più piccola?',ris:'Quella di Micerino, la più a sud-ovest. Cheope è la più grande; Chefren, in mezzo, sembra alta come Cheope perché sta su un terreno più alto.',
+      nota:'Cheope circa 2560 a.C., Chefren e Sfinge circa 2520-2500 a.C., Micerino circa 2500 a.C.: le cronologie differiscono di qualche decennio. Distanze fra le piramidi ridotte nel modellino.',fonti:[TR+'al-giza/',BR+'topic/Pyramids-of-Giza']},
+    {id:'ziggurat',y:-2100,nome:'La ziggurat di Ur',titolo:'La ziggurat di Ur',data:'circa 2100 a.C.',cl:'3ª',ll:[46.1,30.96],
+      testo:['A Ur, città dei Sumeri vicino al Golfo Persico, il re Ur-Nammu fa costruire una ziggurat: una torre a gradoni di mattoni.','In cima c\'era un tempio per il dio della Luna. Tre lunghe scale portavano i sacerdoti verso l\'alto.','Intorno c\'erano la città, i magazzini e i canali per portare l\'acqua ai campi.'],
+      dom:'Di che cosa è fatta la ziggurat? Guarda il colore.',ris:'Di mattoni di argilla: in Mesopotamia c\'era poca pietra, ma tanta argilla portata dai fiumi.',
+      nota:'Costruita sotto Ur-Nammu e il figlio Shulgi, circa 2100 a.C. (cronologia media); restaurata nel VI secolo a.C. e nel Novecento.',fonti:[TR+'ziggurat_(Enciclopedia-Italiana)/',BR+'place/Ur-ancient-city-Iraq']},
+    {id:'hammurabi',y:-1750,nome:'Babilonia',titolo:'Babilonia e le leggi di Hammurabi',data:'circa 1750 a.C.',cl:'3ª',ll:[44.42,32.54],
+      testo:['Babilonia, sull\'Eufrate, diventa la città più importante della Mesopotamia.','Il re Hammurabi fa scrivere le leggi su una grande stele di pietra, perché tutti possano conoscerle.','Le leggi dicono che cosa è vietato e quale punizione spetta a chi non le rispetta.'],
+      dom:'Perché è utile che le leggi siano scritte?',ris:'Perché restano uguali per tutti e non dipendono dalla memoria o dall\'umore di chi giudica.',
+      nota:'Regno di Hammurabi circa 1792-1750 a.C. (cronologia media). La stele è conservata al Louvre. Tappa senza modellino.',fonti:[TR+'hammurabi/',BR+'topic/Code-of-Hammurabi']},
+    {id:'alfabeto',y:-1050,nome:'I Fenici',titolo:'I Fenici e l\'alfabeto',data:'circa 1050 a.C.',cl:'3ª',ll:[35.65,34.12],
+      testo:['I Fenici vivono in città sul mare, come Biblo, Tiro e Sidone, e navigano in tutto il Mediterraneo per commerciare.','Le loro navi portano legno di cedro, vetro e stoffe colorate di porpora.','Scrivono con poche lettere, circa 22: è l\'alfabeto. Da lì nascono l\'alfabeto greco e poi quello che usiamo noi.'],
+      dom:'Guarda le lettere fenicie e le nostre sotto: si somigliano?',ris:'Sì, molte sono girate o rovesciate: la nostra A era una testa di bue (aleph), la B una casa (bet).',
+      nota:'L\'alfabeto fenicio è attestato fra l\'XI e il X secolo a.C. (iscrizione del sarcofago di Ahiram a Biblo, circa 1000 a.C.); data indicativa.',fonti:[TR+'fenici/',TR+'alfabeto/']},
+    {id:'roma',y:-753,nome:'Nasce Roma',titolo:'La fondazione di Roma',data:'753 a.C. (secondo la tradizione)',cl:'4ª',ll:[12.48,41.89],
+      testo:['Secondo la leggenda, Romolo fonda Roma il 21 aprile del 753 a.C. sul colle Palatino.','Sul Palatino gli archeologi hanno trovato i resti di capanne di legno e paglia di quell\'epoca.','Roma nasce vicino al Tevere, dove il fiume si attraversa facilmente.'],
+      dom:'Perché i villaggi sono sulle colline e vicino al fiume?',ris:'Sulle colline ci si difende meglio; il fiume dà acqua e pesce ed è una via per commerciare.',
+      nota:'Il 753 a.C. è la data della tradizione (calcolata da Varrone); sul Palatino ci sono abitati anche più antichi.',fonti:[TR+'roma/',TR+'romolo/']},
+    {id:'partenone',y:-440,nome:'Il Partenone',titolo:'Atene e il Partenone',data:'447-432 a.C.',cl:'4ª',ll:[23.73,37.97],
+      testo:['La Grecia è fatta di monti e di isole: i Greci vivono in città indipendenti, le pòleis.','Ad Atene i cittadini decidono insieme nell\'assemblea: è la democrazia (ma donne e schiavi non votano).','Sull\'Acropoli, la collina della città, costruiscono il Partenone, il tempio della dea Atena, tutto di marmo.'],
+      dom:'Conta le colonne sul lato corto del tempio: quante sono?',ris:'Otto. Sui lati lunghi ce ne sono diciassette.',
+      nota:'Costruzione 447-438 a.C., decorazioni fino al 432 a.C.; architetti Ictino e Callicrate, sculture dirette da Fidia.',fonti:[TR+'partenone/',BR+'topic/Parthenon']},
+    {id:'strade',y:-312,nome:'La via Appia',titolo:'La via Appia e l\'acquedotto',data:'312 a.C.',cl:'4ª',ll:[12.9,41.75],
+      testo:['Roma diventa una repubblica e conquista l\'Italia. Per spostare soldati e merci costruisce strade lastricate di pietra.','Nel 312 a.C. Appio Claudio fa costruire la via Appia, «la regina delle strade», e il primo acquedotto di Roma.','Gli acquedotti portano l\'acqua in città con una leggera discesa, a volte sopra lunghe file di archi.'],
+      dom:'Segui la strada sulla carta: verso quale mare va?',ris:'Verso il mare Adriatico: più tardi arriverà fino a Brindisi, il porto per la Grecia e l\'Oriente.',
+      nota:'Nel 312 a.C. la via Appia arrivava a Capua; il tratto fino a Brindisi è del III-II secolo a.C. L\'acqua Appia era quasi tutta sotterranea: gli archi del modellino sono quelli degli acquedotti più tardi.',fonti:[BR+'topic/Appian-Way']},
+    {id:'colosseo',y:80,nome:'Il Colosseo',titolo:'Il Colosseo',data:'80 d.C.',cl:'5ª',ll:[12.49,41.89],
+      testo:['Roma è ora un grande impero intorno al Mediterraneo, che i Romani chiamano «il nostro mare».','Nell\'80 d.C. l\'imperatore Tito inaugura l\'anfiteatro Flavio, il Colosseo: ci stanno circa 50.000 spettatori.','Gli spettatori entrano da 80 arcate numerate.'],
+      dom:'Quanti piani di archi vedi intorno al Colosseo?',ris:'Tre piani di archi; sopra c\'è un muro con finestre, l\'attico.',
+      nota:'Iniziato sotto Vespasiano (circa 70-72 d.C.), inaugurato da Tito nell\'80 d.C. La capienza è stimata fra 50.000 e 70.000 persone.',fonti:[TR+'colosseo/',BR+'topic/Colosseum']},
+    {id:'costantinopoli',y:330,nome:'Costantinopoli',titolo:'Costantinopoli, la nuova capitale',data:'330 d.C.',cl:'5ª',ll:[28.98,41.01],
+      testo:['Nel 313 l\'imperatore Costantino permette ai cristiani di praticare liberamente la loro religione.','Nel 330 inaugura una nuova capitale sul Bosforo, fra Europa e Asia, nell\'antica Bisanzio: Costantinopoli.','La città ha mura, porti, chiese e una grande colonna con la statua dell\'imperatore.'],
+      dom:'Guarda la carta: fra quali due mari si trova Costantinopoli?',ris:'Fra il Mar Nero e il Mar di Marmara, che porta al Mar Egeo e al Mediterraneo.',
+      nota:'Editto di Milano 313; inaugurazione l\'11 maggio 330. Le grandi mura di Teodosio (413) e Santa Sofia (537) sono più tarde: la chiesa del modellino è generica.',fonti:[TR+'costantinopoli/',TR+'costantino-i-imperatore-detto-il-grande/']},
+    {id:'fine',y:476,nome:'Fine dell\'impero',titolo:'La fine dell\'impero d\'Occidente',data:'476 d.C.',cl:'5ª',ll:[12.2,44.42],
+      testo:['Dal 395 l\'impero è diviso in due parti: l\'Occidente, con Roma, e l\'Oriente, con Costantinopoli.','Nel 476 il capo germanico Odoacre depone a Ravenna l\'ultimo imperatore d\'Occidente, il giovane Romolo Augustolo.','L\'impero d\'Oriente continua per quasi mille anni. Con il 476 finisce la Storia antica.'],
+      dom:'Quale parte dell\'impero continua dopo il 476?',ris:'La parte d\'Oriente, con capitale Costantinopoli: durerà fino al 1453.',
+      nota:'Il 476 è una data convenzionale scelta dagli storici: per chi viveva allora non cambiò tutto in un giorno.',fonti:[TR+'odoacre/',BR+'event/fall-of-Rome']}];
+  TAPPE.forEach(s=>{s.x=llx(s.ll[1]);s.z=llz(s.ll[0]);});
+  // ---------- coste: poligoni semplificati [lon,lat] scritti a mano (mari pieni su terra, poi le isole) ----------
+  const P=a=>{const o=[];for(let i=0;i<a.length;i+=2)o.push([a[i],a[i+1]]);return o;};
+  const MARI=[
+    // Mediterraneo: da Gibilterra lungo la costa nord fino al Levante, poi la costa africana
+    P([-5.6,36.0,-4.4,36.7,-2.5,36.8,-1.6,37.3,-0.8,37.6,-0.4,38.3,0.2,38.75,-0.3,39.5,0.0,40.0,0.9,40.7,1.2,41.1,2.2,41.4,3.2,41.9,3.2,42.4,3.05,42.9,3.6,43.3,4.4,43.45,4.9,43.35,5.4,43.2,6.2,43.1,7.3,43.7,8.3,43.9,8.9,44.4,9.8,44.05,10.25,43.6,10.5,42.95,11.1,42.45,11.8,42.05,12.25,41.74,12.6,41.45,13.6,41.2,14.25,40.83,14.8,40.6,15.6,40.05,15.85,39.55,16.1,38.95,15.65,38.25,15.7,37.95,16.1,37.95,16.6,38.4,17.15,38.95,17.15,39.4,16.55,39.7,16.9,40.4,17.25,40.45,17.95,40.2,18.05,39.95,18.35,39.8,18.5,40.15,17.95,40.65,16.85,41.13,16.05,41.4,15.9,41.6,16.2,41.9,15.6,41.95,15.0,42.0,14.2,42.45,13.6,43.5,12.6,44.05,12.35,44.5,12.5,44.95,12.3,45.45,13.1,45.75,13.75,45.65,13.6,45.1,13.95,44.8,14.4,45.3,15.2,44.1,16.4,43.5,17.5,43.0,18.1,42.65,19.1,42.1,19.45,41.3,19.4,40.45,20.0,39.75,20.7,39.0,21.1,38.4,21.35,37.65,21.7,36.8,22.4,36.4,22.75,36.8,23.05,36.45,22.8,37.5,23.3,37.3,23.6,37.95,24.0,37.65,24.6,38.0,24.2,38.7,23.4,39.0,22.9,39.35,22.6,40.0,22.95,40.6,23.4,40.25,23.9,40.0,24.4,40.9,25.9,40.85,26.6,40.6,26.25,40.05,26.15,39.5,26.9,39.3,27.1,38.45,26.4,38.3,27.3,37.75,27.4,37.0,28.3,36.8,29.1,36.6,30.0,36.25,30.7,36.85,31.6,36.6,32.5,36.1,33.5,36.15,34.6,36.8,35.6,36.75,36.2,36.6,35.8,36.0,35.8,35.5,35.9,34.9,35.85,34.45,35.5,33.9,35.2,33.27,35.0,32.8,34.75,32.08,34.4,31.5,33.8,31.15,32.3,31.27,31.8,31.55,31.0,31.6,30.4,31.45,29.9,31.2,28.5,30.95,27.2,31.35,25.15,31.6,24.0,32.1,22.6,32.85,21.5,32.9,20.05,32.1,19.6,30.6,18.6,30.3,17.3,31.0,16.6,31.2,15.1,32.4,13.2,32.9,12.1,32.9,11.2,33.2,10.1,33.9,10.75,34.75,11.1,35.25,10.85,35.75,10.55,36.4,11.05,37.05,10.3,36.85,10.2,37.2,9.85,37.3,8.6,36.95,7.75,36.95,6.9,36.9,5.1,36.75,3.05,36.75,1.0,36.5,-0.65,35.75,-2.0,35.1,-2.95,35.3,-4.3,35.2,-5.3,35.9,-5.7,35.95]),
+    // Atlantico (oltre il bordo della carta a ovest)
+    P([-5.65,35.95,-5.9,35.8,-6.2,35.0,-6.8,34.05,-7.6,33.6,-8.5,33.25,-9.25,32.5,-9.8,30.6,-9.7,29.5,-11.0,28.5,-12.9,27.9,-14.5,26.2,-16.0,24.0,-17.0,21.5,-25,20,-25,48,-1.2,48,-1.2,46.0,-1.25,44.65,-1.55,43.5,-2.0,43.3,-2.95,43.35,-3.8,43.45,-5.7,43.55,-7.85,43.75,-8.4,43.4,-9.3,42.9,-8.9,42.2,-8.7,41.15,-9.0,40.2,-9.4,39.4,-9.4,38.7,-8.9,37.95,-9.0,37.0,-7.9,37.0,-7.0,37.2,-6.3,36.5,-5.8,36.05]),
+    // golfo di Corinto
+    P([21.7,38.33,22.4,38.1,22.95,37.95,22.9,38.15,22.4,38.38,21.85,38.42]),
+    // Mar di Marmara e stretti
+    P([26.15,40.05,26.7,40.4,27.0,40.95,28.0,41.0,29.0,41.0,29.05,41.2,29.15,41.22,29.1,41.0,29.45,40.75,29.0,40.4,27.6,40.35,26.75,40.3,26.35,40.0]),
+    // Mar Nero (con il Mar d'Azov oltre il bordo nord)
+    P([29.1,41.22,28.6,41.35,28.1,41.65,27.5,42.5,27.95,43.2,28.65,44.2,29.6,45.2,30.75,46.45,31.5,46.9,33.6,46.2,32.6,45.4,33.5,44.6,34.4,44.5,35.4,45.0,36.5,45.35,37.5,46.6,39.2,47.4,38.5,46.6,37.8,45.6,37.5,45.2,37.8,44.7,39.7,43.6,41.0,43.0,41.6,41.6,39.7,41.0,37.9,41.0,36.3,41.3,35.15,42.0,33.5,42.0,31.8,41.45,30.4,41.2]),
+    // Mar Rosso con i golfi di Suez e di Aqaba
+    P([32.55,29.97,32.65,29.6,33.1,28.4,33.85,27.25,34.3,26.1,34.9,25.05,35.5,23.9,35.7,22.8,36.6,22.0,37.3,19.5,40.5,19.5,39.15,21.5,38.05,24.1,37.2,25.0,36.45,26.2,35.7,27.35,35.15,28.05,35.0,29.53,34.9,29.5,34.75,29.0,34.45,28.2,34.25,27.75,33.6,28.25,33.1,28.95,32.7,29.65]),
+    // Golfo Persico
+    P([47.95,29.95,48.6,30.0,49.2,30.1,50.15,30.05,50.8,28.95,51.45,27.9,52.6,27.35,54.5,26.6,56.3,27.1,56.4,26.0,56.2,24.5,54.4,24.3,52.0,24.0,51.6,24.25,51.6,25.3,51.2,26.15,50.8,25.0,50.55,25.6,50.2,26.45,49.6,27.1,48.8,27.7,48.4,28.5,47.95,29.35]),
+    // Mar Caspio (in parte oltre il bordo est)
+    P([47.0,46.3,47.4,45.0,47.5,43.9,47.8,42.8,48.6,41.8,49.5,40.6,49.0,39.5,48.9,38.4,49.9,37.5,51.0,36.8,52.5,36.7,53.9,36.9,54,38.5,53.0,39.5,53.2,40.8,52.7,41.7,51.3,43.1,51.0,44.5,52.5,45.3,53.2,46.8,49,47.2]),
+    // laghi di Van e di Urmia
+    P([42.3,38.7,42.9,39.0,43.6,38.7,43.2,38.35,42.6,38.45]),P([45.2,38.2,45.7,38.0,45.9,37.4,45.4,37.15,45.1,37.6])];
+  const ISOLE=[
+    P([12.45,38.0,13.35,38.12,14.0,38.04,15.65,38.27,15.28,37.85,15.1,37.5,15.3,37.07,15.1,36.68,14.25,37.07,13.55,37.28,13.05,37.5,12.6,37.65,12.42,37.8]),            // Sicilia
+    P([9.15,41.24,9.6,40.92,9.83,40.5,9.7,39.93,9.62,39.3,9.1,39.2,8.85,38.88,8.4,39.05,8.45,39.75,8.35,40.5,8.15,40.6,8.2,41.0,8.4,40.84,8.7,40.92]),                    // Sardegna
+    P([9.4,43.0,9.45,42.7,9.55,42.1,9.3,41.6,9.15,41.38,8.7,41.9,8.6,42.3,8.75,42.57,9.3,42.68]),                                                                         // Corsica
+    P([23.55,35.3,24.0,35.52,24.45,35.37,25.13,35.34,25.72,35.19,26.3,35.25,26.1,35.0,25.73,35.0,24.9,34.95,24.75,34.99,24.0,35.2,23.55,35.25]),                          // Creta
+    P([32.3,35.1,32.4,34.75,33.04,34.67,33.63,34.92,34.08,34.96,33.95,35.12,34.58,35.69,33.9,35.4,33.32,35.34,32.9,35.4,32.8,35.2]),                                       // Cipro
+    P([2.35,39.6,3.1,39.95,3.45,39.7,3.05,39.3,2.6,39.5]),P([3.8,40.05,4.3,39.95,4.15,39.85,3.85,39.95]),P([1.2,38.9,1.6,39.1,1.4,38.85]),                                 // Baleari
+    P([27.7,36.2,28.2,36.45,28.25,36.1,27.9,35.9]),P([26.2,39.3,26.6,39.35,26.4,39.0,25.85,39.15]),P([25.85,38.55,26.15,38.45,26.0,38.2]),P([26.6,37.8,27.05,37.7,26.75,37.65]),   // Rodi, Lesbo, Chio, Samo
+    P([23.9,38.95,24.6,38.1,24.2,38.25,23.3,38.9]),P([10.3,42.85,10.45,42.8,10.1,42.75])];                                                                                // Eubea, Elba
+  const FIUMI=[
+    {n:'Nilo',w:1.3,p:P([30.8,20.0,31.35,21.8,32.5,23.0,32.9,24.09,32.85,25.0,32.64,25.7,32.72,26.16,32.0,26.3,31.18,27.18,30.85,27.7,31.1,28.1,30.9,29.3,31.25,30.05])},
+    {n:'',w:1,p:P([31.25,30.05,30.85,30.6,30.4,31.45])},{n:'',w:1,p:P([31.25,30.05,31.3,30.6,31.8,31.5])},
+    {n:'Tigri',w:1.1,p:P([39.6,38.45,40.2,37.9,41.4,37.6,42.2,37.3,43.13,36.34,43.68,34.6,43.88,34.2,44.4,33.3,45.8,32.5,47.15,31.84,47.43,31.0])},
+    {n:'Eufrate',w:1.1,p:P([39.5,39.7,38.8,38.8,38.3,38.0,37.98,37.03,38.0,36.6,39.0,35.95,40.14,35.33,40.9,34.45,41.9,34.1,42.83,33.64,43.78,33.35,44.42,32.54,44.9,32.0,46.26,31.05,47.43,31.0])},
+    {n:'',w:1.2,p:P([47.43,31.0,47.8,30.5,48.5,29.95])},
+    {n:'Tevere',w:0.9,p:P([12.0,43.78,12.38,43.1,12.38,42.46,12.6,42.2,12.48,41.9,12.25,41.74])},
+    {n:'',w:0.9,p:P([7.6,45.0,9.2,45.15,10.6,45.05,11.9,45.0,12.45,44.95])},                                  // Po
+    {n:'',w:1,p:P([20.5,44.8,22.5,44.6,24.0,43.7,25.95,43.85,27.3,44.1,28.0,44.3,27.95,45.27,28.7,45.25,29.6,45.2])},   // Danubio
+    {n:'',w:0.8,p:P([35.6,33.2,35.55,32.4,35.55,31.75])},{n:'',w:0.9,p:P([4.8,46.2,4.85,45.0,4.6,44.0,4.8,43.4])}];        // Giordano, Rodano
+  // rilievi: [lon, lat, raggio in gradi, altezza relativa]
+  const MONTI=[[10,46.4,2.6,1],[0.5,42.7,1.2,0.6],[12.6,43.3,1.0,0.5],[14.4,41.6,1.0,0.5],[16.2,39.4,0.8,0.4],[-5,32.3,2.2,0.85],[0.5,33.6,1.8,0.5],[-3.3,37.1,0.8,0.5],[-4.5,40.4,2.6,0.4],
+    [21,40.2,1.5,0.6],[20,42.6,1.5,0.6],[24,42.2,1.2,0.5],[33,37.2,2.0,0.8],[37,38.2,2.0,0.75],[33,39.2,3.8,0.45],[42.5,38.8,2.5,0.8],[44.5,42.7,2.2,0.95],[47,33.6,2.2,0.8],[50,31.2,2.0,0.7],[45.3,36.6,1.8,0.75],
+    [36,34.0,0.6,0.45],[34,28.6,0.8,0.45],[33.5,26.0,1.2,0.35],[39,25.0,2.2,0.4],[36,30.6,1.0,0.3]];
+  // ---------- disegno della carta (stesse forme per la texture e per la maschera del rilievo) ----------
+  function percorso(g,pts,Wc,Hc){g.beginPath();pts.forEach((p,i)=>{const X=(llz(p[0])-MZ0)/(MZ1-MZ0)*Wc,Y=(46-p[1])/24*Hc;i?g.lineTo(X,Y):g.moveTo(X,Y);});}
+  const px=(lon,Wc)=>(llz(lon)-MZ0)/(MZ1-MZ0)*Wc,py=(lat,Hc)=>(46-lat)/24*Hc;
+  function disegna(c,maschera){const g=c.getContext('2d'),Wc=c.width,Hc=c.height,f=Wc/2048,r=rng(127);
+    const terra=()=>{if(maschera)return '#fff';const gr=g.createLinearGradient(0,0,0,Hc);gr.addColorStop(0,'#B9CF93');gr.addColorStop(0.3,'#C9D69E');gr.addColorStop(0.55,'#E3D6A6');gr.addColorStop(1,'#EBD3A2');return gr;};
+    g.fillStyle=terra();g.fillRect(0,0,Wc,Hc);
+    if(!maschera){
+      // grana leggera della terra e rilievi tinti
+      for(let i=0;i<5000*f*f;i++){g.fillStyle=r()<0.5?'rgba(120,100,60,0.06)':'rgba(255,255,240,0.08)';g.fillRect(r()*Wc,r()*Hc,3*f,3*f);}
+      MONTI.forEach(m=>{const X=px(m[0],Wc),Y=py(m[1],Hc),R=m[2]*KZ/(MZ1-MZ0)*Wc;const gr=g.createRadialGradient(X,Y,0,X,Y,R);gr.addColorStop(0,`rgba(140,112,72,${0.42*m[3]})`);gr.addColorStop(1,'rgba(140,112,72,0)');g.fillStyle=gr;g.fillRect(X-R,Y-R,2*R,2*R);});
+      // Mezzaluna fertile e valle del Nilo: verde più vivo lungo i fiumi
+      g.lineCap='round';g.lineJoin='round';g.strokeStyle='rgba(110,160,80,0.42)';
+      FIUMI.forEach(F=>{if(!F.n&&F.w<1.1)return;g.lineWidth=26*f*F.w;percorso(g,F.p,Wc,Hc);g.stroke();});
+      g.lineWidth=40*f;g.strokeStyle='rgba(110,160,80,0.22)';percorso(g,P([35.0,31.5,36.2,33.8,36.6,35.6,38.5,36.7,41.5,37.0,43.5,36.2,45.5,34.5,47.5,31.5]),Wc,Hc);g.stroke();
+      g.fillStyle='rgba(110,160,80,0.5)';percorso(g,P([31.25,30.1,30.2,31.5,32.0,31.6]),Wc,Hc);g.fill();}
+    // mari: riva chiara dentro il bordo, poi il contorno
+    MARI.forEach(m=>{percorso(g,m,Wc,Hc);g.closePath();g.fillStyle=maschera?'#000':'#A6D0E4';g.fill();
+      if(!maschera){g.save();g.clip();g.lineWidth=14*f;g.strokeStyle='#C4E2EE';g.stroke();g.restore();}});
+    ISOLE.forEach(m=>{percorso(g,m,Wc,Hc);g.closePath();g.fillStyle=terra();g.fill();});
+    if(maschera)return;
+    g.lineWidth=2.2*f;g.strokeStyle='#5C8DA6';MARI.concat(ISOLE).forEach(m=>{percorso(g,m,Wc,Hc);g.closePath();g.stroke();});
+    // fiumi
+    FIUMI.forEach(F=>{g.lineWidth=4.5*f*F.w;g.strokeStyle='#3F7FA6';percorso(g,F.p,Wc,Hc);g.stroke();});
+    // riquadro nel Sahara: titolo, scala e nota sui modellini
+    const bx=120*f,by=730*f,bw=600*f,bh=225*f;g.fillStyle='rgba(255,252,240,0.88)';g.strokeStyle='#1B6D3F';g.lineWidth=4*f;g.beginPath();g.rect(bx,by,bw,bh);g.fill();g.stroke();
+    g.fillStyle='#1B6D3F';g.font=`700 ${40*f}px Lexend, sans-serif`;g.fillText('Mediterraneo e Vicino Oriente',bx+22*f,by+52*f);
+    g.fillStyle='#3d3d33';g.font=`500 ${24*f}px Lexend, sans-serif`;g.fillText('I monumenti sono molto più grandi del vero;',bx+22*f,by+96*f);g.fillText('le distanze sulla carta sono giuste.',bx+22*f,by+126*f);
+    const kmPx=Wc/(MZ1-MZ0)/KM;g.fillStyle='#1A2E1A';g.fillRect(bx+22*f,by+168*f,500*kmPx,10*f);g.fillStyle='#fff';g.fillRect(bx+22*f+250*kmPx,by+170*f,250*kmPx,6*f);
+    g.fillStyle='#1A2E1A';g.font=`600 ${22*f}px Lexend, sans-serif`;g.fillText('0',bx+16*f,by+205*f);g.fillText('250',bx+8*f+250*kmPx,by+205*f);g.fillText('500 km',bx+4*f+500*kmPx,by+205*f);
+    // rosa dei venti: nord in alto (verso le vetrate)
+    const nx=bx+bw-70*f,ny=by+120*f;g.fillStyle='#B8860B';g.beginPath();g.moveTo(nx,ny-70*f);g.lineTo(nx+20*f,ny);g.lineTo(nx,ny-12*f);g.lineTo(nx-20*f,ny);g.closePath();g.fill();
+    g.font=`700 ${34*f}px Lexend, sans-serif`;g.textAlign='center';g.fillText('N',nx,ny+40*f);g.textAlign='left';}
+  // ---------- rilievo: maschera sfocata + monti ----------
+  function rilievo(){// maschera 256×128 (colonne lungo z, righe lungo x, nord in alto), sfocata tre volte: coste in leggera pendenza
+    const m=mkCanvas(256,128);disegna(m,true);const d=m.getContext('2d',{willReadFrequently:true}).getImageData(0,0,256,128).data;
+    let a=new Float32Array(256*128);for(let i=0;i<a.length;i++)a[i]=d[i*4]/255;
+    for(let it=0;it<3;it++){const b=new Float32Array(a.length);for(let y=0;y<128;y++)for(let x=0;x<256;x++){let s=0,n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>255||Y>127)continue;s+=a[Y*256+X];n++;}b[y*256+x]=s/n;}a=b;}
+    const samp=(u,v)=>{const X=clamp(u*255,0,255),Y=clamp(v*127,0,127),x0=Math.floor(X),y0=Math.floor(Y),x1=Math.min(255,x0+1),y1=Math.min(127,y0+1),fx=X-x0,fy=Y-y0;
+      return lerp(lerp(a[y0*256+x0],a[y0*256+x1],fx),lerp(a[y1*256+x0],a[y1*256+x1],fx),fy);};
+    HG=new Float32Array((GX+1)*(GZ+1));
+    for(let j=0;j<=GZ;j++)for(let i=0;i<=GX;i++){const z=lerp(MZ0,MZ1,i/GX),x=lerp(MX1,MX0,j/GZ),lon=z/KZ+20,lat=46-(MX1-x)/KX;
+      const t=smooth(clamp((samp(i/GX,j/GZ)-0.35)/0.5,0,1));let mo=0;MONTI.forEach(q=>{const dl=(lon-q[0])*Math.cos(34*Math.PI/180),dd=lat-q[1];mo+=q[3]*Math.exp(-(dl*dl+dd*dd)/(q[2]*q[2]*0.5));});
+      HG[j*(GX+1)+i]=0.007+t*(0.016+0.04*Math.min(mo,1.2));}}
+  // altezza della carta in (x,z): bilineare sulla griglia
+  function hMap(x,z){if(!HG||x<MX0||x>MX1||z<MZ0||z>MZ1)return 0;const u=(z-MZ0)/(MZ1-MZ0)*GX,v=(MX1-x)/(MX1-MX0)*GZ,i=Math.min(GX-1,Math.floor(u)),j=Math.min(GZ-1,Math.floor(v)),fu=u-i,fv=v-j,R=GX+1;
+    return lerp(lerp(HG[j*R+i],HG[j*R+i+1],fu),lerp(HG[(j+1)*R+i],HG[(j+1)*R+i+1],fu),fv);}
+  function costruisciCarta(){const bassa=typeof QUALITA!=='undefined'&&QUALITA.livello==='bassa';if(bassa){GX=96;GZ=48;}
+    rilievo();const pos=[],uv=[],idx=[],R=GX+1;
+    for(let j=0;j<=GZ;j++)for(let i=0;i<=GX;i++){const z=lerp(MZ0,MZ1,i/GX),x=lerp(MX1,MX0,j/GZ);pos.push(x,HG[j*R+i],z);uv.push(i/GX,1-j/GZ);}
+    for(let j=0;j<GZ;j++)for(let i=0;i<GX;i++){const a=j*R+i,b=a+1,c=a+R,d=c+1;idx.push(a,c,b,b,c,d);}   // facce verso l'alto
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+    const c=mkCanvas(bassa?1024:2048,bassa?512:1024);disegna(c,false);
+    mapMesh=new THREE.Mesh(g,new THREE.MeshLambertMaterial({map:texOf(c),polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4}));mapMesh.name='carta-storia';SG.add(mapMesh);
+    mapMesh.userData.pick=h=>{const lat=46-(MX1-h.point.x)/KX,lon=h.point.z/KZ+20;let b=null,d=1e9;TAPPE.forEach(s=>{const q=Math.hypot(s.x-h.point.x,s.z-h.point.z);if(q<d&&(s.y<=yNow+0.5)){d=q;b=s;}});
+      if(b&&d<0.45)apri(b);else toast(`Latitudine ${Math.round(lat)}° nord, longitudine ${Math.abs(Math.round(lon))}° ${lon<0?'ovest':'est'}`,2200);};}
+  // ---------- striscia del tempo storica (stessa posizione della striscia dei dinosauri) ----------
+  function texStriscia(){const big=renderer.capabilities.maxTextureSize>=8192,Hc=big?8192:4096,Wc=big?256:128,c=mkCanvas(Wc,Hc),g=c.getContext('2d'),k=Wc/256,y=v=>(v-Y0)/YL*Hc;
+    g.fillStyle='#F7F4EA';g.fillRect(0,0,Wc,Hc);
+    [[Y0,-3200,'#A07A4E','PREISTORIA'],[-3200,Y1,'#2F7F55','STORIA ANTICA']].forEach(b=>{g.fillStyle=b[2];g.globalAlpha=0.9;g.fillRect(0,y(b[0]),Wc*0.34,y(b[1])-y(b[0]));g.globalAlpha=0.15;g.fillRect(Wc*0.34,y(b[0]),Wc*0.66,y(b[1])-y(b[0]));g.globalAlpha=1;});
+    const text=(s,v,x,size,color,weight)=>{g.save();g.translate(x,y(v));g.rotate(Math.PI/2);g.font=`${weight||700} ${size*k}px Lexend, sans-serif`;g.fillStyle=color;g.fillText(s,0,0);g.restore();};
+    text('PREISTORIA',-9900,Wc*0.10,46,'#fff');text('STORIA ANTICA',-3050,Wc*0.10,46,'#fff');
+    g.fillStyle='#3b3b33';for(let v=-10000;v<=0;v+=500){const yy=y(v);g.fillRect(Wc*0.34,yy-1.5*k,v%1000===0?Wc*0.36:Wc*0.16,3*k);}
+    for(let v=-9000;v<=-1000;v+=1000)text((-v).toLocaleString('it-IT')+' a.C.',v+60,Wc*0.74,26,'#1A2E1A',700);
+    text('10.000 a.C.',-9870,Wc*0.74,26,'#1A2E1A',700);
+    g.fillStyle='#B8860B';g.fillRect(0,y(0)-3*k,Wc,6*k);text('a.C. | d.C.',60,Wc*0.56,24,'#7a5a07',700);text('anno 0',60,Wc*0.74,24,'#7a5a07',700);
+    g.fillStyle='#7a5a07';g.fillRect(0,y(-3200)-2*k,Wc,4*k);text('la scrittura',-3140,Wc*0.56,22,'#7a5a07',700);
+    text('1 metro = circa 530 anni',-7700,Wc*0.56,19,'#4A6B4A',500);
+    TAPPE.forEach(s=>{g.fillStyle='#D4A017';g.beginPath();g.arc(Wc*0.52,y(s.y),9*k,0,7);g.fill();});
+    g.fillStyle='#1B6D3F';g.fillRect(0,Hc-10*k,Wc,10*k);text('476 d.C.',Y1-190,Wc*0.56,22,'#1B6D3F',700);
+    return texOf(c);}
+  const _cs=new THREE.Vector3();
+  function costruisciStriscia(){stripS=new THREE.Mesh(new THREE.PlaneGeometry(STRIP.x1-STRIP.x0,LEN),new THREE.MeshLambertMaterial({map:texStriscia()}));
+    stripS.rotation.x=-Math.PI/2;stripS.position.set((STRIP.x0+STRIP.x1)/2,0.007,(ZA+ZB)/2);stripS.name='linea-storia';SG.add(stripS);
+    stripS.userData.pick=h=>{play=false;updBtn();yGoal=yZ(h.point.z);toast(fmtY(yGoal));};
+    cursorS=new THREE.Group();SG.add(cursorS);const gold=new THREE.MeshBasicMaterial({color:col('#D4A017'),toneMapped:false});
+    const post=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.7,8),gold);post.position.y=0.35;cursorS.add(post);
+    const bar=new THREE.Mesh(new THREE.BoxGeometry(STRIP.x1-STRIP.x0+0.12,0.012,0.035),gold);bar.position.y=0.008;cursorS.add(bar);
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.12,4),gold);tip.position.y=0.76;tip.rotation.x=Math.PI;cursorS.add(tip);
+    cursorS.position.set((STRIP.x0+STRIP.x1)/2,0,zY(yNow));
+    cursLab=addLabel({text:'',world:'tempo',visible:()=>modo===1&&k>0.95,anchor:()=>_cs.set(cursorS.position.x,0.86,cursorS.position.z),onClick:()=>{const i=vicina(yNow);if(i>=0)apri(TAPPE[i]);}});cursLab._storia=1;}
+  // ---------- atlante: tavoletta cuneiforme e lettere fenicie (una texture condivisa) ----------
+  function texAtlante(){const c=mkCanvas(512,256),g=c.getContext('2d'),r=rng(131);
+    g.fillStyle='#C49A6C';g.fillRect(0,0,256,256);g.fillStyle='rgba(90,60,30,0.12)';for(let i=0;i<400;i++)g.fillRect(r()*256,r()*256,2,2);
+    g.fillStyle='#6E4C2C';g.strokeStyle='#6E4C2C';g.lineWidth=2;for(let row=0;row<7;row++){const y=28+row*32;g.fillRect(12,y+14,232,1.5);
+      let x=18+r()*6;while(x<232){const n=1+Math.floor(r()*3);for(let q=0;q<n;q++){const v=r()<0.6;g.beginPath();if(v){g.moveTo(x,y-6);g.lineTo(x+7,y-6);g.lineTo(x+3.5,y+1);g.closePath();g.fill();g.fillRect(x+3,y,1.6,10);}else{g.moveTo(x,y-1);g.lineTo(x,y+6);g.lineTo(x+7,y+2.5);g.closePath();g.fill();g.fillRect(x+6,y+1.8,10,1.6);}x+=v?9:17;}x+=8+r()*10;}}
+    g.fillStyle='#E4DDCB';g.fillRect(256,0,256,256);g.strokeStyle='#4A3F36';g.lineWidth=7;g.lineCap='round';g.lineJoin='round';
+    const L=[[[0.75,0.15,0.25,0.5,0.75,0.85],[0.62,0.1,0.42,0.9]],[[0.62,0.15,0.62,0.9],[0.62,0.15,0.3,0.38,0.62,0.52]],[[0.3,0.85,0.58,0.15,0.75,0.42]],[[0.66,0.15,0.3,0.42,0.66,0.55,0.66,0.15],[0.66,0.55,0.64,0.9]],[[0.66,0.12,0.66,0.88],[0.66,0.2,0.3,0.15],[0.66,0.45,0.3,0.4],[0.66,0.7,0.3,0.65]]];
+    L.forEach((gl,i)=>{const ox=256+10+i*48,oy=22,s=44;gl.forEach(st=>{g.beginPath();for(let q=0;q<st.length;q+=2){const X=ox+st[q]*s,Y=oy+st[q+1]*s;q?g.lineTo(X,Y):g.moveTo(X,Y);}g.stroke();});});
+    g.fillStyle='#8a6a10';g.font='700 40px Lexend, sans-serif';g.textAlign='center';['A','B','C','D','E'].forEach((t,i)=>g.fillText(t,256+10+i*48+24,140));
+    g.font='600 22px Lexend, sans-serif';g.fillStyle='#4A3F36';g.fillText('fenicio',384,200);g.fillText('noi',384,232);g.textAlign='left';
+    return texOf(c);}
+  // ---------- modellini (miniKit di Minitalia: metri veri, poi una scala; geometrie unite con colori ai vertici) ----------
+  const MODELLI=[];let matMod,matAtl;
+  const capanna=(K,x,z,r,c)=>{K.cyl(r,r*0.8,x,0,z,c||'#C9A877',{seg:10});K.cone(r*1.25,r*0.95,x,r*0.8,z,'#8E6F43',10);K.rect(r*0.5,r*0.55,x,0,z+r,0,1,'#4A3F36');};
+  const COSTR={
+    neolitico(K){[['#D9C26A',-22,-18,16,12],['#A3B65A',-4,-20,14,12],['#8C6E44',-22,-4,16,10],['#C8B060',14,-16,14,14],['#9BB257',16,2,12,14],['#D9C26A',-24,10,14,12]].forEach(f=>K.box(f[3],0.4,f[4],f[1]+f[3]/2,0,f[2]+f[4]/2,f[0]));
+      [[-2,4],[6,8],[-8,14],[4,18],[10,14],[-4,22],[8,26]].forEach((p,i)=>capanna(K,p[0],p[1],2.6+(i%3)*0.4));
+      K.box(1,1.2,1,-12,0,6,'#7A5A3A');K.cyl(2.2,1.2,1,0,12,'#6F7F86',{seg:10});},
+    scrittura(K){K.box(30,4,22,0,0,0,'#B89A70');K.box(26,1,18,0,4,0,'#8A6A48');},
+    ziggurat(K){const C1='#C79A62',C2='#B9895A',C3='#D3AA74';K.box(80,1.2,64,0,0,0,'#D9C49A');
+      K.sq(62,11,43,0,1.2,-4,C1,0.88);K.sq(38,7,26,0,12.2,-7,C2,0.86);K.box(20,6,13,0,19.2,-9,C3);K.box(21,0.8,14,0,25.2,-9,'#9C7B4A');
+      for(let i=0;i<9;i++){const h=1.2+i*1.22;K.box(6,1.3,2.4,0,h,14+(8-i)*2.4+1.4,C3);}
+      [-1,1].forEach(s=>{for(let i=0;i<7;i++)K.box(5,1.3,2.4,s*(17+(6-i)*0.9),1.2+i*1.4,15.5-i*0.6,C2);});
+      K.windows(0,-4,60,41,3,1,0,1.6,5,6,'#8A6440');},
+    piramidi(K){K.box(600,1,600,-130,0,-130,'#E4CFA0');
+      K.pyr(230,146,230,90,1,90,'#D9BF8A');K.pyr(215,143,215,-110,1,-110,'#D4B884');K.pyr(34,22,34,-110,122.2,-110,'#EEE6D2');K.pyr(105,66,105,-300,1,-300,'#CFAE7A');
+      [-1,0,1].forEach(i=>K.pyr(30,18,30,-390,1,-300+i*42,'#C9A876'));
+      // Sfinge (ingrandita): corpo lungo est-ovest (z), testa a est
+      const sx=-75,sz=110,S='#DCC28C';K.box(30,26,100,sx,1,sz,S);K.box(34,7,44,sx,1,sz+70,S);K.box(24,26,22,sx,27,sz+44,S);K.pyr(36,22,16,sx,27,sz+33,'#C9A86E');K.box(16,16,3,sx,33,sz+56,'#B08A5A');K.box(16,4,4,sx,1,sz-52,S);},
+    alfabeto(K){K.box(12,3,26,0,0,0,'#B7AE98');K.box(3,16,22,0,3,0,'#CFC6B0');},
+    nave(K){const sh=new THREE.Shape();sh.moveTo(-13,3.2);sh.quadraticCurveTo(-10,0,-4,0);sh.lineTo(6,0);sh.quadraticCurveTo(11,0.3,13,3.6);sh.lineTo(14,6.5);sh.lineTo(12.4,6.6);sh.lineTo(11,3.4);sh.lineTo(-11,3.4);sh.lineTo(-13.5,5.2);sh.lineTo(-14.2,4.6);sh.closePath();
+      K.extrude(sh,6,0,0,0,'#7A5634');K.box(25,0.4,5.2,-0.5,3.0,0,'#A07C52');K.cyl(0.35,13,0,3.2,0,'#5E4630',{seg:6});K.box(0.4,0.6,11,0,15,0,'#5E4630');
+      for(let i=0;i<5;i++)K.box(0.12,1.6,10.4,0.2,6.6+i*1.6,0,i%2?'#F2EDE2':'#7A2E3E');
+      for(let i=0;i<7;i++){[-1,1].forEach(s=>K.box(0.3,0.3,4,-8+i*2.6,2.2,s*4.6,'#8C6A44'));}
+      K.box(1,2.2,1,13.2,6.2,0,'#B8860B');},
+    roma(K){K.dome(42,9,0,0,0,'#9FB86E',14);[[-12,-6],[0,-14],[10,-4],[-4,6],[8,12],[-16,10]].forEach(p=>capanna(K,p[0],p[1]+0,2.8));K.box(1,7,1,0,9,0,'#7A5A3A');},
+    // acquedotto: un muro estruso con i fori ad arco (una sola forma), lungo est-ovest; in cima il canale dell'acqua
+    acquedotto(K){const n=10,L=132,h=24,bw=L/n,sh=new THREE.Shape();sh.moveTo(-L/2,0);sh.lineTo(L/2,0);sh.lineTo(L/2,h);sh.lineTo(-L/2,h);sh.closePath();
+      for(let i=0;i<n;i++){const cx=-L/2+(i+0.5)*bw,r=(bw-3.2)/2,y1=h-5-r,hh=new THREE.Path();hh.moveTo(cx-r,0.6);hh.lineTo(cx+r,0.6);hh.lineTo(cx+r,y1);hh.absarc(cx,y1,r,0,Math.PI,false);hh.lineTo(cx-r,0.6);sh.holes.push(hh);}
+      K.extrude(sh,3.6,0,0,0,'#C9B08A',Math.PI/2);K.box(4.2,1.4,L,0,h,0,'#8EA9B8');},
+    partenone(K){const M='#EDE6D6',Mo='#DDD3BE';K.sq(64,12,104,0,0,0,'#A89B85',0.82);K.box(50,0.8,84,0,12,0,'#C9BFA6');
+      K.box(31,3,70,0,12.8,0,Mo);const cy=(x,z)=>K.cyl(0.95,10.4,x,15.8,z,M,{seg:8});
+      for(let i=0;i<17;i++){const z=-32+i*4;cy(-13.5,z);cy(13.5,z);}for(let i=1;i<7;i++){const x=-13.5+i*27/7;cy(x,-32);cy(x,32);}
+      K.box(25,9,58,0,15.8,0,'#D8CDB6');K.box(30,3.2,69,0,26.2,0,Mo);K.gable(31,4.4,70,0,29.4,0,'#C9B48E');},
+    colosseo(K){const T='#D8C5A4',D='#4A3F36',a=94,b=78,N=56,lv=[0,10.5,22.35,33.95,48.5];
+      for(let i=0;i<N;i++){const t0=i/N*Math.PI*2,t1=(i+1)/N*Math.PI*2,tm=(t0+t1)/2,x0=(a-1.5)*Math.cos(t0),z0=(b-1.5)*Math.sin(t0),x1=(a-1.5)*Math.cos(t1),z1=(b-1.5)*Math.sin(t1),xm=a*Math.cos(tm),zm=b*Math.sin(tm);
+        const gx=xm/(a*a),gz=zm/(b*b),gl=Math.hypot(gx,gz),nx=gx/gl,nz=gz/gl,L=Math.hypot(x1-x0,z1-z0);K.wall(x0,z0,x1,z1,0,48.5,3,T);
+        for(let l=0;l<3;l++)K.arch(L*0.6,(lv[l+1]-lv[l])*0.74,xm,lv[l]+0.6,zm,nx,nz,D);if(i%2===0)K.rect(L*0.3,2.4,xm,40,zm,nx,nz,D);}
+      K.with(new THREE.Matrix4().makeScale(1,1,b/a),()=>K.lathe([[44,4],[60,18],[76,34],[88,46]],0,0,0,'#B8A27E',40));
+      K.cyl(1,1.2,0,0,0,'#D9C08A',{seg:40,sx:46,sz:28});},
+    costantinopoli(K){const Wl='#B9A17E',R=70,o=20,pa=a=>[R*Math.sin(a),-R*Math.cos(a)+o];   // mura di terra sul lato ovest (−z), mare a nord, est e sud
+      for(let i=0;i<8;i++){const a0=-1.2+i*0.3,a1=a0+0.3,[x0,z0]=pa(a0),[x1,z1]=pa(a1);K.wall(x0,z0,x1,z1,0,9,3,Wl);K.box(6,13,6,x0,0,z0,'#A88F6C');}{const [x,z]=pa(1.2);K.box(6,13,6,x,0,z,'#A88F6C');}
+      K.box(30,12,24,10,0,-6,'#D9C9A8');K.cyl(9,3,10,12,-6,'#C8B48E',{seg:14});K.dome(9,8,10,15,-6,'#9FA9AE',14);K.box(10,4,10,-6,0,22,'#C9B9A0');
+      K.cyl(2.2,34,-12,0,-24,'#7A3B4F',{seg:10});K.box(5,3,5,-12,0,-24,'#BFB49E');K.cyl(1.4,4,-12,34,-24,'#B8860B',{seg:8});
+      const r=K.R;for(let i=0;i<26;i++){const x=-45+r()*90,z=-25+r()*70;if(Math.hypot(x-10,z+6)<20)continue;K.box(5+r()*4,4+r()*4,5+r()*4,x,0,z,K.vary('#D2BFA0',0.15));}
+      K.box(140,0.6,110,0,0,10,'#C9BC9E');}};
+  // [id del costruttore, tappa, metri veri del pezzo più grande → metri sulla carta, scostamento (dx,dz) in m, fino a (anno), ry]
+  const DEF=[['neolitico','neolitico',64,0.58,[0,0]],['scrittura','scrittura',30,0.13,[0.12,-0.16],null,0,true],['ziggurat','ziggurat',80,0.4,[0,0]],
+    ['piramidi','piramidi',600,0.6,[-0.02,-0.2]],['alfabeto','alfabeto',26,0.14,[0.02,0.12],null,0,true],['nave','alfabeto',28,0.3,[-0.19,-0.44],null,Math.PI/2],
+    ['roma','roma',90,0.3,[0,0],80],['acquedotto','strade',135,0.42,[-0.05,0.42]],['partenone','partenone',104,0.42,[0,0]],
+    ['colosseo','colosseo',206,0.36,[0.02,0.02]],['costantinopoli','costantinopoli',120,0.4,[-0.05,0.05]]];
+  function costruisciModelli(){matMod=new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide});matAtl=new THREE.MeshLambertMaterial({map:texAtlante()});
+    DEF.forEach((d,i)=>{const s=TAPPE.find(t=>t.id===d[1]),sc=d[3]/d[2],K=miniKit(sc,i+201);COSTR[d[0]](K);const geo=mergeParts(K.P),g=new THREE.Group();g.name='storia-'+d[0];
+      const m=new THREE.Mesh(geo,matMod);g.add(m);const x=s.x+d[4][0],z=s.z+d[4][1];let y=0;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)y=Math.max(y,hMap(x+a*d[3]*0.35,z+b*d[3]*0.35));
+      if(d[0]==='nave')y=0.009;g.position.set(x,y-0.002,z);if(d[6])g.rotation.y=d[6];g.scale.set(sc,0.001,sc);g.userData.pick=()=>apri(s);
+      if(d[7]){// faccia scritta: un piano con l'atlante (tavoletta a sinistra, lettere a destra)
+        const pl=new THREE.PlaneGeometry(1,1),u=pl.attributes.uv,sx=d[0]==='scrittura';for(let q=0;q<u.count;q++)u.setX(q,(sx?0:0.5)+u.getX(q)*0.5);
+        // orientamento leggibile da chi guarda dal lato −x verso le vetrate: destra del disegno = +z (est), alto = +x (tavoletta) o +y (lastra)
+        const f=new THREE.Mesh(pl,matAtl),V3=(a,b,c)=>new THREE.Vector3(a,b,c);f.quaternion.setFromRotationMatrix(sx?new THREE.Matrix4().makeBasis(V3(0,0,1),V3(1,0,0),V3(0,1,0)):new THREE.Matrix4().makeBasis(V3(0,0,1),V3(0,1,0),V3(-1,0,0)));
+        if(sx){f.scale.set(25,17,1);f.position.set(0,5.05,0);}else{f.scale.set(21,15,1);f.position.set(-1.55,11,0);}g.add(f);}
+      SG.add(g);MODELLI.push({g,s,sc,y:s.y,fino:d[5]||null,app:0});});
+    // via Appia: nastro di pietra da Roma a Brindisi, alla scala vera della carta
+    const V=P([12.5,41.87,12.9,41.62,13.25,41.4,13.6,41.25,14.25,41.08,14.78,41.13,15.6,40.95,16.55,40.82,17.24,40.47,17.6,40.55,17.94,40.63]),Q=[];
+    V.forEach((v,i)=>{if(!i){Q.push([llx(v[1]),llz(v[0])]);return;}const a=V[i-1];for(let q=1;q<=6;q++){const t=q/6;Q.push([llx(lerp(a[1],v[1],t)),llz(lerp(a[0],v[0],t))]);}});
+    const pos=[],cl=[],idv=[],w=0.011;   // nastro continuo (vertici condivisi alle giunture) che segue il rilievo
+    Q.forEach((p,i)=>{const a=Q[Math.max(0,i-1)],b=Q[Math.min(Q.length-1,i+1)],L=Math.hypot(b[0]-a[0],b[1]-a[1])||1,nx=-(b[1]-a[1])/L*w,nz=(b[0]-a[0])/L*w,h=hMap(p[0],p[1])+0.0025;
+      pos.push(p[0]+nx,h,p[1]+nz,p[0]-nx,h,p[1]-nz);cl.push(0.30,0.28,0.25,0.30,0.28,0.25);if(i){const k0=(i-1)*2;idv.push(k0,k0+1,k0+2,k0+1,k0+3,k0+2);}});
+    const gv=new THREE.BufferGeometry();gv.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));gv.setAttribute('color',new THREE.Float32BufferAttribute(cl,3));gv.setIndex(idv);gv.computeVertexNormals();
+    const via=new THREE.Group();via.name='storia-via-appia';via.add(new THREE.Mesh(gv,matMod));via.scale.set(1,0.001,1);const sv=TAPPE.find(t=>t.id==='strade');via.userData.pick=()=>apri(sv);SG.add(via);MODELLI.push({g:via,s:sv,sc:1,y:sv.y,fino:null,app:0,via:true});}
+  // ---------- etichette (sistema esistente; visibili solo nella storia) ----------
+  function etichette(){const vis=()=>modo===1&&k>0.95;
+    const fissa=(t,lon,lat,o)=>{const v=new THREE.Vector3(llx(lat),hMap(llx(lat),llz(lon))+0.03,llz(lon));o=o||{};
+      const L=addLabel({text:t,world:'tempo',small:o.small,maxDist:o.max,anchor:()=>v,visible:o.quando?()=>vis()&&o.quando():vis,onClick:o.click});L._storia=1;return L;};
+    fissa('Mesopotamia',44.8,33.4);fissa('Egitto',29.6,26.6);fissa('Grecia',22.0,39.4);fissa('Fenicia',36.4,34.6);fissa('Mar Mediterraneo',18.0,34.2,{small:true});
+    fissa('Mar Nero',34.5,43.3,{small:true});fissa('Mar Rosso',36.8,23.5,{small:true});fissa('Golfo Persico',51.0,27.2,{small:true});
+    fissa('Nilo',32.7,24.6,{small:true});fissa('Tigri',42.4,37.6,{small:true});fissa('Eufrate',40.8,34.9,{small:true});fissa('Tevere',11.7,43.3,{small:true});
+    // i nomi delle città stanno un po' a nord dei modellini, per non coprirli
+    fissa('Roma',12.3,43.0,{quando:()=>yNow>=-753.5});fissa('Bisanzio',28.98,41.8,{small:true,quando:()=>yNow>=-660&&yNow<329.5});fissa('Costantinopoli',28.98,42.0,{quando:()=>yNow>=329.5,click:()=>apri(TAPPE.find(t=>t.id==='costantinopoli'))});
+    fissa('Babilonia',44.42,32.54,{small:true,quando:()=>yNow>=-1900,click:()=>apri(TAPPE.find(t=>t.id==='hammurabi'))});fissa('Ravenna',12.2,44.42,{small:true,quando:()=>yNow>=402});
+    // nome del modellino: da vicino (7 m) oppure sempre, se è la tappa di adesso; Costantinopoli ha già il nome della città
+    MODELLI.forEach(M=>{if(M.via||M.s.id==='costantinopoli'||M.s.id==='alfabeto'&&M.g.name!=='storia-nave')return;const s=M.s,v=new THREE.Vector3(M.g.position.x,M.g.position.y+0.32,M.g.position.z);
+      addLabel({text:s.nome,world:'tempo',small:true,anchor:()=>v,visible:()=>vis()&&M.app>0.9&&(ultTappa>=0&&TAPPE[ultTappa]===s||camera.position.distanceTo(v)<7),onClick:()=>apri(s)})._storia=1;});}
+  // ---------- pannelli ----------
+  function apri(s){if(!s)return;const M=MODELLI.find(m=>m.s===s);const anc=new THREE.Vector3(s.x,0.15,s.z);
+    openPanel({title:s.titolo,badges:[[s.data,'gold'],['Classe '+s.cl]],text:s.testo,
+      fig:`<p class="tl-stopname">${esc(s.dom)}</p><div class="reveal" id="rvS">${esc(s.ris)}</div>`,
+      note:'Carta in scala: 1 metro sul pavimento = circa 300 km. '+(M?'Il modellino è molto più grande del vero.':'Per questa tappa non c\'è un modellino.'),doc:{nota:s.nota,fonti:s.fonti},
+      actions:[{label:'Scopri la risposta',cls:'gold',fn:()=>{const r=document.getElementById('rvS');r&&r.classList.add('on');if(typeof SUONI!=='undefined'&&SUONI.attivo())SUONI.play('rivela');}},
+        {label:'Guarda da vicino',cls:'ghost',fn:()=>{closePanel();flyTo(new THREE.Vector3(s.x,0.08,s.z),M?1.5:2.2,-Math.PI/2+0.35,0.95);}}]},()=>anc,null);
+    stato.aperto=s.id;}
+  const stato={aperto:null};
+  AGG.su('pannello:chiude',()=>{stato.aperto=null;});
+  // ---------- dock: selettore e comandi della storia ----------
+  const sel=document.createElement('div');sel.className='tl-modo';sel.setAttribute('role','group');sel.setAttribute('aria-label','Scala del tempo');
+  sel.innerHTML='<button type="button" data-m="0" class="on">Dinosauri</button><button type="button" data-m="1">Storia dell\'uomo</button>';dock.appendChild(sel);
+  sel.querySelectorAll('button').forEach(b=>b.onclick=()=>vai(b.dataset.m==='1'));
+  const zoom=document.createElement('button');zoom.type='button';zoom.className='tl-zoom';zoom.textContent='Ingrandisci il tempo';zoom.title='Ingrandisci il tempo: la storia dell\'uomo';zoom.onclick=()=>vai(true);
+  dock.querySelector('#tlStop').after(zoom);
+  const IP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',IN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const IPL='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',IPA='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  const pc=v=>((v-Y0)/YL*100).toFixed(2)+'%';
+  const row=document.createElement('div');row.className='tl-row st-x';
+  row.innerHTML=`<div class="tl-read"><b id="stA"></b><span id="stU"></span></div><span class="badge" id="stEra"></span><span class="tl-stopname" id="stStop"></span>
+    <div class="tl-btns"><button id="stPrev" title="Tappa precedente">${IP}Prima</button><button class="play" id="stPlay" title="Viaggio nella storia">${IPL}Viaggia</button><button id="stNext" title="Tappa successiva">Dopo${IN}</button><button class="ico" id="stInfo" title="Scala della linea del tempo e della carta" aria-label="Scala della linea del tempo e della carta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg></button></div>`;
+  const track=document.createElement('div');track.className='tl-track st-x';
+  track.innerHTML=`<div class="tl-stops" id="stStops"></div><div class="tl-bands"><div style="flex:${-3200-Y0};background:#A07A4E">PREISTORIA</div><div style="flex:${Y1+3200};background:#2F7F55">STORIA ANTICA</div></div>
+    <input class="tl-range" id="stRange" type="range" min="${Y0}" max="${Y1}" step="1" aria-label="Linea del tempo della storia"><div class="tl-ticks">${[-10000,-8000,-6000,-4000,-2000].map(v=>`<span style="left:${pc(v)}">${v===-10000?'10.000 a.C.':(-v)+''}</span>`).join('')}<span class="fine" style="left:100%">476 d.C.</span></div>`;
+  const nota=document.createElement('div');nota.className='tl-note st-x';nota.textContent='Sul pavimento, lungo le vetrate: 1 metro = circa 530 anni. Sulla carta 1 metro = circa 300 km: i monumenti sono molto più grandi del vero, le distanze sono giuste. Le date «circa» sono incerte.';
+  dock.append(row,track,nota);
+  const $s=id=>dock.querySelector('#'+id),rng_=$s('stRange');
+  function updBtn(){$s('stPlay').innerHTML=play?IPA+'Pausa':IPL+'Viaggia';}
+  rng_.addEventListener('input',()=>{play=false;updBtn();yGoal=+rng_.value;});
+  $s('stInfo').onclick=()=>{dock.classList.toggle('note-on');$s('stInfo').classList.toggle('sel');};
+  const vicina=y=>{let b=-1,d=1e9;TAPPE.forEach((s,i)=>{const q=Math.abs(s.y-y);if(q<d){d=q;b=i;}});return d<60?b:-1;};
+  function vaiTappa(i){i=clamp(i,0,TAPPE.length-1);yGoal=TAPPE[i].y;}
+  function passo(dir){let i;if(dir>0){i=TAPPE.findIndex(s=>s.y>yGoal+0.5);if(i<0)i=TAPPE.length-1;}else{i=-1;for(let q=TAPPE.length-1;q>=0;q--)if(TAPPE[q].y<yGoal-0.5){i=q;break;}if(i<0)i=0;}vaiTappa(i);}
+  $s('stPrev').onclick=()=>{play=false;updBtn();passo(-1);};$s('stNext').onclick=()=>{play=false;updBtn();passo(1);};
+  $s('stPlay').onclick=()=>{play=!play;if(play){if(yGoal>=Y1-0.5){yGoal=yNow=Y0;}pWait=0.4;}updBtn();};
+  TAPPE.forEach((s,i)=>{const b=document.createElement('button');b.style.left=pc(s.y);b.title=s.data+' — '+s.titolo;b.onclick=()=>{play=false;updBtn();vaiTappa(i);};$s('stStops').appendChild(b);s.el=b;});
+  let ultTappa=-2,ultTesto='';
+  function aggDock(){const t=fmtY(yNow),m=t.match(/^([\d.]+)\s(.*)$/);if(t!==ultTesto){ultTesto=t;$s('stA').textContent=m?m[1]:t;$s('stU').textContent=m?m[2]:'';
+      $s('stEra').textContent=yNow<-3200?'Preistoria':'Storia antica';if(document.activeElement!==rng_)rng_.value=String(Math.round(yNow));cursLab&&(cursLab.el.querySelector('span').textContent=t);}
+    const si=vicina(yNow);if(si!==ultTappa){ultTappa=si;$s('stStop').textContent=si>=0?TAPPE[si].nome+' · '+TAPPE[si].cl:'';TAPPE.forEach((s,i)=>s.el.classList.toggle('on',i===si));}}
+  // ---------- costruzione al primo ingresso ----------
+  function costruisci(){if(costruita)return;costruita=true;const t0=performance.now();
+    surfD=W.surfaces.slice();dinoG=new THREE.Group();dinoG.name='dinosauri';root.children.slice().forEach(o=>dinoG.add(o));root.add(dinoG);root.add(SG);
+    costruisciCarta();costruisciStriscia();costruisciModelli();etichette();
+    // compilazione: tutto visibile per un renderer.compile, poi lo stato vero
+    const v0=SG.visible,vr=root.visible;SG.visible=true;root.visible=true;MODELLI.forEach(M=>M.g.visible=true);
+    try{renderer.compile(scene,camera);}catch(e){console.error('STORIA compile:',e);}
+    SG.visible=v0;root.visible=vr;MODELLI.forEach(M=>{M.g.visible=false;});
+    stato.msCostruzione=Math.round(performance.now()-t0);}
+  // le etichette dei dinosauri (già create da W.build) si spengono durante la storia
+  let etD=null;function spegniDino(){if(etD)return;etD=[];LABELS.forEach(L=>{if(L.world!=='tempo'||L._storia)return;const v=L.visible;etD.push(L);L.visible=v?()=>modo===0&&k<0.05&&v():()=>modo===0&&k<0.05;});}
+  // ---------- passaggio fra le due scale ----------
+  let surfD=null;
+  function applica(){const kd=smooth(clamp(k*2,0,1)),ks=smooth(clamp(k*2-1,0,1));
+    if(dinoG){dinoG.position.y=-0.25*kd;dinoG.scale.y=Math.max(0.001,1-kd);dinoG.visible=kd<0.999;}
+    SG.visible=ks>0.001;SG.scale.y=Math.max(0.001,ks);}
+  function vai(s,subito){s=!!s;if((modo===1)===s&&!subito)return;
+    if(s&&!costruita){if(!subito){toast('Sto preparando la carta…',1500);setTimeout(()=>{costruisci();vai(true);},40);return;}costruisci();}
+    if(s){spegniDino();}
+    closePanel();stopFollow();modo=s?1:0;play=false;updBtn();if(playing){playing=false;updPlayBtn();}
+    dock.classList.toggle('storia',s);sel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',(b.dataset.m==='1')===s));zoom.classList.remove('on');
+    W.surfaces.length=0;if(s)W.surfaces.push(mapMesh,stripS);else W.surfaces.push(...surfD);
+    W.view=s?VIEW_ST:VIEW_D;ultTappa=-2;ultTesto='';
+    setTopView(s);
+    if(s){fire.visible=false;if(!subito){toast('Ingrandiamo il tempo: ora 1 metro sono circa 530 anni',4200);flyTo(VIEW_ST.target,VIEW_ST.r,VIEW_ST.theta,VIEW_ST.phi);}}
+    else if(!subito){toast('Di nuovo i dinosauri: 1 metro = circa 13 milioni di anni',3000);flyTo(VIEW_D.target,VIEW_D.r,VIEW_D.theta,VIEW_D.phi);}
+    if(subito){k=modo;applica();}
+    stato.cambi=(stato.cambi||0)+1;}
+  // ---------- ciclo ----------
+  function aggModelli(dt){for(const M of MODELLI){const on=yNow>=M.y-0.5&&!(M.fino!=null&&yNow>=M.fino-0.5),tg=on?1:0;
+      if(M.app!==tg){M.app=dt>=1?tg:clamp(M.app+(tg>M.app?1:-1)*dt*1.6,0,1);const e=smooth(M.app);M.g.scale.y=M.sc*Math.max(0.001,e);M.g.visible=M.app>0.002;}}}
+  function aggiorna(dt){
+    if(play){if(pWait>0)pWait-=dt;else{const i=TAPPE.findIndex(s=>s.y>yGoal+0.5);if(Math.abs(yNow-yGoal)<0.5){if(i<0){play=false;updBtn();}else{vaiTappa(i);pWait=2.8;}}}}
+    // avvicinamento: esponenziale con una velocità minima (400 anni al secondo), così l'arrivo non si trascina
+    const dy=yGoal-yNow,st=Math.max(Math.abs(dy)*(1-Math.pow(0.02,dt)),400*dt);yNow=Math.abs(dy)<=st?yGoal:yNow+Math.sign(dy)*st;
+    cursorS.position.z=zY(yNow);aggModelli(dt);aggDock();}
+  const _u=W.update,UOMO=STOPS.findIndex(s=>s.name==='Compare l\'uomo');
+  W.update=(dt,t)=>{if(k!==modo){k=dt>=1?modo:clamp(k+(modo?1:-1)*dt/1.6,0,1);applica();}
+    if(modo===0){_u(dt,t);const on=UOMO>=0&&nearestStop(tNow)===UOMO;if(zoom.classList.contains('on')!==on){zoom.classList.toggle('on',on);dock.classList.toggle('zoom-on',on);}}
+    else if(costruita)aggiorna(dt);};
+  const _pk=W.pickables,_lp=[];
+  W.pickables=()=>{if(modo===0)return _pk();_lp.length=0;_lp.push(stripS);for(const M of MODELLI)if(M.app>0.5)_lp.push(M.g);_lp.push(mapMesh);return _lp;};
+  const _ga=W.groundAt;W.groundAt=(x,z)=>modo===1&&k>0.5?hMap(x,z):_ga(x,z);
+  // Cammina: il suolo segue la carta; la striscia porta il tempo storico; misura in anni; tappe sulla striscia
+  {const F=W.fp,o={...F},_ul={x:NaN,z:NaN},_vuoto=[];
+    F.calpestabile=(x,z,alt)=>modo===1?true:o.calpestabile(x,z,alt);
+    F.entra=()=>{_ul.x=NaN;if(modo===1)setTopView(false);o.entra&&o.entra();};
+    F.esci=m=>{if(modo===1&&m!=='mondo')setTopView(true);o.esci&&o.esci(m);};
+    F.aggiorna=(p,dt,f)=>{if(modo===0)return o.aggiorna(p,dt,f);if(isNaN(_ul.x)){_ul.x=p.x;_ul.z=p.z;return;}const d=Math.hypot(p.x-_ul.x,p.z-_ul.z);if(d<=0.001)return;_ul.x=p.x;_ul.z=p.z;
+      if(d>0.5+2.5*dt)return;const zp=p.z+0.30*f.z;if(p.x>STRIP.x0-0.3&&p.x<STRIP.x1+0.3&&zp>ZA-0.3){if(play){play=false;updBtn();}yGoal=yZ(clamp(zp,ZA,ZB));}};
+    F.misura=m=>{if(modo===0)return o.misura(m);const a=m*YL/LEN;return a<1?'':'circa '+Math.round(a).toLocaleString('it-IT')+' anni di storia, '+Math.round(m*KM).toLocaleString('it-IT')+' km sulla carta';};
+    F.tappe=()=>modo===1?TAPPE.map(s=>({titolo:s.titolo,stai:[4.22,Math.min(zY(s.y),9.6)],guarda:[s.x,0.1,s.z]})):o.tappe();
+    F.mobili=()=>modo===1?_vuoto:o.mobili();
+    F.stato=()=>({...o.stato(),storia:modo===1,anno:yNow});}
+  const _en=W.enter,_ed=W.entered,_ex=W.exit;
+  W.enter=()=>{_en();if(!giaLivello&&PARAM.get('livello')==='storia'){giaLivello=true;vai(true,true);}};
+  W.entered=()=>{if(modo===1)toast('Ingrandiamo il tempo: ora 1 metro sono circa 530 anni. Usa la linea del tempo in basso.',4200);else _ed();};
+  W.exit=()=>{_ex();play=false;updBtn();if(modo===1||k>0)vai(false,true);};
+  const api={vai,get attiva(){return modo===1;},
+    stato:()=>({modo:modo?'storia':'dinosauri',k,costruita,anno:Math.round(yNow),obiettivo:Math.round(yGoal),play,aperto:stato.aperto,msCostruzione:stato.msCostruzione,
+      modelli:MODELLI.map(M=>({id:M.g.name.replace('storia-',''),tappa:M.s.id,vis:M.g.visible,app:+M.app.toFixed(2)})),dock:dock.classList.contains('storia'),
+      dinoVis:dinoG?dinoG.visible:true,sgVis:SG.visible,tappe:TAPPE.length,surf:W.surfaces.map(s=>s.name)}),
+    prova:{anno:y=>{yGoal=clamp(y,Y0,Y1);},subito:y=>{yGoal=yNow=clamp(y,Y0,Y1);},tappa:i=>vaiTappa(i),tappe:()=>TAPPE.map(s=>({id:s.id,y:s.y,x:+s.x.toFixed(3),z:+s.z.toFixed(3)})),apri:id=>apri(TAPPE.find(t=>t.id===id)),
+      schermo:id=>{const M=MODELLI.find(m=>m.s.id===id&&!m.via);const v=new THREE.Vector3();if(M){new THREE.Box3().setFromObject(M.g).getCenter(v);}else{const s=TAPPE.find(t=>t.id===id);v.set(s.x,0.05,s.z);}v.project(camera);return [Math.round((v.x*0.5+0.5)*innerWidth),Math.round((-v.y*0.5+0.5)*innerHeight)];},
+      altezza:(x,z)=>hMap(x,z),ll:(lon,lat)=>[llx(lat),llz(lon)]}};
+  W.storia=api;return api;})();
 registerWorld(W);return W;})();
 
 // GEODATI ELABORATI (build_geo.py, 2026-10-20). Fonti: altimetria AWS Terrain Tiles (Mapzen/Tilezen: SRTM, GMTED, ETOPO1, EU-DEM);
