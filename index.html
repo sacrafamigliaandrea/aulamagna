@@ -5309,32 +5309,73 @@ function _h3(x,y,z){let h=(x*374761393+y*668265263+z*1274126177)|0;h=(h^(h>>>13)
 function vnoise(x,y,z){const X=Math.floor(x),Y=Math.floor(y),Z=Math.floor(z),fx=x-X,fy=y-Y,fz=z-Z,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy),w=fz*fz*(3-2*fz);
   const l=(a,b,t)=>a+(b-a)*t;return l(l(l(_h3(X,Y,Z),_h3(X+1,Y,Z),u),l(_h3(X,Y+1,Z),_h3(X+1,Y+1,Z),u),v),l(l(_h3(X,Y,Z+1),_h3(X+1,Y,Z+1),u),l(_h3(X,Y+1,Z+1),_h3(X+1,Y+1,Z+1),u),v),w);}
 // pelle a squame: texture in scala di grigi che modula i colori (condivisa da tutti gli animali)
-const SKIN=(()=>{const N=256,c=mkCanvas(N,N),g=c.getContext('2d'),r=rng(77);g.fillStyle='#e9e9e9';g.fillRect(0,0,N,N);
-  for(let row=0;row<16;row++)for(let k=0;k<16;k++){const x=k*16+(row%2?8:0)+(r()-.5)*3,y=row*16+(r()-.5)*3,s=6.5+r()*2.5;
-    const gr=g.createRadialGradient(x-2,y-2,1,x,y,s);gr.addColorStop(0,'#ffffff');gr.addColorStop(0.75,'#e2e2e2');gr.addColorStop(1,'#a8a8a8');
-    [[0,0],[N,0],[0,N],[N,N],[-N,0],[0,-N]].forEach(([ox,oy])=>{g.fillStyle=gr;g.beginPath();g.ellipse(x+ox,y+oy,s,s*0.85,0,0,7);g.fill();});}
-  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=MAXANISO;return t;})();
+/* ===== P28 · DINOSAURI: pelli, rig unito per nodo, dettagli e LOD ===== */
+// livello di qualità al momento della costruzione: 0 bassa, 1 media, 2 alta (senza QUALITA: media)
+const P28Q=(()=>{try{const i=['bassa','media','alta'].indexOf(QUALITA.livello);return i<0?1:i;}catch(_){return 1;}})();
+const _UVW=6/512;   // uv del quadrato bianco nell'angolo delle pelli: lì puntano artigli, denti, occhi, corna
+// tre pelli in scala di grigi (moltiplicano i colori dei vertici): 0 squame fini, 1 tubercoli e squame grandi, 2 piumaggio e picnofibre
+const PELLI=(()=>{const N=512,out=[];
+  const tile=(x,y,s,f)=>{for(const ox of [0,-N,N])for(const oy of [0,-N,N]){const X=x+ox,Y=y+oy;if(X<-s||X>N+s||Y<-s||Y>N+s)continue;f(X,Y);}};
+  for(let tipo=0;tipo<3;tipo++){const c=mkCanvas(N,N),g=c.getContext('2d'),r=rng(77+tipo*13);
+    g.fillStyle=tipo===2?'#d2d2d2':'#c4c4c4';g.fillRect(0,0,N,N);
+    if(tipo<2){const cols=tipo?24:40,rows=Math.round(cols*1.15),dx=N/cols,dy=N/rows;   // griglia esagonale ripetibile
+      for(let row=0;row<rows;row++)for(let k=0;k<cols;k++){const x=k*dx+(row%2?dx/2:0)+(r()-.5)*dx*0.22,y=row*dy+(r()-.5)*dy*0.22;
+        let s=dx*(0.56+r()*0.1);if(tipo===1&&r()<0.1)s*=1.55;const v=226+(r()*29|0),m=v-34;
+        tile(x,y,s,(X,Y)=>{const gr=g.createRadialGradient(X-s*0.3,Y-s*0.32,s*0.08,X,Y,s);gr.addColorStop(0,`rgb(${v},${v},${v})`);gr.addColorStop(0.68,`rgb(${m},${m},${m})`);gr.addColorStop(1,'rgb(140,140,140)');
+          g.fillStyle=gr;g.beginPath();g.ellipse(X,Y,s,s*(tipo?0.92:0.78),0,0,7);g.fill();});}
+      g.strokeStyle='rgba(95,95,95,0.22)';g.lineWidth=1.3;   // pieghe sottili della pelle, lungo la lunghezza
+      for(let i=0;i<(tipo?36:20);i++){const y=r()*N,ph=r()*6;g.beginPath();g.moveTo(0,y);for(let x=8;x<=N;x+=8)g.lineTo(x,y+Math.sin(x*Math.PI*2/N*3+ph)*3);g.stroke();}}
+    else{for(let i=0;i<9000;i++){const x=r()*N,y=r()*N,l=5+r()*9,v=150+(r()*105|0),w=1+r()*1.6,dy=(r()-.5)*2.5;
+        tile(x,y,l+2,(X,Y)=>{g.strokeStyle=`rgb(${v},${v},${v})`;g.lineWidth=w;g.beginPath();g.moveTo(X,Y);g.lineTo(X-l,Y+dy);g.stroke();});}}
+    g.fillStyle='#ffffff';g.fillRect(0,0,12,12);
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=MAXANISO;out.push(t);}
+  return out;})();
+const SKIN=PELLI[0];
 function uvScala(g,su,sv){const a=g.attributes.uv;if(!a)return g;for(let i=0;i<a.count;i++)a.setXY(i,a.getX(i)*su,a.getY(i)*sv);return g;}
 const _cA=new THREE.Color();
-function shadeGeo(g,cBack,cBelly,stripe,offX,sz){if(!g.attributes.normal)g.computeVertexNormals();const p=g.attributes.position,n=g.attributes.normal,cnt=p.count,arr=new Float32Array(cnt*3);
+// colori della pelle: contro-ombreggiatura (dorso scuro, ventre chiaro), chiazze leggere, striscia dorsale, strisce o macchie discrete
+function shadeGeo(g,cBack,cBelly,stripe,offX,sz,pat){if(!g.attributes.normal)g.computeVertexNormals();const p=g.attributes.position,n=g.attributes.normal,cnt=p.count,arr=new Float32Array(cnt*3);
   const f=1/Math.max(0.05,(sz||1)*0.35);
-  for(let i=0;i<cnt;i++){const ny=n.getY(i),x=p.getX(i)+(offX||0),y=p.getY(i),z=p.getZ(i);_cA.copy(cBelly).lerp(cBack,smooth(clamp((ny+0.7)/0.95,0,1)));
-    const mot=vnoise(x*f*2.3,y*f*2.3,z*f*2.3);_cA.multiplyScalar(0.92+0.16*mot);                          // chiazze leggere
-    if(ny>0.82)_cA.multiplyScalar(0.86);                                                                   // striscia dorsale più scura
-    if(stripe&&ny>-0.1){const s=vnoise(x*f*1.4,y*f*0.6,z*f*0.6)*0.6+vnoise(x*f*3.1,y*f*1.5,z*f*1.5)*0.4;if(s>0.56)_cA.lerp(stripe.c,clamp((s-0.56)*5,0,0.6));}
+  for(let i=0;i<cnt;i++){const ny=n.getY(i),x=p.getX(i)+(offX||0),y=p.getY(i),z=p.getZ(i);_cA.copy(cBelly).lerp(cBack,smooth(clamp((ny+0.6)/0.9,0,1)));
+    const mot=vnoise(x*f*2.3,y*f*2.3,z*f*2.3);_cA.multiplyScalar(0.9+0.2*mot);
+    if(ny>0.78)_cA.multiplyScalar(0.84+0.1*(1-ny));
+    if(stripe&&ny>-0.15){if(pat==='macchie'){const s=vnoise(x*f*4.2,y*f*4.2,z*f*4.2);if(s>0.66)_cA.lerp(stripe.c,clamp((s-0.66)*4,0,0.55));}
+      else{const s=vnoise(x*f*1.4,y*f*0.6,z*f*0.6)*0.6+vnoise(x*f*3.1,y*f*1.5,z*f*1.5)*0.4;if(s>0.56)_cA.lerp(stripe.c,clamp((s-0.56)*5,0,0.6));}}
     arr[i*3]=_cA.r;arr[i*3+1]=_cA.g;arr[i*3+2]=_cA.b;}
   g.setAttribute('color',new THREE.BufferAttribute(arr,3));return g;}
+// colore piatto o sfumato (asse 0 = x, 1 = y) e uv sul quadrato bianco (uvKeep: tiene le uv, per placche e membrane con la pelle)
+function _tinta(g,c,c2,asse,uvKeep){if(!g.attributes.normal)g.computeVertexNormals();const p=g.attributes.position,n=p.count,a=new Float32Array(n*3);let lo=Infinity,hi=-Infinity;
+  const v=i=>asse?p.getY(i):p.getX(i);if(c2)for(let i=0;i<n;i++){lo=Math.min(lo,v(i));hi=Math.max(hi,v(i));}
+  for(let i=0;i<n;i++){_cA.copy(c);if(c2)_cA.lerp(c2,(v(i)-lo)/Math.max(1e-6,hi-lo));a[i*3]=_cA.r;a[i*3+1]=_cA.g;a[i*3+2]=_cA.b;}
+  g.setAttribute('color',new THREE.BufferAttribute(a,3));
+  if(!uvKeep||!g.attributes.uv){const u=new Float32Array(n*2).fill(_UVW);g.setAttribute('uv',new THREE.BufferAttribute(u,2));}return g;}
+// unisce geometrie già trasformate (position, normal, uv, color) in una sola, indicizzata
+function _unisci(list){let nv=0,ni=0;for(const g of list){nv+=g.attributes.position.count;ni+=g.index?g.index.count:g.attributes.position.count;}
+  const P=new Float32Array(nv*3),N=new Float32Array(nv*3),U=new Float32Array(nv*2),C=new Float32Array(nv*3),I=nv>65535?new Uint32Array(ni):new Uint16Array(ni);let ov=0,oi=0;
+  for(const g of list){const a=g.attributes,n=a.position.count;P.set(a.position.array,ov*3);N.set(a.normal.array,ov*3);if(a.uv)U.set(a.uv.array,ov*2);C.set(a.color.array,ov*3);
+    if(g.index){const ix=g.index.array;for(let k=0;k<ix.length;k++)I[oi+k]=ix[k]+ov;oi+=ix.length;}else{for(let k=0;k<n;k++)I[oi+k]=ov+k;oi+=n;}ov+=n;g.dispose();}
+  const o=new THREE.BufferGeometry();o.setAttribute('position',new THREE.BufferAttribute(P,3));o.setAttribute('normal',new THREE.BufferAttribute(N,3));
+  o.setAttribute('uv',new THREE.BufferAttribute(U,2));o.setAttribute('color',new THREE.BufferAttribute(C,3));o.setIndex(new THREE.BufferAttribute(I,1));o.computeBoundingSphere();return o;}
+// lastra sottile da una Shape nel piano xy (placche, collare, vela, membrane, piume): spessore lungo z, centrata
+function _lastra(sh,dep,seg){const g=new THREE.ExtrudeGeometry(sh,{depth:dep,bevelEnabled:false,curveSegments:seg||[2,4,6][P28Q]});g.translate(0,0,-dep/2);g.computeVertexNormals();return g;}
+// profilo di un tubo alla x data: [y centro, raggio verticale, raggio laterale] (interpolazione lineare fra i punti)
+function _prof(pts,x){let k=0;while(k<pts.length-2&&pts[k+1][0]<x)k++;const a=pts[k],b=pts[k+1],u=clamp((x-a[0])/((b[0]-a[0])||1e-6),0,1);
+  return [lerp(a[1],b[1],u),lerp(a[2],b[2],u),lerp(a[3]??a[2],b[3]??b[2],u)];}
 function buildRig(sp){
-  const cB=col(sp.col[0]),cL=col(sp.col[1]),stripe=sp.stripe?{c:col(sp.stripe),f:sp.stripeF||6}:null;
-  const mat=new THREE.MeshPhongMaterial({vertexColors:true,map:SKIN,shininess:16,specular:0x1c1c1c});
-  const acc=new THREE.MeshPhongMaterial({color:col(sp.accent||sp.col[0]),map:SKIN,shininess:10,side:THREE.DoubleSide});
-  const SZ=sp.size||1,SCL=Math.max(0.012,0.07*SZ);   // grandezza delle squame in proporzione all'animale
+  const Q=P28Q,cB=col(sp.col[0]),cL=col(sp.col[1]),stripe=sp.stripe?{c:col(sp.stripe),f:sp.stripeF||6}:null;
+  const mat=new THREE.MeshPhongMaterial({vertexColors:true,map:PELLI[sp.skin||0],shininess:sp.shine??14,specular:0x1c1c1c});
+  const SZ=sp.size||1,SCL=Math.max(0.03,(sp.skin===1?0.5:sp.skin===2?0.8:0.4)*SZ);   // grandezza delle squame in proporzione all'animale
+  const sides=Math.round((sp.sides||10)*[1,1.34,1.42][Q]),sub=[3,4,5][Q],rs=[8,10,12][Q];
   const root=new THREE.Group(),body=new THREE.Group();root.add(body);
-  const R={root,body,legs:[],arms:[],wings:[],mat,acc,sp};
-  const pc=k=>sp[k]?[col(sp[k][0]),col(sp[k][1])]:null,cHead=pc('headCol'),cLimb=pc('limbCol');
-  const mk=(geo,parent,offX,cc)=>{shadeGeo(geo,cc?cc[0]:cB,cc?cc[1]:cL,cc?null:stripe,offX,SZ);const m=new THREE.Mesh(geo,mat);parent.add(m);return m;};
-  const T=(pts,s)=>tube(pts,s||sp.sides,5,SCL);
-  R.mk=mk;
+  const R={root,body,legs:[],arms:[],wings:[],det:[],detOn:true,lodD2:9,mat,acc:mat,sp,torso:null,Q};
+  const pc=k=>sp[k]?[col(sp[k][0]),col(sp[k][1])]:null,cHead=pc('headCol'),cLimb=pc('limbCol'),cLd=[cB,cB.clone().lerp(cL,0.3)];   // zampe: colore del dorso, appena più chiaro sotto
+  const accC=col(sp.accent||sp.col[0]),avorio=col('#E9E0C8'),corno=col('#CDBF9E'),cornoS=col('#5E5244'),scuro=col('#1C1612'),bocca=col('#3E2622'),lingua=col('#6E433B'),bianco=col('#FFFFFF');
+  const B=new Map(),bk=(par,k)=>{let b=B.get(par);if(!b){b={p:[],d:[]};B.set(par,b);}return b[k];};
+  const mk=(geo,parent,offX,cc,mtx)=>{if(mtx)geo.applyMatrix4(mtx);shadeGeo(geo,cc?cc[0]:cB,cc?cc[1]:cL,cc?null:stripe,offX,SZ,sp.pat);bk(parent,'p').push(geo);return geo;};
+  const fl=(geo,parent,c,mtx,det,c2,asse,uvKeep)=>{if(mtx)geo.applyMatrix4(mtx);_tinta(geo,c,c2,asse,uvKeep);bk(parent,det?'d':'p').push(geo);return geo;};
+  const sph=(r,w,h)=>new THREE.SphereGeometry(r,w||[6,8,10][Q],h||[4,6,7][Q]);
+  const T=(pts,s)=>tube(pts,s||sides,sub,SCL);
+  Object.assign(R,{mk,fl,sph,T,cols:{cB,cL,accC,avorio,corno,cornoS,scuro},lastra:(sh,d,s)=>uvScala(_lastra(sh,d,s),1/SCL,1/SCL)});
   if(sp.torso)mk(T(sp.torso),body,0);
   if(sp.tail){const P=sp.tail.pts,mid=Math.floor(P.length/2);
     const t1=new THREE.Group();t1.position.set(sp.tail.pivot[0],sp.tail.pivot[1],0);body.add(t1);mk(T(P.slice(0,mid+1)),t1,sp.tail.pivot[0]);
@@ -5342,41 +5383,68 @@ function buildRig(sp){
     mk(T(P.slice(mid).map(p=>[p[0]-P[mid][0],p[1]-P[mid][1],p[2],p[3]])),t2,sp.tail.pivot[0]+P[mid][0]);R.tail1=t1;R.tail2=t2;}
   if(sp.neck){const nk=new THREE.Group();nk.position.set(sp.neck.pivot[0],sp.neck.pivot[1],0);body.add(nk);mk(T(sp.neck.pts),nk,sp.neck.pivot[0]);R.neck=nk;
     const last=sp.neck.pts[sp.neck.pts.length-1],h=new THREE.Group();h.position.set(last[0],last[1],0);h.rotation.z=sp.head.tilt||0;nk.add(h);R.head=h;R.headRest=sp.head.tilt||0;
-    mk(T(sp.head.pts),h,0,cHead);
-    if(sp.head.jaw){const J=sp.head.jaw,j=new THREE.Group();j.position.set(J.pivot[0],J.pivot[1],0);h.add(j);
-      mk(T(J.pts.map(p=>[p[0]-J.pivot[0],p[1]-J.pivot[1],p[2],p[3]]),Math.max(8,(sp.sides||10)-2)),j,0);R.jaw=j;}
-    // denti dei carnivori: una fila sulla mascella e una sulla mandibola
-    if(sp.head.teeth&&sp.head.jaw){const tc=sp.head.teeth,dente=new THREE.ConeGeometry(tc.r,tc.l,5),P2=[],P3=[],bianco=col('#F1EADA');
-      for(let k=0;k<tc.n;k++){const x=lerp(tc.x0,tc.x1,k/(tc.n-1));[-1,1].forEach(s=>{P2.push({g:dente,m:M(x,tc.y,s*tc.z,Math.PI,0,0),c:bianco});P3.push({g:dente,m:M(x-sp.head.jaw.pivot[0],tc.yj-sp.head.jaw.pivot[1],s*tc.z*0.92),c:bianco});});}
-      const dm=new THREE.MeshPhongMaterial({vertexColors:true,shininess:40});h.add(new THREE.Mesh(mergeParts(P2),dm));if(R.jaw)R.jaw.add(new THREE.Mesh(mergeParts(P3),dm));}
-    // occhi: bulbo, iride con pupilla e un piccolo riflesso
-    if(sp.head.eye){const e=sp.head.eye,r=e[3],bulb=new THREE.MeshPhongMaterial({color:col(sp.eyeCol||'#D9C48A'),shininess:60}),pup=new THREE.MeshBasicMaterial({color:0x0c0a08}),hi=new THREE.MeshBasicMaterial({color:0xffffff});
-      const gB=new THREE.SphereGeometry(r,12,8),gP=new THREE.SphereGeometry(r*0.55,10,6),gH=new THREE.SphereGeometry(r*0.18,6,4);
-      [-1,1].forEach(s=>{const o=new THREE.Group();o.position.set(e[0],e[1],s*e[2]);h.add(o);o.add(new THREE.Mesh(gB,bulb));
-        const p=new THREE.Mesh(gP,pup);p.position.set(r*0.25,0,s*r*0.62);p.scale.set(0.55,1,0.6);o.add(p);const q=new THREE.Mesh(gH,hi);q.position.set(r*0.45,r*0.38,s*r*0.8);o.add(q);});}}
-  const limb=(L,parent)=>{const hip=new THREE.Group();hip.position.set(L.x,L.y,L.z);parent.add(hip);const joints=[];let cur=hip;
+    const hp=sp.head.pts;R.hp=hp;mk(T(hp),h,0,cHead);
+    const J=sp.head.jaw;
+    if(J){const j=new THREE.Group();j.position.set(J.pivot[0],J.pivot[1],0);h.add(j);
+      mk(T(J.pts.map(p=>[p[0]-J.pivot[0],p[1]-J.pivot[1],p[2],p[3]]),Math.max(8,sides-2)),j,0,cHead);R.jaw=j;
+      // interno della bocca: palato scuro nella testa e lingua nella mandibola (si vedono a bocca aperta)
+      const xm=J.pts[Math.floor(J.pts.length/2)][0],[cy,ry,rz]=_prof(hp,xm),Lm=Math.abs(J.pts[J.pts.length-1][0]-J.pts[0][0]);
+      fl(sph(1),h,bocca,M(xm,cy-ry*0.78,0,0,0,0,Lm*0.42,ry*0.16,rz*0.62));
+      const [jy,jry,jrz]=_prof(J.pts,xm);fl(sph(1),j,lingua,M(xm-J.pivot[0],jy+jry*0.55-J.pivot[1],0,0,0,0,Lm*0.36,jry*0.25,jrz*0.5));}
+    // denti color avorio sul bordo della bocca, più grandi a metà fila (solo nei carnivori)
+    if(sp.head.teeth&&J){const tc=sp.head.teeth,n=[Math.max(5,tc.n-3),tc.n,tc.n+3][Q],cone=new THREE.ConeGeometry(tc.r,tc.l,[4,5,6][Q]);
+      for(let k=0;k<n;k++){const x=lerp(tc.x0,tc.x1,k/(n-1)),sc=0.65+0.55*Math.sin(Math.PI*(0.15+0.7*k/(n-1))),[cy,ry,rz]=_prof(hp,x),[jy,jry,jrz]=_prof(J.pts,x);
+        [-1,1].forEach(s=>{fl(cone.clone(),h,avorio,M(x,cy-ry*0.86-tc.l*0.42*sc,s*rz*0.8,Math.PI,0,0,sc,sc,sc),true);
+          fl(cone.clone(),R.jaw,avorio,M(x-J.pivot[0],jy+jry*0.86+tc.l*0.36*sc-J.pivot[1],s*jrz*0.8,0,0,0,sc*0.85,sc*0.85,sc*0.85),true);});}}
+    // occhi: bulbo scuro, iride, pupilla (a fessura nei carnivori), riflesso; arcata sopraccigliare di pelle
+    if(sp.head.eye){const e=sp.head.eye,r=e[3],ex=e[0],[cy,ry,rz]=_prof(hp,ex),ey=cy+ry*(e[4]??0.36),ec=col(sp.eyeCol||'#C9A050');
+      [-1,1].forEach(s=>{const ez=s*rz*0.8;
+        fl(sph(r),h,scuro,M(ex,ey,ez),true);
+        fl(sph(r*0.8),h,ec,M(ex+r*0.05,ey,ez+s*r*0.7,0,0,0,1,1,0.52),true);
+        fl(sph(r*0.5),h,scuro,M(ex+r*0.07,ey,ez+s*r*0.86,0,0,0,sp.slit?0.36:0.85,1,0.34),true);
+        fl(sph(r*0.15,5,4),h,bianco,M(ex+r*0.32,ey+r*0.32,ez+s*r*0.95),true);
+        if(!sp.fly&&!sp.human)mk(sph(1),h,0,cHead,M(ex-r*0.1,ey+r*0.95,ez*0.9,0,0,0,r*1.7,r*0.55,r*0.95));});}}
+  const limb=(L,parent)=>{const hip=new THREE.Group();hip.position.set(L.x,L.y,L.z);parent.add(hip);const joints=[];let cur=hip;const zs=Math.sign(L.z)||1;
     L.segs.forEach((s,i)=>{const j=i===0?hip:new THREE.Group();if(i>0){j.position.y=-L.segs[i-1][0];cur.add(j);}
-      j.rotation.z=L.rest[i]||0;const g=new THREE.CylinderGeometry(s[1],s[2],s[0],10,2);g.translate(0,-s[0]/2,0);uvScala(g,2*Math.PI*s[1]/SCL,s[0]/SCL);mk(g,j,0,L.arm?cHead||cLimb:cLimb);joints.push(j);cur=j;});
-    if(L.arm&&sp.claws!==false&&!sp.human){const last=L.segs[L.segs.length-1],ug=new THREE.ConeGeometry(last[2]*0.55,last[2]*3.2,5),um=new THREE.MeshPhongMaterial({color:col('#3a332b'),shininess:30});
-      [-0.5,0.5].forEach(a=>{const u=new THREE.Mesh(ug,um);u.position.set(last[2]*0.6,-last[0]-last[2]*1.2,a*last[2]*1.2);u.rotation.z=Math.PI*0.85;cur.add(u);});}
+      j.rotation.z=L.rest[i]||0;const g=new THREE.CylinderGeometry(s[1],s[2],s[0],rs,2);g.translate(0,-s[0]/2,0);uvScala(g,2*Math.PI*s[1]/SCL,s[0]/SCL);
+      const cc=L.arm?cHead||cLimb||cLd:cLimb||cLd;mk(g,j,0,cc);
+      // muscoli: coscia che si fonde col tronco, polpaccio nei bipedi
+      if(!L.arm&&!sp.human&&!sp.fly&&i===0&&!L.fore)mk(sph(1),j,0,cc,sp.toes==='teropode'?M(s[1]*0.22,-s[0]*0.36,0,0,0,0,s[1]*1.3,s[0]*0.5,s[1]*1.02):M(s[1]*0.1,-s[0]*0.18,0,0,0,0,s[1]*1.35,s[0]*0.42,s[1]*1.05));
+      if(!L.arm&&!sp.human&&i===1&&sp.toes==='teropode')mk(sph(1),j,0,cc,M(-s[1]*0.3,-s[0]*0.3,0,0,0,0,s[1]*0.95,s[0]*0.34,s[1]*0.85));
+      joints.push(j);cur=j;});
+    // mani: 2 o 3 dita curve in avanti con artigli chiari
+    if(L.arm&&sp.claws!==false&&!sp.human){const last=L.segs[L.segs.length-1],nf=sp.fingers||3,fr=last[2]*0.42,fL=last[2]*2.3,th=0.35;
+      for(let k=0;k<nf;k++){const z=(k-(nf-1)/2)*last[2]*0.9,g=new THREE.CylinderGeometry(fr*0.7,fr,fL,[4,5,6][Q],1);g.translate(0,-fL/2,0);
+        mk(g,cur,0,cHead||cLimb||cLd,M(0,-last[0],z,0,0,th));const tx=fL*Math.sin(th),ty=-last[0]-fL*Math.cos(th);
+        fl(new THREE.ConeGeometry(fr*0.85,fr*3,[4,5,6][Q]),cur,corno,M(tx+fr*0.6,ty-fr*0.9,z,0,0,Math.PI+0.75),false,cornoS,1);}}
     let foot=null;if(L.foot){foot=new THREE.Group();foot.position.y=-L.segs[L.segs.length-1][0];cur.add(foot);
-      const fc=sp.footCol?[col(sp.footCol),col(sp.footCol)]:cLimb;
-      if(sp.toes==='teropode'){// tre dita in avanti con artigli scuri, più un pollice corto
-        const um=new THREE.MeshPhongMaterial({color:col('#2f2a24'),shininess:30});[-0.42,0,0.42].forEach((a,k)=>{const l=L.foot[0]*(k===1?1.05:0.85),dg=new THREE.CylinderGeometry(L.foot[2]*0.42,L.foot[2]*0.62,l,8,1);
-          dg.rotateZ(-Math.PI/2);dg.translate(l/2,-L.foot[2]*0.45,0);const d=mk(dg,foot,0,fc);d.rotation.y=a;const cl=new THREE.Mesh(new THREE.ConeGeometry(L.foot[2]*0.36,L.foot[2]*1.3,6),um);
-          cl.position.set(Math.cos(a)*(l+L.foot[2]*0.4),-L.foot[2]*0.4,-Math.sin(a)*(l+L.foot[2]*0.4));cl.rotation.set(0,a,-Math.PI/2-0.35);foot.add(cl);});}
-      else if(sp.toes==='piede'){// zampa a colonna con unghie (sauropodi, stegosauri, ceratopsidi)
-        const pg=new THREE.CylinderGeometry(L.foot[1]*0.55,L.foot[1]*0.62,L.foot[2]*1.6,12,1);pg.translate(L.foot[0]*0.15,-L.foot[2]*0.8,0);mk(pg,foot,0,fc);
-        const um=new THREE.MeshPhongMaterial({color:col('#4a4238'),shininess:20});for(let k=0;k<4;k++){const a=-0.75+k*0.5,u=new THREE.Mesh(new THREE.SphereGeometry(L.foot[1]*0.13,6,4),um);
-          u.position.set(L.foot[0]*0.15+Math.cos(a)*L.foot[1]*0.6,-L.foot[2]*1.25,Math.sin(a)*L.foot[1]*0.6);u.scale.set(1,0.7,1);foot.add(u);}}
-      else{const g=new THREE.BoxGeometry(L.foot[0],L.foot[2],L.foot[1]);g.translate(L.foot[0]*0.28,-L.foot[2]/2,0);mk(g,foot,0,fc);}}
+      const fc=sp.footCol?[col(sp.footCol),col(sp.footCol)]:cLimb,f2=L.foot[2];
+      if(sp.toes==='teropode'){// tre dita in avanti (la II più corta), alluce all'indietro, artigli chiari; II rialzata a falce nei dromeosauridi
+        [-0.38,0,0.38].forEach((a0,k)=>{const a=a0*zs*-1,inner=a0*zs<0,falce=sp.sickle&&inner,l=L.foot[0]*(k===1?1.05:inner?(falce?0.5:0.8):0.85),r0=f2*0.62,r1=f2*0.4;
+          const dg=new THREE.CylinderGeometry(r1,r0,l,[5,6,8][Q],1);dg.rotateZ(-Math.PI/2);dg.translate(l/2,-f2*0.45,0);
+          mk(dg,foot,0,fc||cLd,M(0,falce?f2*0.35:0,0,0,a,falce?0.35:0));
+          const cx=Math.cos(a)*(l+f2*0.35),cz=-Math.sin(a)*(l+f2*0.35);
+          if(falce)fl(new THREE.ConeGeometry(f2*0.42,f2*3.4,[5,6,7][Q]),foot,corno,M(cx*0.95,f2*0.9,cz*0.95,0,a,-0.55),false,cornoS,1);
+          else fl(new THREE.ConeGeometry(f2*0.34,f2*1.4,[4,5,6][Q]),foot,corno,M(cx,-f2*0.42,cz,0,a,-Math.PI/2-0.35),false,cornoS,0);});
+        const ah=zs*(Math.PI-0.7),hl=L.foot[0]*0.32,hg=new THREE.CylinderGeometry(f2*0.3,f2*0.42,hl,[4,5,6][Q],1);hg.rotateZ(-Math.PI/2);hg.translate(hl/2,-f2*0.2,0);
+        mk(hg,foot,0,fc||cLd,M(0,f2*0.5,0,0,ah,0.3));}
+      else if(sp.toes==='piede'){// zampa a colonna con unghie chiare (sauropodi, stegosauri, ceratopsidi, adrosauri)
+        const pg=new THREE.CylinderGeometry(L.foot[1]*0.55,L.foot[1]*0.64,f2*1.6,rs+2,1);pg.translate(L.foot[0]*0.15,-f2*0.8,0);mk(pg,foot,0,fc||cLd);
+        const nu=L.fore&&sp.fore5?5:4;for(let k=0;k<nu;k++){const a=-0.8+k*1.6/(nu-1);
+          fl(sph(L.foot[1]*0.15),foot,corno,M(L.foot[0]*0.15+Math.cos(a)*L.foot[1]*0.6,-f2*1.3,Math.sin(a)*L.foot[1]*0.6,0,0,0,1.15,0.75,1));}}
+      else{const g=new THREE.BoxGeometry(L.foot[0],f2,L.foot[1]);g.translate(L.foot[0]*0.28,-f2/2,0);mk(g,foot,0,fc);}}
     return {hip,joints,foot,rest:L.rest.slice(),phase:L.phase||0,fore:!!L.fore};};
   (sp.legs||[]).forEach(L=>R.legs.push(limb(L,body)));
   (sp.arms||[]).forEach(L=>R.arms.push(limb({...L,arm:true},body)));
   R.legs.forEach(L=>{if(L.foot)L.foot.rotation.z=-L.rest.reduce((a,b)=>a+b,0);});
   if(sp.extras)sp.extras(R);
+  if(!R.jaw&&R.head){const j=new THREE.Group();j.name='mandibola-vuota';R.head.add(j);R.jaw=j;}   // contratto: R.jaw per ogni animale
+  // una mesh per nodo con la pelle, più una «dettagli» (occhi, denti) dove ce ne sono
+  B.forEach((b,par)=>{if(b.p.length){const m=new THREE.Mesh(_unisci(b.p),mat);m.name='pelle';par.add(m);if(par===body)R.torso=m;}
+    if(b.d.length){const m=new THREE.Mesh(_unisci(b.d),mat);m.name='dettagli';par.add(m);R.det.push(m);}});
   root.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(root);
   body.position.y=-bb.min.y;R.bodyY=body.position.y;R.size=bb.getSize(new THREE.Vector3());
+  {const d=Math.max(1.6,0.9+Math.max(R.size.x,R.size.y)*0.1*2.6);R.lodD2=d*d;}   // LOD: occhi e denti entro d (scala 1:10)
   if(!sp.fly){const sh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),matBlob.clone());sh.material.opacity=0.55;sh.rotation.x=-Math.PI/2;
     sh.scale.set(R.size.x*0.75,Math.max(R.size.z*1.3,R.size.x*0.28),1);sh.position.set((bb.min.x+bb.max.x)/2,0.04*Math.max(0.3,R.size.y),0);sh.renderOrder=1;root.add(sh);}
   return R;}
@@ -5386,10 +5454,18 @@ function poseRig(R,phase,amp,t,seed,grazing){const sp=R.sp,A=(sp.A??0.36)*amp,K=
     j[0].rotation.z=L.rest[0]+A*s*(L.fore?0.85:1);if(j[1])j[1].rotation.z=L.rest[1]+sg*K*c;if(j[2])j[2].rotation.z=L.rest[2]-sg*K*0.65*c;
     if(L.foot)L.foot.rotation.z=-(j.reduce((a,q)=>a+q.rotation.z,0))+(L.fore?0:0.25*A*s);});
   R.arms.forEach((L,i)=>{L.joints[0].rotation.z=L.rest[0]+0.12*Math.sin(t*1.3+i+seed)+(sp.human?-0.5*A*Math.sin(phase+(i?Math.PI:0)):0);});
-  R.body.position.y=R.bodyY+(sp.bob??0.012)*R.size.y*amp*Math.cos(phase*2);
-  if(R.tail1){R.tail1.rotation.y=0.10*Math.sin(t*0.9+seed)+0.06*amp*Math.sin(phase);R.tail2.rotation.y=0.16*Math.sin(t*0.9+seed-0.8);}
-  if(R.neck){const gz=grazing||0;R.neck.rotation.z=lerp(0.04*Math.sin(t*0.6+seed),sp.grazeAng??-0.5,gz);R.neck.rotation.y=0.15*Math.sin(t*0.35+seed*2)*(1-amp*0.6);}
-  if(R.head)R.head.rotation.z=R.headRest+0.05*Math.sin(t*0.8+seed);
+  // P28: bacino che rolla e imbarda col passo, coda in controfase (tailRigid: 1 flessibile, meno = più rigida), collo e testa stabilizzati,
+  // collo dei sauropodi che ondeggia camminando, respiro da fermi sul solo tronco; LOD dei dettagli (occhi, denti) con la distanza
+  {const sw=amp*Math.sin(phase),yw=(sp.yaw??0.03)*sw,pt=(sp.pitch??0.012)*amp*Math.sin(phase*2),tr=sp.tailRigid??1;
+    R.body.position.y=R.bodyY+(sp.bob??0.012)*R.size.y*amp*Math.cos(phase*2);R.body.rotation.set((sp.roll??0.03)*sw,yw,pt);
+    if(R.tail1){R.tail1.rotation.y=tr*(0.10*Math.sin(t*0.9+seed)+0.06*amp*Math.sin(phase))-yw*1.5;R.tail1.rotation.z=-pt*0.6+0.015*tr*Math.sin(t*0.7+seed);
+      R.tail2.rotation.y=tr*0.16*Math.sin(t*0.9+seed-0.8)-yw*0.7;}
+    const gz=grazing||0,osc=0.04*Math.sin(t*0.6+seed);
+    if(R.neck){R.neck.rotation.z=lerp(osc,sp.grazeAng??-0.5,gz)-pt;R.neck.rotation.y=(sp.neckSway??0.15)*Math.sin(t*0.35+seed*2)*(1-amp*0.6)+(sp.neckWalk??0)*amp*Math.sin(phase+0.6)-yw;}
+    if(R.head){R.head.rotation.z=R.headRest+0.03*Math.sin(t*0.8+seed)-osc*0.7*(1-gz);R.head.rotation.y=R.neck?-R.neck.rotation.y*0.4:0;}
+    if(R.torso){const br=(sp.breath??0.012)*(1-0.75*amp)*Math.sin(t*(sp.breathF??1.5)+seed);R.torso.scale.set(1,1+br,1+br*0.8);}
+    if(R.det.length){const e=R.root.matrixWorld.elements,c=camera.position,dx=e[12]-c.x,dy=e[13]-c.y,dz=e[14]-c.z,on=dx*dx+dy*dy+dz*dz<R.lodD2;
+      if(on!==R.detOn){R.detOn=on;for(let i=0;i<R.det.length;i++)R.det[i].visible=on;}}}
   const vo=R.vd>0&&t>=R.vt0&&t-R.vt0<R.vd?Math.sin(Math.PI*(t-R.vt0)/R.vd):0,vf=vo>0?R.vfam:null;R.voce=vo;   // P14: R.voce, 0 senza un verso in corso
   if(R.jaw){const o=Math.pow(Math.max(0,Math.sin(t*0.55+seed*3)),12);let j=-(sp.jawOpen??0.35)*o;
     if(vf)j=vf==='boom'||vf==='sbuffo'?j*(1-vo):Math.min(j,-(vf==='sibilo'||vf==='cinguettio'?0.35:vf==='nasale'?0.1:0.25)*vo);R.jaw.rotation.z=j;}
@@ -5400,68 +5476,90 @@ function poseRig(R,phase,amp,t,seed,grazing){const sp=R.sp,A=(sp.A??0.36)*amp,K=
 
 /* ---------- modelli: famiglie di forme (proporzioni rispetto all'altezza dell'anca H) ---------- */
 function tplTheropod(o){const H=o.H,b=o.bulk||1,X=v=>v*H,R=v=>v*H*b;
-  const sp={col:o.col,stripe:o.stripe,stripeF:Math.PI*2/(0.42*H),accent:o.accent,sides:H<0.4?8:12,size:H,toes:'teropode',eyeCol:o.herb?'#C9B07A':'#D8B04A',A:o.A??0.38,K:o.K??0.65,jawOpen:o.jawOpen,
-    torso:[[X(-.32),X(.04),R(.25),R(.21)],[0,0,R(.34),R(.29)],[X(.30),X(-.07),R(.37),R(.31)],[X(.56),X(-.04),R(.30),R(.25)],[X(.70),X(.05),R(.21),R(.18)]]};
-  const T=o.tail*H;sp.tail={pivot:[X(-.28),X(.03)],pts:[[X(.06),0,R(.23),R(.19)],[-.25*T,X(.02),R(.165),R(.14)],[-.5*T,X(.01),R(.11),R(.09)],[-.75*T,X(-.02),R(.06),R(.05)],[-T,X(-.05),X(.012),X(.012)]]};
-  const N=o.neck*H,a=o.neckAng,nk=o.neckThin||1;
-  sp.neck={pivot:[X(.64),X(.05)],pts:[[X(-.06),0,R(.19),R(.16)],[.5*N*Math.cos(a),.5*N*Math.sin(a),R(.15)*nk,R(.13)*nk],[N*Math.cos(a),N*Math.sin(a),R(.125)*nk,R(.11)*nk]]};
+  const sp={col:o.col,stripe:o.stripe,stripeF:Math.PI*2/(0.42*H),accent:o.accent,sides:H<0.4?8:12,size:H,toes:'teropode',eyeCol:o.eyeCol||(o.herb?'#B0965A':'#C99A2E'),
+    A:o.A??0.38,K:o.K??0.65,jawOpen:o.jawOpen,skin:o.skin??(o.feathers?2:0),fingers:o.fingers??3,sickle:!!o.sickle,slit:!o.herb,tailRigid:0.5,roll:0.03,yaw:0.035,
+    pat:o.pat,headCol:o.headCol,breath:0.014,
+    torso:[[X(-.36),X(.05),R(.19),R(.16)],[X(-.2),X(.04),R(.28),R(.24)],[0,X(.01),R(.34),R(.29)],[X(.18),X(-.04),R(.38),R(.31)],[X(.36),X(-.07),R(.39),R(.31)],[X(.52),X(-.04),R(.32),R(.26)],[X(.63),X(.02),R(.24),R(.2)],[X(.71),X(.06),R(.19),R(.16)]]};
+  const T=o.tail*H,tt=o.tailTall||1;   // coda orizzontale e rigida, più alta che larga
+  sp.tail={pivot:[X(-.3),X(.03)],pts:[[X(.08),0,R(.22),R(.19)],[-.12*T,X(.015),R(.19)*tt,R(.155)],[-.28*T,X(.01),R(.145)*tt,R(.115)],[-.45*T,0,R(.105)*tt,R(.08)],[-.62*T,X(-.01),R(.07)*tt,R(.052)],[-.8*T,X(-.025),R(.042)*tt,R(.03)],[-T,X(-.04),X(.01),X(.01)]]};
+  const N=o.neck*H,a=o.neckAng,nk=o.neckThin||1;   // collo a S
+  sp.neck={pivot:[X(.64),X(.05)],pts:[[X(-.06),0,R(.2),R(.17)],[.3*N*Math.cos(a*0.7),.3*N*Math.sin(a*0.7),R(.16)*nk,R(.14)*nk],[.65*N*Math.cos(a*1.12),.63*N*Math.sin(a*1.12),R(.135)*nk,R(.115)*nk],[N*Math.cos(a),N*Math.sin(a*1.06),R(.12)*nk,R(.1)*nk]]};
   const L=o.head*H,h=o.headH*H,w=(o.headW||o.headH*0.7)*H;
-  sp.head=o.croc?{tilt:-0.06,pts:[[-.08*L,0,.45*h,.5*w],[.15*L,.06*h,.52*h,.48*w],[.42*L,-.06*h,.30*h,.30*w],[.85*L,-.12*h,.20*h,.20*w],[.96*L,-.1*h,.24*h,.24*w],[1.0*L,-.12*h,.04*h,.04*w]],
-      jaw:{pivot:[-.04*L,-.14*h],pts:[[0,-.1*h,.2*h,.42*w],[.45*L,-.24*h,.12*h,.26*w],[.92*L,-.24*h,.1*h,.18*w],[.98*L,-.24*h,.02*h,.02*w]]},eye:[.12*L,.28*h,.42*w,.09*h]}
-    :{tilt:o.headTilt??-0.06,pts:[[-.10*L,0,.45*h,.5*w],[.2*L,.06*h,.55*h,.52*w],[.6*L,-.02*h,.42*h,.4*w],[.93*L,-.12*h,.24*h,.26*w],[1.0*L,-.14*h,.05*h,.05*w]],
-      jaw:o.herb?null:{pivot:[-.06*L,-.14*h],pts:[[0,-.08*h,.2*h,.42*w],[.5*L,-.2*h,.17*h,.32*w],[.9*L,-.18*h,.08*h,.18*w],[.96*L,-.18*h,.02*h,.02*w]]},eye:[.22*L,.24*h,.46*w,.09*h]};
-  if(!o.herb)sp.head.teeth=o.croc?{n:12,x0:.15*L,x1:.95*L,y:-.27*h,yj:-.12*h,z:.17*w,l:.1*h,r:.03*h}:{n:9,x0:.22*L,x1:.9*L,y:-.36*h,yj:-.03*h,z:.3*w,l:.12*h,r:.03*h};
-  sp.legs=[-1,1].map(s=>({x:0,y:0,z:s*R(.23),segs:[[X(.42),R(.14),R(.095)],[X(.40),R(.085),R(.055)],[X(.23),R(.05),R(.04)]],rest:[.35,-.9,.8],
+  // cranio: la mandibola fa il bordo inferiore della testa; occhi alti e indietro
+  sp.head=o.croc?{tilt:-0.06,pts:[[-.08*L,.1*h,.42*h,.5*w],[.15*L,.14*h,.46*h,.46*w],[.42*L,.03*h,.26*h,.3*w],[.82*L,-.02*h,.17*h,.2*w],[.94*L,0,.2*h,.25*w],[1.0*L,-.02*h,.05*h,.06*w]],
+      jaw:{pivot:[-.04*L,-.2*h],pts:[[0,-.2*h,.22*h,.42*w],[.45*L,-.22*h,.12*h,.26*w],[.9*L,-.19*h,.09*h,.18*w],[.98*L,-.18*h,.03*h,.04*w]]},eye:[.12*L,0,0,.09*h,0.42]}
+    :{tilt:o.headTilt??-0.06,pts:[[-.1*L,.12*h,.4*h,.5*w],[.08*L,.16*h,.46*h,.56*w],[.3*L,.14*h,.4*h,.46*w],[.55*L,.08*h,.32*h,.34*w],[.78*L,.02*h,.25*h,.26*w],[.95*L,-.02*h,.16*h,.2*w],[1.0*L,-.04*h,.05*h,.07*w]],
+      jaw:{pivot:[-.06*L,-.18*h],pts:[[0,-.2*h,.25*h,.46*w],[.3*L,-.27*h,.19*h,.38*w],[.6*L,-.3*h,.13*h,.28*w],[.88*L,-.27*h,.08*h,.19*w],[.98*L,-.24*h,.03*h,.05*w]]},eye:[.24*L,0,0,.085*h,0.4]};
+  if(!o.herb)sp.head.teeth=o.croc?{n:12,x0:.18*L,x1:.95*L,l:.1*h,r:.024*h}:{n:10,x0:.3*L,x1:.93*L,l:.11*h,r:.026*h};
+  sp.legs=[-1,1].map(s=>({x:0,y:0,z:s*R(.23),segs:[[X(.44),R(.15),R(.1)],[X(.41),R(.09),R(.055)],[X(.24),R(.055),R(.04)]],rest:[.35,-.9,.8],
     foot:[X(.21),R(.17),X(.035)],phase:s<0?0:Math.PI}));
-  const Ar=o.arm*H;sp.arms=[-1,1].map(s=>({x:X(.55),y:X(-.12),z:s*R(.27),segs:[[.5*Ar,R(.07),R(.05)],[.45*Ar,R(.05),R(.035)]],rest:[o.armRest??0.55,-1.1]}));
-  sp.extras=G=>{
-    if(o.crest){[-1,1].forEach(s=>{const c=new THREE.Mesh(new THREE.ConeGeometry(.06*h,.28*h,4),G.acc);c.position.set(.25*L,.52*h,s*.22*w);G.head.add(c);});}
-    if(o.sail){const sh=new THREE.Shape(),x0=X(-.34),x1=X(.66),n=10;sh.moveTo(x0,0);
-      for(let i=0;i<=n;i++){const u=i/n;sh.lineTo(lerp(x0,x1,u),o.sail*Math.pow(Math.sin(Math.PI*clamp(u*1.05,0,1)),0.8)+R(.2));}
-      sh.lineTo(x1,0);const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),G.acc);m.position.y=R(.12);G.body.add(m);}
-    if(o.feathers){const fan=(len,wid)=>{const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(-len*0.2,wid*0.6);s.lineTo(-len,wid);s.lineTo(-len*1.05,0);s.lineTo(-len,-wid*0.1);s.lineTo(0,0);return new THREE.ShapeGeometry(s);};
-      G.arms.forEach(A=>{const m=new THREE.Mesh(fan(.5*Ar,.35*Ar),G.acc);m.rotation.z=Math.PI/2;A.joints[1].add(m);});
-      const tf=new THREE.Mesh(fan(.45*T,.18*T),G.acc);tf.rotation.x=Math.PI/2;tf.position.x=-.0*T;G.tail2.add(tf);
-      const cr=new THREE.Mesh(fan(.4*L,.25*L),G.acc);cr.position.set(.1*L,.4*h,0);cr.rotation.z=0.3;G.head.add(cr);}
-    if(o.extras)o.extras(G,{H,X,R:R2=>R2*H*b,L,h,w});};
+  const Ar=o.arm*H;sp.arms=[-1,1].map(s=>({x:X(.55),y:X(-.12),z:s*R(.27),segs:[[.5*Ar,R(.07),R(.05)],[.45*Ar,R(.05),R(.035)]],rest:[o.armRest??0.55,o.elbow??-1.1]}));
+  sp.extras=G=>{const C=G.cols,hp=G.hp;
+    if(o.crest){[-1,1].forEach(s=>{const x=.16*L,[cy,ry,rz]=_prof(hp,x);G.fl(new THREE.ConeGeometry(.07*h,.24*h,[4,5,6][G.Q]),G.head,C.accC,M(x,cy+ry*0.82,s*rz*0.42,s*0.25,0,0.35),false,C.cB,1,true);});}
+    if(o.sail){const sh=new THREE.Shape(),x0=X(-.34),x1=X(.66),n=14;sh.moveTo(x0,0);   // vela sorretta dalle spine neurali, bordo ondulato
+      for(let i=0;i<=n;i++){const u=i/n;sh.lineTo(lerp(x0,x1,u),o.sail*Math.pow(Math.sin(Math.PI*clamp(u*1.05,0,1)),0.8)*(1+0.06*Math.sin(u*40))+R(.2));}
+      sh.lineTo(x1,0);G.fl(G.lastra(sh,X(.02)),G.body,C.cB,M(0,R(.12),0),false,C.accC,1,true);}
+    if(o.feathers){// ala ripiegata sull'avambraccio e ventaglio orizzontale sulla coda: un contorno a festoni (una penna per festone), scuro in punta
+      const ala=new THREE.Shape();ala.moveTo(Ar*0.03,0);ala.lineTo(Ar*0.03,-0.5*Ar);ala.quadraticCurveTo(-0.06*Ar,-0.64*Ar,-0.22*Ar,-0.52*Ar);ala.quadraticCurveTo(-0.27*Ar,-0.16*Ar,0,0);
+      const cAla=C.accC.clone().lerp(C.cB,0.45);G.arms.forEach(A=>G.fl(G.lastra(ala,Ar*0.014,2),A.joints[1],cAla,null,false,C.cB,0,true));
+      const Lt=0.55*T,cv=new THREE.Shape(),nT=[6,8,10][G.Q],wd=u=>T*(0.02+0.085*Math.pow(Math.sin(Math.PI*clamp(u*0.92+0.08,0,1)),0.7));
+      cv.moveTo(0,R(.03));for(let k=1;k<=nT;k++){const u=k/nT;cv.lineTo(-u*Lt,wd(u));cv.lineTo(-(u-0.5/nT)*Lt,wd(u-0.5/nT)*0.82);}
+      cv.lineTo(-Lt*1.04,0);for(let k=nT;k>=1;k--){const u=k/nT;cv.lineTo(-(u-0.5/nT)*Lt,-wd(u-0.5/nT)*0.82);cv.lineTo(-u*Lt,-wd(u));}cv.lineTo(0,-R(.03));cv.lineTo(0,R(.03));
+      const gc=G.lastra(cv,T*0.006,2);gc.rotateX(Math.PI/2);G.fl(gc,G.tail2,C.cB,null,false,C.accC,0,true);}
+    if(o.extras)o.extras(G,{H,X,R:R2=>R2*H*b,L,h,w,T});};
   return sp;}
 // quadrupedi (sauropodi, stegosauri, ceratopsidi, adrosauri): H anca, F spalla, BL anca→spalla (m)
 function tplQuad(o){const H=o.H,F=o.F,BL=o.BL,R=o.R,yS=F-H;
-  const sp={col:o.col,stripe:o.stripe,stripeF:Math.PI*2/(0.5*H),accent:o.accent,sides:12,size:H,toes:'piede',eyeCol:'#B89A62',A:o.A??0.26,K:o.K??0.35,bob:0.006,grazeAng:o.grazeAng??-0.45,jawOpen:0.12};
-  const fr=[-0.24,0.12,0.5,0.86,1.07],rr=[0.68,0.95,1.0,0.92,0.66];
-  sp.torso=fr.map((f,i)=>{const u=clamp(f,0,1);return[f*BL,lerp(0,yS,u)+0.14*R*Math.sin(Math.PI*u),rr[i]*R,rr[i]*R*(o.wide??0.82)];});
-  const T=o.T,td=o.tailDrop??0.2;sp.tail={pivot:[-0.2*BL,0.02*R],pts:[[.07*BL,0,.66*R,.55*R],[-.22*T,-td*.4*R,.46*R,.38*R],[-.48*T,-td*R,.27*R,.23*R],[-.75*T,-td*1.1*R,.12*R,.1*R],[-T,-td*1.1*R,.03*R,.03*R]]};
-  const N=o.N,a=o.nAng,a2=a+(o.nCurve??0.1),nr=o.nR??0.5;
-  sp.neck={pivot:[0.97*BL,yS+0.2*R],pts:[[-.06*BL,0,nr*1.1*R,nr*0.9*R],[.35*N*Math.cos(a),.35*N*Math.sin(a),nr*.72*R,nr*.6*R],[.7*N*Math.cos((a+a2)/2),.7*N*Math.sin((a+a2)/2),nr*.5*R,nr*.43*R],[N*Math.cos(a2),N*Math.sin(a2),nr*.4*R,nr*.34*R]]};
+  const sp={col:o.col,stripe:o.stripe,stripeF:Math.PI*2/(0.5*H),accent:o.accent,sides:12,size:H,toes:'piede',eyeCol:o.eyeCol||'#8E6E3C',A:o.A??0.26,K:o.K??0.35,bob:0.006,
+    grazeAng:o.grazeAng??-0.45,jawOpen:0.12,skin:1,tailRigid:o.tailRigid??0.55,neckSway:o.neckSway??0.15,neckWalk:o.neckWalk??0,roll:0.022,yaw:0.018,pitch:0.008,
+    pat:o.pat,headCol:o.headCol,fore5:!!o.fore5,breath:0.01,breathF:1.1};
+  const fr=[-0.3,-0.12,0.1,0.32,0.55,0.78,0.95,1.08],rr=[0.6,0.84,0.97,1.0,0.99,0.93,0.82,0.62];
+  sp.torso=fr.map((f,i)=>{const u=clamp(f,0,1);return[f*BL,lerp(0,yS,u)+0.14*R*Math.sin(Math.PI*u)+(o.hump??0)*R*Math.sin(Math.PI*clamp(f*1.4,0,1)),rr[i]*R,rr[i]*R*(o.wide??0.82)];});
+  const T=o.T,td=o.tailDrop??0.2,tt=o.tailTall||1;sp.tail={pivot:[-0.24*BL,0.02*R],pts:[[.1*BL,0,.62*R,.52*R],[-.12*T,-td*.2*R,.5*R*tt,.42*R],[-.28*T,-td*.5*R,.36*R*tt,.3*R],[-.46*T,-td*.85*R,.24*R*tt,.2*R],
+    [-.64*T,-td*1.05*R,.14*R,.12*R],[-.82*T,-td*1.12*R,.07*R,.06*R],[-T,-td*1.15*R,.025*R,.025*R]]};
+  const N=o.N,a=o.nAng,a2=a+(o.nCurve??0.1),nr=o.nR??0.5,am=(a+a2)/2;
+  sp.neck={pivot:[0.97*BL,yS+0.2*R],pts:[[-.08*BL,0,nr*1.15*R,nr*0.95*R],[.25*N*Math.cos(a),.25*N*Math.sin(a),nr*.8*R,nr*.66*R],[.5*N*Math.cos(am),.5*N*Math.sin(am),nr*.6*R,nr*.5*R],
+    [.76*N*Math.cos(am),.76*N*Math.sin(am),nr*.47*R,nr*.4*R],[N*Math.cos(a2),N*Math.sin(a2),nr*.4*R,nr*.34*R]]};
   const L=o.head,h=o.headH??0.45*L,w=o.headW??0.36*L;
+  const jaw0={pivot:[0,-.2*h],pts:[[.04*L,-.22*h,.16*h,.38*w],[.45*L,-.27*h,.14*h,.32*w],[.82*L,-.25*h,.08*h,.22*w],[.94*L,-.23*h,.03*h,.06*w]]};
   const heads={
-    small:{pts:[[-.1*L,0,.42*h,.5*w],[.3*L,.1*h,.52*h,.5*w],[.72*L,-.04*h,.34*h,.38*w],[1.0*L,-.12*h,.08*h,.1*w]],eye:[.3*L,.3*h,.42*w,.08*h]},
-    duck:{pts:[[-.1*L,0,.42*h,.48*w],[.3*L,.12*h,.5*h,.45*w],[.65*L,-.05*h,.26*h,.42*w],[.95*L,-.12*h,.16*h,.55*w],[1.02*L,-.12*h,.04*h,.2*w]],eye:[.28*L,.3*h,.4*w,.08*h]},
-    beak:{pts:[[-.15*L,.05*h,.5*h,.5*w],[.2*L,.0,.5*h,.5*w],[.62*L,-.12*h,.38*h,.34*w],[.92*L,-.3*h,.2*h,.18*w],[1.0*L,-.38*h,.04*h,.04*w]],eye:[.35*L,.2*h,.44*w,.07*h]}};
+    small:{pts:[[-.1*L,.05*h,.4*h,.48*w],[.25*L,.12*h,.45*h,.48*w],[.6*L,.03*h,.3*h,.36*w],[.9*L,-.05*h,.18*h,.24*w],[1.0*L,-.07*h,.06*h,.1*w]],jaw:jaw0,eye:[.28*L,0,0,.08*h,0.42]},
+    brachio:{pts:[[-.1*L,.05*h,.4*h,.48*w],[.18*L,.18*h,.48*h,.44*w],[.4*L,.3*h,.42*h,.34*w],[.64*L,.07*h,.3*h,.34*w],[.92*L,-.03*h,.2*h,.26*w],[1.0*L,-.05*h,.06*h,.1*w]],jaw:jaw0,eye:[.26*L,0,0,.08*h,0.3]},
+    duck:{pts:[[-.1*L,.05*h,.42*h,.48*w],[.3*L,.14*h,.45*h,.44*w],[.62*L,.02*h,.25*h,.4*w],[.92*L,-.05*h,.15*h,.55*w],[1.02*L,-.06*h,.05*h,.22*w]],jaw:{pivot:[0,-.2*h],pts:[[.04*L,-.22*h,.17*h,.4*w],[.5*L,-.26*h,.12*h,.34*w],[.86*L,-.22*h,.07*h,.42*w],[.98*L,-.2*h,.03*h,.15*w]]},eye:[.28*L,0,0,.08*h,0.4]},
+    beak:{pts:[[-.15*L,.08*h,.5*h,.5*w],[.1*L,.08*h,.56*h,.52*w],[.32*L,0,.5*h,.4*w],[.5*L,-.1*h,.36*h,.26*w],[.64*L,-.24*h,.2*h,.17*w],[.74*L,-.36*h,.04*h,.04*w]],
+      jaw:{pivot:[.05*L,-.35*h],pts:[[.08*L,-.38*h,.15*h,.36*w],[.38*L,-.42*h,.13*h,.28*w],[.63*L,-.47*h,.06*h,.12*w],[.69*L,-.48*h,.02*h,.03*w]]},eye:[.24*L,0,0,.075*h,0.45]}};
   sp.head={tilt:o.headTilt??-0.2,...heads[o.headType||'small']};
   const legR=o.legR??0.28;
   sp.legs=[[-1,0,false,0],[1,0,false,Math.PI],[-1,1,true,Math.PI*0.5],[1,1,true,Math.PI*1.5]].map(([s,f,fore,ph])=>{
     const top=fore?F:H,x=fore?BL:0,y=fore?yS:0,r=legR*R*(fore?(o.foreR??0.9):1);
     return {x,y,z:s*0.55*R*(o.wide??0.82)/0.82,fore,phase:ph,segs:[[0.5*top,r,r*0.8],[0.43*top,r*0.78,r*0.66],[0.07*top,r*0.66,r*0.72]],
       rest:fore?[-0.06,0.12,-0.06]:[0.10,-0.16,0.06],foot:[r*1.5,r*1.5,0.05*top]};});
-  sp.extras=R=>{if(o.extras)o.extras(R,{H,F,BL,R:o.R,L,h,w,T});};return sp;}
+  sp.extras=G=>{if(o.extras)o.extras(G,{H,F,BL,R:o.R,L,h,w,T,yS});};return sp;}
 // pterosauri e uccelli in volo
 function tplFlyer(o){const B=o.B;   // B = lunghezza del corpo (m)
-  const sp={col:o.col,accent:o.accent,sides:8,size:o.B*2,claws:false,flap:o.flap??0.6,flapF:o.flapF??4,fly:true,
-    torso:[[-.5*B,0,.12*B,.12*B],[-.1*B,.02*B,.2*B,.17*B],[.3*B,0,.18*B,.15*B],[.55*B,.05*B,.1*B,.09*B]]};
+  const sp={col:o.col,accent:o.accent,sides:8,size:o.B*2,claws:false,flap:o.flap??0.6,flapF:o.flapF??4,fly:true,skin:2,eyeCol:o.eyeCol||'#3a2a1a',breath:0.008,
+    torso:[[-.5*B,0,.11*B,.11*B],[-.25*B,.01*B,.18*B,.16*B],[0,.02*B,.21*B,.18*B],[.3*B,.01*B,.18*B,.15*B],[.55*B,.05*B,.1*B,.09*B]]};
   if(o.tail)sp.tail={pivot:[-.45*B,0],pts:[[.05*B,0,.1*B,.1*B],[-.3*o.tail,0,.05*B,.05*B],[-.65*o.tail,0,.03*B,.03*B],[-o.tail,0,.01*B,.01*B]]};
   const N=o.neck,a=o.neckAng??0.35;sp.neck={pivot:[.5*B,.05*B],pts:[[-.05*B,0,.08*B,.07*B],[.5*N*Math.cos(a),.5*N*Math.sin(a),.06*B,.055*B],[N*Math.cos(a),N*Math.sin(a),.055*B,.05*B]]};
-  const L=o.head,h=o.headH;sp.head={tilt:-a*0.9,pts:[[-.08*L,0,.5*h,.45*h],[.15*L,.0,.5*h,.45*h],[.6*L,-.06*h,.22*h,.2*h],[1.0*L,-.1*h,.03*h,.03*h]],eye:[.08*L,.2*h,.38*h,.08*h]};
-  sp.extras=R=>{const span=o.span/2,ch=o.chord;
+  const L=o.head,h=o.headH;
+  sp.head={tilt:-a*0.9,pts:[[-.08*L,.04*h,.46*h,.45*h],[.12*L,.06*h,.48*h,.45*h],[.4*L,0,.26*h,.24*h],[.75*L,-.04*h,.14*h,.13*h],[1.0*L,-.06*h,.02*h,.02*h]],
+    jaw:{pivot:[0,-.2*h],pts:[[.05*L,-.24*h,.16*h,.32*h],[.45*L,-.18*h,.1*h,.18*h],[.95*L,-.1*h,.02*h,.03*h]]},eye:[.08*L,0,0,.085*h,0.38]};
+  sp.extras=R=>{const span=o.span/2,ch=o.chord,C=R.cols,mem=col(o.memCol||o.accent||o.col[0]);
     [-1,1].forEach(s=>{const sh=new THREE.Shape();
-      if(o.feather){sh.moveTo(.2*ch,0);sh.lineTo(.35*ch,.5*span);sh.lineTo(.15*ch,span);sh.lineTo(-.45*ch,.92*span);sh.lineTo(-.7*ch,.55*span);sh.lineTo(-.55*ch,0);}
-      else{sh.moveTo(.25*ch,0);sh.lineTo(.4*ch,.35*span);sh.lineTo(.3*ch,.7*span);sh.lineTo(.05*ch,span);sh.lineTo(-.25*ch,.62*span);sh.lineTo(-.55*ch,.25*span);sh.lineTo(-.5*ch,0);}
-      const g=new THREE.ShapeGeometry(sh);g.rotateX(Math.PI/2);if(s<0)g.scale(1,1,-1);
-      const pv=new THREE.Group();pv.position.set(.15*B,.08*B,s*.08*B);R.body.add(pv);pv.add(new THREE.Mesh(g,R.acc));R.wings[s<0?0:1]=pv;});
-    if(o.crest){const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(-o.crest,o.crest*0.35);s.lineTo(-o.crest*0.85,o.crest*0.1);s.lineTo(0,-.05*h);
-      const m=new THREE.Mesh(new THREE.ShapeGeometry(s),R.acc);m.position.set(-.02*L,.2*h,0);R.head.add(m);}
+      if(o.feather){sh.moveTo(.2*ch,0);sh.lineTo(.35*ch,.5*span);sh.lineTo(.15*ch,span);sh.lineTo(-.15*ch,.97*span);sh.lineTo(-.3*ch,.9*span);sh.lineTo(-.45*ch,.86*span);sh.lineTo(-.55*ch,.72*span);
+        sh.lineTo(-.7*ch,.55*span);sh.lineTo(-.65*ch,.3*span);sh.lineTo(-.55*ch,0);}
+      else{sh.moveTo(.25*ch,0);sh.quadraticCurveTo(.45*ch,.4*span,.32*ch,.72*span);sh.lineTo(.05*ch,span);sh.quadraticCurveTo(-.05*ch,.7*span,-.3*ch,.5*span);sh.quadraticCurveTo(-.55*ch,.25*span,-.5*ch,0);}
+      const g=R.lastra(sh,Math.max(0.004,B*0.012));g.rotateX(s*Math.PI/2);
+      const pv=new THREE.Group();pv.position.set(.15*B,.08*B,s*.08*B);R.body.add(pv);R.wings[s<0?0:1]=pv;
+      R.fl(g,pv,o.feather?C.accC:mem,null,false,o.feather?C.cL:C.cB,0,true);
+      if(!o.feather){// bordo d'attacco: braccio e dito alare allungato, con la pelle del corpo
+        const lg=new THREE.CylinderGeometry(.02*B,.045*B,span*1.0,[5,6,8][R.Q],1);lg.translate(0,span*0.5,0);lg.rotateX(s*Math.PI/2);
+        R.mk(lg,pv,0,null,M(.3*ch,0,0,0,s*-0.12,0));}});
+    if(o.crest){const s=new THREE.Shape();s.moveTo(0,0);s.quadraticCurveTo(-o.crest*0.5,o.crest*0.42,-o.crest,o.crest*0.36);s.lineTo(-o.crest*0.82,o.crest*0.12);s.lineTo(0,-.05*h);
+      R.fl(R.lastra(s,.05*h,3),R.head,C.accC,M(-.02*L,.22*h,0),false,C.cB,0,true);}
     if(o.tailFan){const s=new THREE.Shape();s.moveTo(0,0);s.lineTo(-o.tailFan,o.tailFan*0.45);s.lineTo(-o.tailFan*1.1,0);s.lineTo(-o.tailFan,-o.tailFan*0.45);s.lineTo(0,0);
-      const g=new THREE.ShapeGeometry(s);g.rotateX(Math.PI/2);const m=new THREE.Mesh(g,R.acc);(R.tail2||R.body).add(m);if(!R.tail2)m.position.x=-.5*B;}};
+      const g=R.lastra(s,Math.max(0.003,B*0.01),2);g.rotateX(Math.PI/2);R.fl(g,R.tail2||R.body,C.accC,R.tail2?null:M(-.5*B,0,0),false,C.cB,0,true);}
+    if(!o.feather){[-1,1].forEach(s=>{const lg=new THREE.CylinderGeometry(.018*B,.03*B,.38*B,5,1);lg.translate(0,-.19*B,0);R.mk(lg,R.body,0,null,M(-.4*B,-.05*B,s*.08*B,0,0,-1.25));});}};
   return sp;}
 // essere umano (Homo sapiens), altezza Hh
 function tplHuman(o){const Hh=o.Hh,X=v=>v*Hh;
@@ -6228,34 +6326,48 @@ function ascoltaVerso(a){const v=VOCI[a.sd.id];if(!v)return;
   d.innerHTML=`<p class="note">${esc(x.testo)}</p>`+(x.nota||(x.fonti&&x.fonti.length)?`<details class="doc"><summary>Per il docente: da dove vengono i versi</summary>${x.nota?`<p>${esc(x.nota)}</p>`:''}${(x.fonti||[]).length?`<ul>${x.fonti.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>`:''}</details>`:'');
   acts.parentNode.insertBefore(d,acts.nextSibling);}
 const MODELLI={
-  eoraptor:()=>tplTheropod({H:0.36,bulk:0.55,neck:0.75,neckAng:0.55,head:0.42,headH:0.2,headW:0.13,tail:1.9,arm:0.55,col:['#8A6440','#CDB38A'],stripe:'#5c4128'}),
-  herrerasaurus:()=>tplTheropod({H:1.1,bulk:0.62,neck:0.55,neckAng:0.5,head:0.45,headH:0.22,headW:0.14,tail:2.0,arm:0.5,col:['#6B5236','#BFA27A'],stripe:'#45331f'}),
-  coelophysis:()=>tplTheropod({H:0.75,bulk:0.45,neck:0.85,neckAng:0.6,neckThin:0.8,head:0.42,headH:0.15,headW:0.1,tail:2.2,arm:0.55,col:['#6F7A44','#C9C39A'],stripe:'#4c5530'}),
-  plateosaurus:()=>tplTheropod({H:1.9,bulk:0.85,neck:1.05,neckAng:0.75,neckThin:0.75,head:0.22,headH:0.12,headW:0.10,tail:1.8,arm:0.95,armRest:0.25,herb:true,col:['#7A6F48','#CDBF95'],stripe:'#5a5132'}),
-  saltriovenator:()=>tplTheropod({H:2.1,bulk:0.8,neck:0.5,neckAng:0.5,head:0.48,headH:0.24,headW:0.15,tail:1.8,arm:0.45,crest:true,accent:'#9a5a35',col:['#6A4B36','#C2A07E'],stripe:'#4a3324'}),
-  allosaurus:()=>tplTheropod({H:2.15,bulk:0.82,neck:0.5,neckAng:0.5,head:0.42,headH:0.22,headW:0.14,tail:1.85,arm:0.45,crest:true,accent:'#a0582f',col:['#7C5A3A','#CBAE88'],stripe:'#4f3622'}),
-  tyrannosaurus:()=>tplTheropod({H:3.5,bulk:1,neck:0.42,neckAng:0.55,head:0.45,headH:0.25,headW:0.2,tail:1.6,arm:0.26,col:['#4F4C3A','#B3A27F'],stripe:'#383526'}),
-  velociraptor:()=>tplTheropod({H:0.5,bulk:0.55,neck:0.6,neckAng:0.6,head:0.5,headH:0.17,headW:0.13,tail:2.0,arm:0.7,feathers:true,accent:'#3f3428',col:['#5A4A38','#C7B08B'],stripe:'#3d3125'}),
-  scipionyx:()=>tplTheropod({H:0.14,bulk:0.6,neck:0.6,neckAng:0.55,head:0.6,headH:0.26,headW:0.18,tail:1.7,arm:0.6,col:['#957651','#DCC8A0'],stripe:'#6d5434'}),
-  spinosaurus:()=>tplTheropod({H:2.3,bulk:0.9,neck:0.75,neckAng:0.45,head:0.78,headH:0.15,headW:0.12,croc:true,tail:2.9,arm:0.65,sail:1.6,accent:'#A0603E',col:['#5A5848','#B8AE8C'],stripe:'#403e32'}),
-  brachiosaurus:()=>tplQuad({H:4.1,F:5.3,BL:5.0,R:1.35,N:8.2,nAng:1.05,nCurve:0.12,nR:0.55,T:7,tailDrop:0.25,head:0.9,headTilt:-0.35,col:['#5F675C','#9D9C88'],grazeAng:-0.7}),
-  diplodocus:()=>tplQuad({H:3.4,F:3.0,BL:4.4,R:1.15,N:7.2,nAng:0.22,nCurve:-0.12,nR:0.5,T:13,tailDrop:0.15,head:0.65,headTilt:-0.25,col:['#776A52','#BDAF90'],stripe:'#5a4f3c',grazeAng:-0.35}),
-  stegosaurus:()=>tplQuad({H:2.2,F:1.35,BL:2.4,R:0.8,N:0.8,nAng:-0.35,nCurve:0.1,nR:0.5,T:3.0,tailDrop:-0.1,head:0.5,headTilt:-0.3,foreR:0.8,col:['#5E6A40','#BEB78D'],accent:'#B0703A',
-    extras:(R,q)=>{const plate=new THREE.OctahedronGeometry(1,0);
-      const spots=[[0.15,0.55,0],[0.35,0.7,1],[0.55,0.75,0],[0.75,0.65,1],[0.95,0.45,0]];
-      spots.forEach(([u,s,side])=>{const m=new THREE.Mesh(plate,R.acc);const x=lerp(-0.2*q.BL,0.95*q.BL,1-u);const y=lerp(0,q.F-q.H,clamp(1-u,0,1))+0.14*q.R*Math.sin(Math.PI*clamp(1-u,0,1))+q.R*0.95;
-        m.position.set(x,y+s*0.35,(side?1:-1)*0.07);m.scale.set(0.38*s,0.42*s+0.12,0.035);m.rotation.z=0.2;R.body.add(m);});
-      [[0.0,0.6,0],[-0.6,0.5,1],[-1.2,0.38,0]].forEach(([x,s,side])=>{const m=new THREE.Mesh(plate,R.acc);m.position.set(x,q.R*0.5+s*0.3,(side?1:-1)*0.06);m.scale.set(0.3*s,0.38*s,0.03);m.rotation.z=0.25;R.tail1.add(m);});
-      [[-0.3,0.42,1],[-0.8,0.3,0]].forEach(([x,s,side])=>{const m=new THREE.Mesh(plate,R.acc);m.position.set(x,q.R*0.28+s*0.25,(side?1:-1)*0.05);m.scale.set(0.25*s,0.3*s,0.03);m.rotation.z=0.3;R.tail2.add(m);});
-      const sp=new THREE.ConeGeometry(0.05,0.75,5);[[-1.2,1],[-1.42,-1]].forEach(([x,s])=>[0.6,-0.6].forEach(zz=>{const m=new THREE.Mesh(sp,R.acc);m.position.set(x,0.12,zz*0.35);m.rotation.set(zz>0?-1.1:1.1,0,0.5);R.tail2.add(m);}));}}),
-  triceratops:()=>tplQuad({H:2.3,F:1.9,BL:3.0,R:1.0,N:0.55,nAng:-0.1,nR:0.6,T:2.6,tailDrop:0.2,head:2.1,headH:0.9,headW:0.75,headType:'beak',headTilt:-0.15,foreR:0.95,col:['#6A5A40','#C2AC86'],accent:'#9C6A42',grazeAng:-0.3,
-    extras:(R,q)=>{const s0=new THREE.Shape();s0.moveTo(-0.85,0);for(let i=0;i<=12;i++){const a=Math.PI*i/12;s0.lineTo(-Math.cos(a)*0.85,Math.sin(a)*0.95+(i%2?0.06:0));}s0.lineTo(0.85,0);
-      const fg=new THREE.ShapeGeometry(s0);fg.rotateY(Math.PI/2);const fr=new THREE.Mesh(fg,R.acc);fr.position.set(0.02*q.L,0.15*q.h,0);fr.rotation.z=0.75;R.head.add(fr);
-      const horn=new THREE.ConeGeometry(0.1,1.0,6),hm=new THREE.MeshPhongMaterial({color:col('#E6DCC4'),flatShading:true});
-      [-1,1].forEach(s=>{const m=new THREE.Mesh(horn,hm);m.position.set(0.32*q.L,0.55*q.h,s*0.18*q.w);m.rotation.set(s*0.2,0,-1.0);R.head.add(m);});
-      const n=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.3,6),hm);n.position.set(0.82*q.L,0.05*q.h,0);n.rotation.z=-0.5;R.head.add(n);}}),
-  tethyshadros:()=>tplQuad({H:1.1,F:0.8,BL:1.25,R:0.36,N:0.75,nAng:0.4,nR:0.55,T:1.9,tailDrop:-0.05,head:0.55,headType:'duck',headTilt:-0.2,foreR:0.7,col:['#6C774F','#C8C49C'],stripe:'#4f5838'}),
-  pteranodon:()=>tplFlyer({B:0.7,neck:0.5,neckAng:0.3,head:1.1,headH:0.16,crest:0.7,span:5.6,chord:1.1,flap:0.5,flapF:3,col:['#CFC6B4','#EFE9DC'],accent:'#A99B86'}),
+  eoraptor:()=>tplTheropod({H:0.36,bulk:0.55,neck:0.75,neckAng:0.55,head:0.42,headH:0.2,headW:0.13,tail:1.9,arm:0.55,col:['#8A6440','#D6BE96'],stripe:'#5c4128'}),
+  herrerasaurus:()=>tplTheropod({H:1.1,bulk:0.62,neck:0.55,neckAng:0.5,head:0.45,headH:0.22,headW:0.14,tail:2.0,arm:0.5,col:['#6B5236','#C8AC84'],stripe:'#45331f'}),
+  coelophysis:()=>tplTheropod({H:0.75,bulk:0.45,neck:0.85,neckAng:0.6,neckThin:0.8,head:0.42,headH:0.15,headW:0.1,tail:2.2,arm:0.55,col:['#6F7A44','#D2CCA4'],stripe:'#4c5530'}),
+  plateosaurus:()=>tplTheropod({H:1.9,bulk:0.85,neck:1.05,neckAng:0.75,neckThin:0.75,head:0.22,headH:0.12,headW:0.10,tail:1.8,arm:0.95,armRest:0.25,herb:true,col:['#7A6F48','#D4C69E'],stripe:'#5a5132',pat:'macchie'}),
+  saltriovenator:()=>tplTheropod({H:2.1,bulk:0.8,neck:0.5,neckAng:0.5,head:0.48,headH:0.24,headW:0.15,tail:1.8,arm:0.45,crest:true,accent:'#8a5634',col:['#6A4B36','#C9A886'],stripe:'#4a3324'}),
+  allosaurus:()=>tplTheropod({H:2.15,bulk:0.82,neck:0.5,neckAng:0.5,head:0.42,headH:0.22,headW:0.14,tail:1.85,arm:0.45,crest:true,accent:'#8f5530',col:['#7C5A3A','#D2B690'],stripe:'#4f3622'}),
+  tyrannosaurus:()=>tplTheropod({H:3.5,bulk:1,neck:0.42,neckAng:0.55,head:0.45,headH:0.25,headW:0.2,tail:1.6,arm:0.26,fingers:2,col:['#4F4C3A','#BCAB88'],stripe:'#383526',headCol:['#4A4636','#B0A07E']}),
+  velociraptor:()=>tplTheropod({H:0.5,bulk:0.55,neck:0.6,neckAng:0.6,head:0.5,headH:0.17,headW:0.13,tail:2.0,arm:0.7,armRest:-0.3,elbow:1.6,feathers:true,sickle:true,accent:'#3f3428',col:['#5A4A38','#CDB792'],stripe:'#3d3125',headCol:['#5E4E3A','#C2AC88']}),
+  scipionyx:()=>tplTheropod({H:0.14,bulk:0.6,neck:0.6,neckAng:0.55,head:0.6,headH:0.26,headW:0.18,tail:1.7,arm:0.6,skin:2,col:['#957651','#E2CFA8'],stripe:'#6d5434'}),
+  spinosaurus:()=>tplTheropod({H:2.3,bulk:0.9,neck:0.75,neckAng:0.45,head:0.78,headH:0.15,headW:0.12,croc:true,tail:2.9,tailTall:1.9,arm:0.65,sail:1.6,accent:'#96603E',col:['#5A5848','#C0B694'],stripe:'#403e32'}),
+  brachiosaurus:()=>tplQuad({H:4.1,F:5.3,BL:5.0,R:1.35,N:8.2,nAng:1.05,nCurve:0.12,nR:0.55,T:7,tailDrop:0.25,head:0.9,headType:'brachio',headTilt:-0.35,col:['#5F675C','#A5A490'],grazeAng:-0.7,
+    neckSway:0.22,neckWalk:0.07,tailRigid:0.9,fore5:true}),
+  diplodocus:()=>tplQuad({H:3.4,F:3.0,BL:4.4,R:1.15,N:7.2,nAng:0.22,nCurve:-0.12,nR:0.5,T:13,tailDrop:0.15,head:0.65,headTilt:-0.25,col:['#776A52','#C4B698'],stripe:'#5a4f3c',grazeAng:-0.35,
+    neckSway:0.2,neckWalk:0.06,tailRigid:1}),
+  stegosaurus:()=>tplQuad({H:2.2,F:1.35,BL:2.4,R:0.8,N:0.8,nAng:-0.35,nCurve:0.1,nR:0.5,T:3.0,tailDrop:-0.1,head:0.5,headTilt:-0.3,foreR:0.8,col:['#5E6A40','#C6BF95'],accent:'#A86C3A',tailRigid:0.35,
+    extras:(G,q)=>{const C=G.cols,Q=G.Q;
+      // placche alternate su due file (17), le più grandi sopra fianchi e base della coda; 4 spine del thagomizer
+      const placca=(w,hh)=>{const s=new THREE.Shape();s.moveTo(-w*0.5,0);s.quadraticCurveTo(-w*0.62,hh*0.55,-w*0.12,hh);s.quadraticCurveTo(w*0.3,hh*0.62,w*0.5,0);s.lineTo(-w*0.5,0);return s;};
+      const tor=G.sp.torso,tl=G.sp.tail.pts,mid=Math.floor(tl.length/2),Np=[11,17,17][Q];
+      for(let k=0;k<Np;k++){const u=k/(Np-1),sgn=k%2?1:-1,sz=0.35+0.65*Math.sin(Math.PI*clamp(u*1.1-0.05,0,1)),hh=0.78*sz,w=0.72*sz;
+        // u da 0 (collo) a 1 (metà coda): x sul profilo dorsale
+        const xb=lerp(1.0*q.BL,-0.25*q.BL-0.55*q.T,u);let par,x,y;
+        if(xb>-0.24*q.BL){const [cy,ry]=_prof(tor,xb);par=G.body;x=xb;y=cy+ry*0.9;}
+        else{const xl=xb+0.24*q.BL;if(xl>tl[mid][0]){const [cy,ry]=_prof(tl,xl);par=G.tail1;x=xl;y=cy+ry*0.9;}else{const [cy,ry]=_prof(tl,xl);par=G.tail2;x=xl-tl[mid][0];y=cy+ry*0.9-tl[mid][1];}}
+        G.fl(G.lastra(placca(w,hh),0.035,[2,3,4][Q]),par,C.cB,M(x,y-0.05*sz,sgn*0.07,sgn*0.1,0,0),false,C.accC,1,true);}
+      const sp1=new THREE.ConeGeometry(0.045,0.72,[5,6,7][Q]);
+      [[-0.22*q.T,0.5],[-0.33*q.T,0.42]].forEach(([dx,up])=>[-1,1].forEach(s=>{const [cy,ry]=_prof(tl,tl[mid][0]+dx);
+        G.fl(sp1.clone(),G.tail2,C.corno,M(dx,cy+ry*0.6-tl[mid][1]+0.12,s*0.12,s*1.0,0,0.62+up*0.2),false,C.cornoS,1);}));}}),
+  triceratops:()=>tplQuad({H:2.3,F:1.9,BL:3.0,R:1.0,N:0.55,nAng:-0.1,nR:0.6,T:2.6,tailDrop:0.2,head:2.1,headH:0.9,headW:0.75,headType:'beak',headTilt:-0.15,foreR:0.95,col:['#6A5A40','#C8B48E'],accent:'#8C6442',grazeAng:-0.3,tailRigid:0.4,
+    extras:(G,q)=>{const C=G.cols,Q=G.Q;
+      // collare con epoccipitali sul bordo, due corna sopra gli occhi, corno nasale corto, becco scuro
+      const s0=new THREE.Shape(),nE=[10,14,18][Q];s0.moveTo(-0.85,0);
+      for(let i=0;i<=nE*2;i++){const a=Math.PI*i/(nE*2),rr=i%2?1.04:0.97;s0.lineTo(-Math.cos(a)*0.85*rr,Math.sin(a)*0.98*rr);}s0.lineTo(0.85,0);s0.lineTo(-0.85,0);
+      const fg=G.lastra(s0,0.06,[2,3,4][Q]);fg.rotateY(Math.PI/2);{const pa=fg.attributes.position;for(let i=0;i<pa.count;i++){const z=pa.getZ(i);pa.setX(i,pa.getX(i)+0.55*z*z);}fg.computeVertexNormals();}
+      G.fl(fg,G.head,C.cB,M(-0.06*q.L,0.2*q.h,0,0,0,1.05,1.15,1.15,1.15),false,C.accC,1,true);
+      const horn=new THREE.ConeGeometry(0.1,1.0,[6,8,10][Q]);
+      [-1,1].forEach(s=>G.fl(horn.clone(),G.head,C.corno,M(0.24*q.L,0.55*q.h,s*0.18*q.w,s*0.2,0,-1.0),false,C.cornoS,1));
+      G.fl(new THREE.ConeGeometry(0.08,0.32,[6,8,10][Q]),G.head,C.corno,M(0.56*q.L,0.1*q.h,0,0,0,-0.5),false,C.cornoS,1);
+      G.fl(new THREE.ConeGeometry(0.1*q.h,0.2*q.L,[6,8,8][Q]),G.head,C.scuro,M(0.73*q.L,-0.33*q.h,0,0,0,-2.2,1,1,0.7));}}),
+  tethyshadros:()=>tplQuad({H:1.1,F:0.8,BL:1.25,R:0.36,N:0.75,nAng:0.4,nR:0.55,T:1.9,tailDrop:-0.05,head:0.55,headType:'duck',headTilt:-0.2,foreR:0.7,col:['#6C774F','#CFCBA4'],stripe:'#4f5838',tailRigid:0.4,
+    extras:(G,q)=>{G.fl(new THREE.SphereGeometry(1,[6,8,10][G.Q],[4,5,6][G.Q]),G.head,G.cols.scuro,M(0.97*q.L,-0.08*q.h,0,0,0,0,0.07*q.L,0.06*q.h,0.48*q.w));}}),
+  pteranodon:()=>tplFlyer({B:0.7,neck:0.5,neckAng:0.3,head:1.1,headH:0.16,crest:0.7,span:5.6,chord:1.1,flap:0.5,flapF:3,col:['#BDB3A0','#EFE9DC'],accent:'#8F7F6A',memCol:'#9A8268'}),
   archaeopteryx:()=>tplFlyer({B:0.18,neck:0.08,head:0.06,headH:0.035,tail:0.25,tailFan:0.12,feather:true,span:0.7,chord:0.14,flap:0.7,flapF:9,col:['#2E2B28','#4a4540'],accent:'#24211f'}),
   uccello:()=>tplFlyer({B:0.25,neck:0.06,head:0.08,headH:0.05,tailFan:0.12,feather:true,span:0.8,chord:0.16,flap:0.8,flapF:8,col:['#5B6670','#D8D8D0'],accent:'#3f4a55'}),
   homo:()=>Object.assign(tplHuman({Hh:1.65,col:['#6E5034','#8C6A47'],hair:'#241a12'}),{headCol:['#B98A66','#A87A58'],limbCol:['#B08060','#9E7052'],footCol:'#4a3626'})};
