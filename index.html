@@ -764,10 +764,11 @@ body.fg-strumento #c{cursor:crosshair}
 .sg-az{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .sg-az .btn{font-size:14px;padding:6px 12px}
 body.sg-mano #c{cursor:copy}
+body.sg-gomma #c{cursor:not-allowed}
+.sg-row .btn.sg-gomma[aria-pressed="true"]{background:#FFF6E0;border-color:#D4A017;color:#6b4e07;box-shadow:0 0 0 2px rgba(212,160,23,.35)}
 @media (max-width:1360px){.sg-row{gap:6px}.sg-row .btn{padding:6px 9px;font-size:13.5px}.sg-cnt{min-width:0;font-size:15px}.sg-t b{display:none}}
 @media (max-width:1180px){.sg-t,.sg-t+.sg-sep{display:none}.dock.seggiole{padding:8px 10px}.sg-row .btn{padding:6px 8px}}
-.sg-row .btn.sg-vista[aria-pressed="true"]{background:var(--goldL);border-color:var(--gold);color:#5f4706}
-.sg-row .btn.sg-porta{background:var(--gold);border-color:var(--gold);color:#fff}
+.sg-row .btn.sg-prendi{font-size:15px;padding:7px 14px}
 /* @slot:css */
 </style>
 </head>
@@ -10872,10 +10873,10 @@ const GIORNI=['Domani','Lunedì','Giovedì pomeriggio','Venerdì sera'];
 function genera(seme){const RL=RACCOLTA_LOGICA,r=RL.mulberry32(RL.cyrb53(String(seme)+'|seggiole2'));const pk=a=>a[Math.floor(r()*a.length)];
   const file=2+Math.floor(r()*4),lato=pk([6,7]),rel=2+Math.floor(r()*4),chiedi=r()<0.5,dist=r()<0.5?1:null,corr=r()<0.5?1.2:null;
   const pubblico=file*2*lato,totale=pubblico+rel,occ=pk(OCC),giorno=pk(GIORNI),dove='il tavolone';
-  let testo=`${giorno} c'è ${occ}. Prima spostate il tavolone: deve stare a <b>2 metri dal muro</b>. Dietro il tavolone mettete <b>${rel} seggiole per i relatori</b>, rivolte verso il pubblico. Per il pubblico preparate <b>${file} file da ${lato} + ${lato} seggiole</b>, con un corridoio in mezzo, rivolte verso il tavolone.`;
-  if(dist)testo+=` Fra una fila e l'altra lasciate <b>1 metro</b>.`;
+  let testo=`${giorno} c'è ${occ}. Prima sposta il tavolone: deve stare a <b>2 metri dal muro</b>. Dietro il tavolone metti <b>${rel} seggiole per i relatori</b>, rivolte verso il pubblico. Per il pubblico prepara <b>${file} file da ${lato} + ${lato} seggiole</b>, con un corridoio in mezzo, rivolte verso il tavolone.`;
+  if(dist)testo+=` Fra una fila e l'altra lascia <b>1 metro</b>.`;
   if(corr)testo+=` Il corridoio deve essere largo almeno <b>1,2 metri</b>.`;
-  testo+=chiedi?' <b>Quante seggiole vi servono in tutto?</b>':` Vi servono <b>${totale} seggiole</b>.`;
+  testo+=chiedi?' <b>Quante seggiole ti servono in tutto?</b>':` Ti servono <b>${totale} seggiole</b>.`;
   return {seme:String(seme),file,lato,rel,fronte:'tavolone',dove,chiedi,dist,corr,pubblico,totale,testo};}
 
 // ---------------------------------------------------------------- geometria di una seggiola dalla pila di P05
@@ -10889,12 +10890,20 @@ function geometrie(){if(G)return G;const pila=SEDIE.mesh||SEDIE.costruisci(),g0=
   const sotto=blocco(0),cima=blocco(N-1,[dy*(N-1),dz*(N-1)]);
   sotto.computeBoundingBox();const bb=sotto.boundingBox,cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;
   for(const g of [sotto,cima]){g.translate(-cx,0,-cz);g.computeBoundingBox();g.computeBoundingSphere();}
-  G={cima,sotto,off:[dy,dz],cx,cz,h:bb.max.y,w:bb.max.x-bb.min.x,d:bb.max.z-bb.min.z};return G;}
+  // seggiola posata: la sedia in cima alla pila, con le gambe posteriori attaccate. In P05 le posteriori stanno 17 mm fuori dal fianco
+  // della scocca (servono per impilare: passano fuori dalla sedia sotto) e toccano la scocca solo lungo uno spigolo: in una pila non si
+  // vede, in una seggiola da sola sì (sembravano staccate). P05 costruisce ogni sedia con la scocca e poi le 4 gambe, le posteriori per
+  // ultime: sono i vertici in coda al blocco (sotto 0,468 m, dietro, fuori dal fianco). Si spostano verso l'interno di 12 mm, così la
+  // testa della gamba entra nel fianco della scocca. In bassa (pila di oggi, gambe cilindriche sotto la seduta) la coda è vuota.
+  const posata=cima.clone(),pp=posata.attributes.position;let k=pp.count;
+  while(k>0){const i=k-1,x=pp.getX(i),y=pp.getY(i),z=pp.getZ(i);if(y<0.468&&z<-0.05&&Math.abs(x)>0.2215)k--;else break;}
+  for(let i=k;i<pp.count;i++)pp.setX(i,pp.getX(i)-Math.sign(pp.getX(i))*0.012);pp.needsUpdate=true;posata.computeBoundingSphere();
+  G={cima,sotto,posata,codaGambe:pp.count-k,off:[dy,dz],cx,cz,h:bb.max.y,w:bb.max.x-bb.min.x,d:bb.max.z-bb.min.z};return G;}
 
 
 // ---------------------------------------------------------------- scena
 const root=new THREE.Group();root.name='seggiole';
-let meshCima=null,meshSotto=null,fantasma=null,ombraTav=null;
+let meshCima=null,meshSotto=null,meshPosate=null,fantasma=null,ombraTav=null;
 const matFant=new THREE.MeshBasicMaterial({color:0xE2C35A,transparent:true,opacity:0.5,depthWrite:false,toneMapped:false});
 // segni della griglia: un quadratino d'oro tenue per posto, mesh unite; solo mentre si tiene una seggiola (i relatori solo a tavolone spostato).
 // Le linee di WebGL restano di 1 px e sul pavimento a scacchi non si vedevano: i quadratini sì.
@@ -10911,14 +10920,14 @@ function trovaTavolone(){if(TV.g)return TV.g;scene.traverse(o=>{const p=o.geomet
   return TV.g;}
 function posaTavolone(u){if(TV.g){TV.g.position.z=TV.z+DZ*u;TV.g.updateMatrixWorld(true);}if(TV.ost){TV.ost.z0=TV.ost0[0]+DZ*u;TV.ost.z1=TV.ost0[1]+DZ*u;}if(ombraTav)ombraTav.visible=u>0.999&&C.dentro;}
 function costruisciScena(){const g=geometrie(),mat=SEDIE.mesh.material;
-  meshCima=new THREE.InstancedMesh(g.cima,mat,TOT+NP);meshSotto=new THREE.InstancedMesh(g.sotto,mat,TOT);
-  for(const m of [meshCima,meshSotto]){m.name='seggiole';m.frustumCulled=false;m.castShadow=SEDIE.mesh.castShadow;m.receiveShadow=SEDIE.mesh.receiveShadow;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(m);}
-  fantasma=new THREE.Mesh(g.cima,matFant);fantasma.renderOrder=4;root.add(fantasma);
+  meshCima=new THREE.InstancedMesh(g.cima,mat,NP);meshSotto=new THREE.InstancedMesh(g.sotto,mat,TOT);meshPosate=new THREE.InstancedMesh(g.posata,mat,TOT);
+  for(const m of [meshCima,meshSotto,meshPosate]){m.name='seggiole';m.frustumCulled=false;m.castShadow=SEDIE.mesh.castShadow;m.receiveShadow=SEDIE.mesh.receiveShadow;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(m);}
+  fantasma=new THREE.Mesh(g.posata,matFant);fantasma.renderOrder=4;root.add(fantasma);
   trovaTavolone();ombraTav=contatto((TAV.x0+TAV.x1)/2,(TAV.z0+TAV.z1)/2+DZ,5.3,1.3,0.55,root);}
 
 // ---------------------------------------------------------------- stato
 let S=null;
-const C={dentro:false,mano:[],giro:0,hover:null,vista:'tavolone',tav:0,tavT:0};   // mano: pila di origini {da:'pila',i} | {da:'posto',j,r,zona,rot}
+const C={gomma:false,dentro:false,mano:[],giro:0,hover:null,tav:0,tavT:0};   // mano: pila di origini {da:'pila',i} | {da:'posto',j,r,zona,rot}
 function avvia(seme){const c=genera(seme);S={seme:c.seme,c,pile:new Array(NP).fill(PIENA),posate:[],totaleOk:!c.chiedi,fbTot:null,esito:null,controlli:0,tav:0};C.mano=[];C.giro=0;ridisegna();aggDock();return S;}
 const nPosate=()=>S?S.posate.length:0;
 const posto=(j,r,zona)=>S.posate.findIndex(p=>p.j===j&&(zona==='r'?p.zona==='r':p.zona!=='r'&&p.r===r));
@@ -10926,39 +10935,45 @@ function matPila(i,k){const g=G;return _m.makeTranslation(SEDIE.xs[i]+g.cx,k*g.o
 function matPosto(p){_q.setFromAxisAngle(_Y,p.rot*Math.PI/2);return _m.compose(_v.set(xDi(p.j),0,zCella(p.r,p.zona)),_q,_s);}
 function ridisegna(){if(!meshCima||!S)return;let a=0,b=0;
   for(let i=0;i<NP;i++){const c=S.pile[i];for(let k=0;k<c;k++){if(k===c-1)meshCima.setMatrixAt(a++,matPila(i,k));else meshSotto.setMatrixAt(b++,matPila(i,k));}}
-  for(const p of S.posate)meshCima.setMatrixAt(a++,matPosto(p));
-  meshCima.count=a;meshSotto.count=b;meshCima.instanceMatrix.needsUpdate=true;meshSotto.instanceMatrix.needsUpdate=true;}
-function mostraSedie(mie){if(SEDIE.mesh)SEDIE.mesh.visible=!mie;if(meshCima)meshCima.visible=meshSotto.visible=!!mie;}
+  let c=0;for(const p of S.posate)meshPosate.setMatrixAt(c++,matPosto(p));
+  meshCima.count=a;meshSotto.count=b;meshPosate.count=c;meshCima.instanceMatrix.needsUpdate=meshSotto.instanceMatrix.needsUpdate=meshPosate.instanceMatrix.needsUpdate=true;}
+function mostraSedie(mie){if(SEDIE.mesh)SEDIE.mesh.visible=!mie;if(meshCima)meshCima.visible=meshSotto.visible=meshPosate.visible=!!mie;}
 
 // ---------------------------------------------------------------- suoni (morbidi)
 const suoni=()=>typeof SUONI!=='undefined'&&SUONI.attivo&&SUONI.attivo();
 function suona(n,o){try{if(suoni())SUONI.play(n,o);}catch(e){console.error(e);}}
 
-// ---------------------------------------------------------------- viste: «Pile» (dal centro dell'aula verso le pile), «Sala» (le file e il tavolone),
-// «Tavolone» (da vicino: il tavolone e i posti dei relatori). Con il soffitto a 3 m nessuna vista contiene bene pile, file e tavolone
-// insieme (20 m di aula) e dalla «Sala» i posti dietro il tavolone sono piccoli: tre viste, tre pulsanti nel dock.
-// Con seggiole in mano nella vista «Pile» il pulsante diventa «Porta in sala (n)».
-const VISTE={pile:{t:new THREE.Vector3(0.4,0,-6.4),r:9.5,th:0,ph:1.24},sala:{t:new THREE.Vector3(0.5,0,6.6),r:9.6,th:Math.PI,ph:1.27},
-  tavolone:{t:new THREE.Vector3(0.55,0,9.2),r:4.4,th:Math.PI,ph:0.85}};
-function vista(nome){if(!VISTE[nome])return;C.vista=nome;const v=VISTE[nome];if(C.dentro)flyTo(v.t,v.r,v.th,v.ph);aggDock();}
+// ---------------------------------------------------------------- vista unica (23/10/2026, Andrea: tre viste complicavano)
+// Vista obliqua fissa dal lato delle pile verso il tavolone: file del pubblico, tavolone e posti dei relatori dietro di esso. Le pile
+// restano alle spalle della camera: «Prendi una seggiola» / «Prendine 7» nel dock tolgono dalla pila più piena (la pila cala lo stesso);
+// il clic sulle pile funziona ancora se le si inquadra girando la vista. La camera arretra quanto serve perché l'ultima fila possibile
+// (z 2,8 con 5 file a 1 m) stia tutta nello schermo: dipende dal rapporto della finestra (a 4:3 la camera sta più indietro che a 16:9).
+function vistaUnica(){const asp=Math.max(1,innerWidth/Math.max(1,innerHeight)),tz=5.4,h=Math.tan((camera.fov||55)*Math.PI/360)*asp,
+    zc=Math.min(-1.5,2.8-4.7/h),oriz=tz-zc,Y=2.9;
+  return {target:new THREE.Vector3(0.3,0,tz),r:Math.hypot(oriz,Y),theta:Math.PI,phi:Math.atan2(oriz,Y)};}
+function prendiN(n){let k=0;for(let q=0;q<n;q++){let i=-1,m=0;S.pile.forEach((c,x)=>{if(c>m){m=c;i=x;}});if(i<0){toast('Le pile sono vuote.',2000);break;}if(!prendiPila(i))break;k++;}return k;}
 
 // ---------------------------------------------------------------- azioni (le usano il puntatore, i pulsanti e i collaudi)
 // con una seggiola in mano il pannello della consegna si chiude, così non copre la zona di lavoro («Consegna» nel dock lo riapre)
 function chiudiMio(){if(C.dentro&&panelState&&panelState.d&&panelState.d.title==='Prepara la riunione')closePanel();}
-function puoPrendere(){if(!S)return false;if(!S.totaleOk){toast('Prima rispondete: quante seggiole vi servono in tutto?',2600);apriConsegna();return false;}
-  if(C.mano.length>=MAXMANO){toast(`Al massimo ${MAXMANO} seggiole alla volta: portatele in sala.`,2400);return false;}chiudiMio();return true;}
-function prendiPila(i){if(!puoPrendere())return false;if(S.pile[i]<=0){toast('Questa pila è vuota: prendete da un\'altra.',2200);return false;}
-  S.pile[i]--;if(!C.mano.length)C.giro=0;C.mano.push({da:'pila',i});S.esito=null;ridisegna();manoUI();suona('tic',{nota:'A5'});return true;}
-function riprendi(j,r,zona){zona=zona||'p';if(!puoPrendere())return false;const k=posto(j,r,zona);if(k<0)return false;const p=S.posate.splice(k,1)[0];
+function puoPrendere(){if(!S)return false;if(!S.totaleOk){toast('Prima rispondi: quante seggiole ti servono in tutto?',2600);apriConsegna();return false;}
+  if(C.mano.length>=MAXMANO){toast(`Al massimo ${MAXMANO} seggiole alla volta: posa prima quelle che hai in mano.`,2400);return false;}chiudiMio();return true;}
+function prendiPila(i){if(!puoPrendere())return false;if(S.pile[i]<=0){toast('Questa pila è vuota: prendi da un\'altra.',2200);return false;}
+  if(C.gomma)gomma(false);S.pile[i]--;if(!C.mano.length)C.giro=0;C.mano.push({da:'pila',i});S.esito=null;ridisegna();manoUI();suona('tic',{nota:'A5'});return true;}
+function riprendi(j,r,zona){zona=zona||'p';if(!puoPrendere())return false;const k=posto(j,r,zona);if(k<0)return false;if(C.gomma)gomma(false);const p=S.posate.splice(k,1)[0];
   C.mano.push({da:'posto',j,r:p.r,zona:p.zona,rot:p.rot});C.giro=(p.rot-rotBase(p.zona)+4)%4;S.esito=null;ridisegna();manoUI();suona('tic',{nota:'A5'});return true;}
 function posa(j,r,rot,zona){zona=zona||'p';if(!C.mano.length)return false;
-  if(zona==='r'){if(!S.tav){toast('Prima spostate il tavolone: clic sul tavolone.',2400);return false;}if(j<JR0||j>JR1){toast('I posti dei relatori sono dietro il tavolone.',2200);return false;}r=0;}
-  else if(j<J0||j>J1||r<0||r>=NR){toast('Posate la seggiola dentro la zona segnata sul pavimento.',2200);return false;}
+  if(zona==='r'){if(!S.tav){toast('Prima sposta il tavolone: clicca sul tavolone.',2400);return false;}if(j<JR0||j>JR1){toast('I posti dei relatori sono dietro il tavolone.',2200);return false;}r=0;}
+  else if(j<J0||j>J1||r<0||r>=NR){toast('Posa la seggiola dentro la zona segnata sul pavimento.',2200);return false;}
   if(posto(j,r,zona)>=0){toast('Questo posto è già occupato.',1800);return false;}
-  C.mano.pop();S.posate.push({j,r,zona,rot:rot!=null?rot:(rotBase(zona)+C.giro)%4});C.giro=0;ridisegna();manoUI();suona('tic',{nota:'D6'});return true;}
+  C.mano.pop();S.posate.push({j,r,zona,rot:rotBase(zona)});/* sempre nel verso giusto: non si gira */C.giro=0;ridisegna();manoUI();suona('tic',{nota:'D6'});return true;}
 function rimettiPila(i){if(!C.mano.length)return false;if(S.pile[i]>=PIENA){toast('Questa pila è già piena.',1800);return false;}S.pile[i]++;C.mano.pop();C.giro=0;ridisegna();manoUI();return true;}
 function annulla(){if(!C.mano.length)return false;for(const m of C.mano){if(m.da==='pila')S.pile[m.i]++;else S.posate.push({j:m.j,r:m.r,zona:m.zona,rot:m.rot});}C.mano=[];C.giro=0;ridisegna();manoUI();return true;}
-function gira(){if(!C.mano.length)return false;C.giro=(C.giro+1)%4;aggFantasma();return true;}
+// gomma («Elimina»): il clic su una seggiola posata la rimette nella pila più vuota (che risale); resta attiva finché si riclicca
+// «Elimina», si prende una seggiola o si preme Esc. Fuori dalla gomma il clic su una seggiola posata la riprende in mano.
+function gomma(on){C.gomma=!!on&&C.dentro;if(C.gomma&&C.mano.length)annulla();document.body.classList.toggle('sg-gomma',C.gomma);aggFantasma();aggDock();return C.gomma;}
+function elimina(j,r,zona){zona=zona||'p';const k=posto(j,r,zona);if(k<0)return false;let i=-1,m=PIENA;S.pile.forEach((c,x)=>{if(c<m){m=c;i=x;}});if(i<0)return false;
+  S.posate.splice(k,1);S.pile[i]++;S.esito=null;ridisegna();aggDock();suona('tic',{nota:'E5'});return true;}
 function riporta(){if(!S)return;C.mano=[];C.giro=0;S.pile.fill(PIENA);S.posate.length=0;S.esito=null;ridisegna();manoUI();if(C.dentro&&panelState)apriConsegna();}
 // il tavolone scorre sulle ruote fino a 2 m dal muro (1,4 s); subito con ?prova=1 o movimento ridotto
 const RIDOTTO=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
@@ -10976,7 +10991,9 @@ function bersaglio(e){if(!S||!G)return null;_n.set(e.clientX/innerWidth*2-1,-(e.
   let best=null,bd=1e9;const prova=(b,d)=>{if(d<bd){bd=d;best=b;}};
   for(let i=0;i<NP;i++){const x=SEDIE.xs[i],hh=Math.max(1,S.pile[i])*G.off[0]+G.h;_b.min.set(x-0.3,0,SEDIE.z-0.38);_b.max.set(x+0.3,hh,SEDIE.z+0.45);
     if(ray.intersectBox(_b,_h))prova({tipo:'pila',i},_h.distanceTo(ray.origin));}
-  for(const p of S.posate){if(p.zona==='r')continue;const x=xDi(p.j),z=zDi(p.r);_b.min.set(x-0.24,0,z-0.26);_b.max.set(x+0.24,G.h,z+0.26);
+  // con seggiole in mano le seggiole posate non fanno da bersaglio (il raggio verso i posti dei relatori passa sopra la fila 1):
+  // conta il posto sul pavimento sotto il puntatore, e se è occupato si riprende quella seggiola
+  if(!C.mano.length)for(const p of S.posate){if(p.zona==='r')continue;const x=xDi(p.j),z=zDi(p.r);_b.min.set(x-0.24,0,z-0.26);_b.max.set(x+0.24,G.h,z+0.26);
     if(ray.intersectBox(_b,_h))prova({tipo:'sedia',j:p.j,r:p.r,zona:'p'},_h.distanceTo(ray.origin));}
   // tavolone e zona dei relatori (dal bordo del tavolone verso il pubblico fino al muro): il tavolone copre il pavimento dietro di sé,
   // quindi qui conta la x del punto colpito: posto dei relatori più vicino, oppure la seggiola dei relatori che sta lì
@@ -10988,16 +11005,17 @@ function bersaglio(e){if(!S||!G)return null;_n.set(e.clientX/innerWidth*2-1,-(e.
     if(!S.tav)prova({tipo:'tav'},d);
     else{const k=S.posate.findIndex(p=>p.zona==='r'&&p.j===j);prova(k>=0&&Math.abs(x-xDi(j))<0.3?{tipo:'sedia',j,r:0,zona:'r'}:{tipo:'rel',j,r:0},d);}}
   if(best)return best;
-  if(ray.intersectPlane(_pl,_h)){const j=Math.round(_h.x/PX),r=Math.round((_h.z-Z0)/PZ);if(j>=J0&&j<=J1&&r>=0&&r<NR&&Math.abs(_h.x-xDi(j))<0.4&&Math.abs(_h.z-zDi(r))<0.4)return {tipo:'pav',j,r};
+  if(ray.intersectPlane(_pl,_h)){const j=Math.round(_h.x/PX),r=Math.round((_h.z-Z0)/PZ);if(j>=J0&&j<=J1&&r>=0&&r<NR&&Math.abs(_h.x-xDi(j))<0.4&&Math.abs(_h.z-zDi(r))<0.4)return posto(j,r,'p')>=0?{tipo:'sedia',j,r,zona:'p'}:{tipo:'pav',j,r};
     if(_h.x>ROOM.x0&&_h.x<ROOM.x1&&_h.z>ROOM.z0&&_h.z<ROOM.z1)return {tipo:'fuori'};}
   return null;}
 function pointer(e){if(!e||!C.dentro||!S||e.button>0)return false;   // AGG.evt può dare null (mouse bloccato di P20)
   const b=bersaglio(e);if(!b)return false;
   if(b.tipo==='tav'){sposta();return true;}
+  if(C.gomma){if(b.tipo==='sedia')elimina(b.j,b.r,b.zona);return b.tipo==='sedia';}
   if(b.tipo==='pila'){prendiPila(b.i);return true;}
   if(b.tipo==='sedia'){C.hover={tipo:b.zona==='r'?'rel':'pav',j:b.j,r:b.r};riprendi(b.j,b.r,b.zona);return true;}
   if(C.mano.length){if(b.tipo==='pav'||b.tipo==='rel'){C.hover=b;posa(b.j,b.r,null,b.tipo==='rel'?'r':'p');aggFantasma();return true;}
-    toast('Posate la seggiola dentro la zona segnata sul pavimento.',2200);return true;}
+    toast('Posa la seggiola dentro la zona segnata sul pavimento.',2200);return true;}
   return false;}   // pavimento vuoto senza seggiole in mano: la vista si trascina come sempre
 function hover(e){if(!e||!C.dentro||!C.mano.length)return;C.hover=bersaglio(e);aggFantasma();}
 
@@ -11006,22 +11024,21 @@ const quante=(n,d)=>d===1?'ne manca una':d>1?'ne mancano '+d:d===-1?'ce n\'è un
 function controlla(){if(!S)return null;const c=S.c,M=[];S.controlli++;
   if(C.mano.length)annulla();
   const P=S.posate.filter(p=>p.zona!=='r'),R=S.posate.filter(p=>p.zona==='r'),n=S.posate.length;
-  if(!S.tav)M.push('Il tavolone è ancora contro il muro: va spostato a 2 metri dal muro (clic sul tavolone).');
-  if(!n){M.push('Non ci sono ancora seggiole sul pavimento: prendetele dalle pile.');S.esito={ok:false,msgs:M};return S.esito;}
-  if(n!==c.totale)M.push(`Avete posato ${n} seggiol${n===1?'a':'e'}: ne servono ${c.totale}, ${quante(n,c.totale-n)}.`);
-  // relatori: numero e verso
+  if(!S.tav)M.push('Il tavolone è ancora contro il muro: va spostato a 2 metri dal muro (clicca sul tavolone).');
+  if(!n){M.push('Non ci sono ancora seggiole sul pavimento: prendile dalle pile.');S.esito={ok:false,msgs:M};return S.esito;}
+  if(n!==c.totale)M.push(`Hai posato ${n} seggiol${n===1?'a':'e'}: ne servono ${c.totale}, ${quante(n,c.totale-n)}.`);
+  // relatori: numero (il verso è sempre giusto: le seggiole si posano già rivolte al pubblico)
   if(R.length!==c.rel)M.push(`Dietro il tavolone ci sono ${R.length} seggiol${R.length===1?'a':'e'}: i relatori sono ${c.rel}, ${quante(R.length,c.rel-R.length)}.`);
-  const rg=R.filter(p=>p.rot!==2).length;if(rg)M.push(rg===1?'Una seggiola dei relatori è girata: deve guardare verso il pubblico.':`${rg} seggiole dei relatori sono girate: devono guardare verso il pubblico.`);
   if(!P.length){M.push('Mancano le file del pubblico.');S.esito={ok:false,msgs:M};suona('neutro');return S.esito;}
   // file (per z), dalla più vicina al tavolone
   const zs=[...new Set(P.map(p=>p.r))].sort((a,b)=>b-a),file=zs.map(r=>P.filter(p=>p.r===r).map(p=>p.j).sort((a,b)=>a-b));
   if(zs.length>c.file){const pic=file.map((f,i)=>[f.length,i]).sort((a,b)=>a[0]-b[0])[0];M.push(`Ci sono ${zs.length} file, ma ne servono ${c.file}. ${pic[0]===1?'Una seggiola è fuori posto, da sola nella fila '+(pic[1]+1)+'.':'La fila '+(pic[1]+1)+' ha solo '+pic[0]+' seggiole.'}`);}
-  else if(zs.length<c.file)M.push(`Avete fatto ${zs.length} fil${zs.length===1?'a':'e'} per il pubblico: ne servono ${c.file}.`);
+  else if(zs.length<c.file)M.push(`Hai fatto ${zs.length} fil${zs.length===1?'a':'e'} per il pubblico: ne servono ${c.file}.`);
   // corridoio: in ogni fila il varco (posti vuoti fra due seggiole) più largo, il più vicino al centro; vale quello più frequente
   const varchi=file.map(f=>{let v=null;for(let i=0;i+1<f.length;i++){const a=f[i]+1,b=f[i+1]-1;if(b<a)continue;const w=b-a,mid=Math.abs((a+b)/2-(f[0]+f[f.length-1])/2);if(!v||w>v.w||w===v.w&&mid<v.mid)v={a,b,w,mid};}return v;});
   const conta=new Map();varchi.forEach(v=>{if(v){const k=v.a+','+v.b;conta.set(k,(conta.get(k)||0)+1);}});
   let A=null;if(conta.size){const k=[...conta.entries()].sort((x,y)=>y[1]-x[1]||(y[0].split(',')[1]-y[0].split(',')[0])-(x[0].split(',')[1]-x[0].split(',')[0]))[0][0].split(',');A={a:+k[0],b:+k[1]};}
-  if(!A)M.push('Manca il corridoio in mezzo: in ogni fila lasciate dei posti vuoti al centro.');
+  if(!A)M.push('Manca il corridoio in mezzo: in ogni fila lascia dei posti vuoti al centro.');
   else{const m=A.b-A.a+1,lib=(m+1)*PX-LARGA,min=c.corr||0.6;
     if(lib+0.005<min)M.push(`Il corridoio è largo ${Math.round(lib*100)} cm: ne servono almeno ${Math.round(min*100)}. Un posto della griglia è largo 55 cm, una seggiola 45 cm.`);
     file.forEach((f,i)=>{const fi=i+1,nel=f.filter(j=>j>=A.a&&j<=A.b).length,sx=f.filter(j=>j<A.a),dx=f.filter(j=>j>A.b);
@@ -11029,22 +11046,20 @@ function controlla(){if(!S)return null;const c=S.c,M=[];S.controlli++;
       for(const [lat,L] of [['a sinistra',sx],['a destra',dx]]){
         if(L.length!==c.lato){M.push(`La fila ${fi} ${lat} ha ${L.length} seggiol${L.length===1?'a':'e'}: ${quante(L.length,c.lato-L.length)}.`);}
         else{const vic=lat==='a sinistra'?A.a-1:A.b+1,cont=L[L.length-1]-L[0]===L.length-1,att=lat==='a sinistra'?L[L.length-1]===vic:L[0]===vic;
-          if(!cont)M.push(`Nella fila ${fi} ${lat} c'è un posto vuoto fra le seggiole: avvicinatele.`);
+          if(!cont)M.push(`Nella fila ${fi} ${lat} c'è un posto vuoto fra le seggiole: avvicinale.`);
           else if(!att&&!nel)M.push(`Nella fila ${fi} le seggiole ${lat} non sono in colonna con quelle delle altre file.`);}}});}
   // distanza fra le file
   if(zs.length>1){const d=zs.slice(1).map((r,i)=>(zs[i]-r)*PZ);
     if(c.dist){const k=d.findIndex(x=>Math.abs(x-c.dist)>0.01);if(k>=0)M.push(`Fra la fila ${k+1} e la fila ${k+2} ci sono ${fmt(d[k])} m: la consegna chiede 1 metro. Fra due segni della griglia ci sono 50 cm.`);}
     else{const k=d.findIndex(x=>x<0.99);if(k>=0)M.push(`La fila ${k+1} e la fila ${k+2} sono troppo vicine (${fmt(d[k])} m): per passare serve almeno 1 metro.`);
       else if(d.some(x=>Math.abs(x-d[0])>0.01))M.push(`Le file non sono tutte alla stessa distanza: ${d.map((x,i)=>`fra la ${i+1} e la ${i+2} ${fmt(x)} m`).join(', ')}.`);}}
-  // verso del pubblico
-  const gir=P.filter(p=>p.rot!==0);if(gir.length){const fi=zs.indexOf(gir[0].r)+1;M.push(gir.length===1?`Una seggiola della fila ${fi} è girata: deve guardare verso ${c.dove}.`:`${gir.length} seggiole del pubblico sono girate: tutte devono guardare verso ${c.dove}.`);}
   S.esito=M.length?{ok:false,msgs:M}:{ok:true,msgs:[],corr:A?(A.b-A.a+2)*PX-LARGA:0,dist:zs.length>1?(zs[0]-zs[1])*PZ:0};
   suona(M.length?'neutro':'conferma');return S.esito;}
 
 // ---------------------------------------------------------------- pannello della consegna e dell'esito
 function esitoHtml(){const E=S.esito;if(!E)return '';const c=S.c;
   if(E.ok)return `<h3>La sala è pronta!</h3><p>Pubblico: ${c.file} file × ${2*c.lato} seggiole = <b>${c.pubblico}</b>; relatori: <b>${c.rel}</b>; in tutto <b>${c.totale} seggiole</b>. Tavolone a 2 m dal muro, corridoio largo ${Math.round(E.corr*100)} cm${c.file>1?', file a '+fmt(E.dist)+' m l\'una dall\'altra':''}.</p>
-    <p class="sg-dom">Come avete contato le seggiole del pubblico senza contarle una per una? E come avete aggiunto quelle dei relatori?</p><p class="sg-dom">Se arrivassero altre ${2*c.lato} persone, quante file servirebbero? E quante seggiole in tutto?</p>`;
+    <p class="sg-dom">Come hai contato le seggiole del pubblico senza contarle una per una? E come hai aggiunto quelle dei relatori?</p><p class="sg-dom">Se arrivassero altre ${2*c.lato} persone, quante file servirebbero? E quante seggiole in tutto?</p>`;
   const mm=E.msgs.slice(0,5);return `<b>Non ancora: la sala non è pronta.</b><ul>${mm.map(m=>`<li>${esc(m)}</li>`).join('')}</ul>${E.msgs.length>5?`<p>E ancora ${E.msgs.length-5} cos${E.msgs.length-5===1?'a':'e'} da sistemare.</p>`:''}`;}
 const _anc=new THREE.Vector3();
 // ancora a destra dello schermo (il pannello si apre a destra dell'ancora): la zona delle file al centro resta scoperta
@@ -11053,7 +11068,7 @@ function apriConsegna(){if(!S||!C.dentro)return;const c=S.c,E=S.esito;
   const tot=c.chiedi?(S.totaleOk?`<div class="sg-fb ok">Sì: ${c.file} file × ${2*c.lato} = ${c.pubblico} seggiole per il pubblico, più ${c.rel} per i relatori: <b>${c.totale} seggiole</b>.</div>`:
     `<div class="sg-ops"><input class="sg-num" id="sgNum" type="text" inputmode="numeric" autocomplete="off" aria-label="Quante seggiole servono in tutto"><span>seggiole</span><button class="btn" type="button" data-sg="tot">Controlla il numero</button></div><div class="sg-fb${S.fbTot?' ambra':''}" role="status" aria-live="polite">${S.fbTot?esc(S.fbTot):''}</div>`):'';
   openPanel({title:'Prepara la riunione',badges:[['Matematica · file e colonne','gold'],[`Consegna «${S.seme}»`,'']],
-    after:`<p class="sg-cons">${c.testo}</p>${tot}<p class="sg-ist">Clic sul tavolone: si sposta. «Pile»: clic su una pila prende una seggiola (fino a ${MAXMANO}). «Sala»: clic su un segno del pavimento la posa. «Tavolone»: dietro il tavolone ci sono i posti dei relatori. Clic su una seggiola posata: la riprendete. R la gira, Esc annulla. Segni ogni 55 cm in larghezza e 50 cm in profondità.</p>
+    after:`<p class="sg-cons">${c.testo}</p>${tot}<p class="sg-ist">Clicca sul tavolone: si sposta. «Prendi una seggiola» (o «Prendine 7»): le seggiole vanno in mano, le pile calano. Clicca su un segno del pavimento: la seggiola si posa, già rivolta nel verso giusto. Per i relatori clicca sul tavolone spostato o appena dietro. Clicca su una seggiola posata: la riprendi in mano. «Elimina»: ogni seggiola che clicchi torna nella pila. Esc rimette nelle pile quelle che hai in mano. Segni ogni 55 cm in larghezza e 50 cm in profondità.</p>
       <div class="sg-fb${E?(E.ok?' ok':' ambra'):''}" id="sgEsito" role="status" aria-live="polite">${esitoHtml()}</div>
       <div class="sg-az">${E&&E.ok?'<button class="btn gold" type="button" data-sg="nuova">Nuova consegna</button>':'<button class="btn gold" type="button" data-sg="controlla">Controlla</button><button class="btn ghost" type="button" data-sg="nuova">Nuova consegna</button>'}</div>`},ancora);
   const q=k=>info.querySelector(`[data-sg="${k}"]`);
@@ -11062,12 +11077,12 @@ function apriConsegna(){if(!S||!C.dentro)return;const c=S.c,E=S.esito;
   if(q('controlla'))q('controlla').onclick=()=>{controlla();apriConsegna();aggDock();};
   if(q('nuova'))q('nuova').onclick=()=>nuova(nuovoSeme());}
 function rispondiTotale(x){if(!S||S.totaleOk)return true;const c=S.c;
-  if(!isFinite(x))S.fbTot='Scrivete un numero.';
+  if(!isFinite(x))S.fbTot='Scrivi un numero.';
   else if(x===c.totale){S.totaleOk=true;S.fbTot=null;suona('conferma');}
-  else if(x===c.pubblico)S.fbTot='Questo è solo il pubblico: aggiungete le seggiole dei relatori.';
-  else if(x===c.file*c.lato||x===c.file*c.lato+c.rel)S.fbTot=`Avete contato un solo lato: ogni fila ha ${c.lato} + ${c.lato} seggiole.`;
+  else if(x===c.pubblico)S.fbTot='Questo è solo il pubblico: aggiungi le seggiole dei relatori.';
+  else if(x===c.file*c.lato||x===c.file*c.lato+c.rel)S.fbTot=`Hai contato un solo lato: ogni fila ha ${c.lato} + ${c.lato} seggiole.`;
   else if(x===2*c.lato||x===2*c.lato+c.rel)S.fbTot=`Questa è una fila sola: le file sono ${c.file}.`;
-  else if(x===c.file+2*c.lato+c.rel||x===c.file+2*c.lato)S.fbTot='Avete sommato: pensate a quante seggiole ci sono in una fila e a quante file servono.';
+  else if(x===c.file+2*c.lato+c.rel||x===c.file+2*c.lato)S.fbTot='Hai sommato: pensa a quante seggiole ci sono in una fila e a quante file servono.';
   else S.fbTot=`Non ancora. Quante seggiole in una fila (${c.lato} + ${c.lato})? Quante file? E i relatori?`;
   if(!S.totaleOk)suona('neutro');aggDock();if(C.dentro)apriConsegna();return S.totaleOk;}
 function nuova(seme){C.mano=[];C.giro=0;const t=S&&S.tav;avvia(seme);S.tav=t?1:0;if(C.dentro){manoUI();apriConsegna();}}
@@ -11076,56 +11091,52 @@ function nuova(seme){C.mano=[];C.giro=0;const t=S&&S.tav;avvia(seme);S.tav=t?1:0
 const dock=document.createElement('div');dock.className='dock seggiole';document.body.appendChild(dock);
 dock.innerHTML=`<div class="sg-row"><div class="sg-t"><b>Prepara la riunione</b><span id="sgRiass"></span></div><span class="sg-sep"></span>
 <span class="sg-cnt" id="sgCnt" aria-live="polite"></span>
-<button class="btn ghost sg-vista" id="sgPile" type="button" aria-pressed="false" title="Vista sulle pile di seggiole">Pile</button>
-<button class="btn ghost sg-vista" id="sgSala" type="button" aria-pressed="false" title="Vista sulle file del pubblico">Sala</button>
-<button class="btn ghost sg-vista" id="sgTav" type="button" aria-pressed="true" title="Vista da vicino sul tavolone e sui posti dei relatori">Tavolone</button><span class="sg-sep"></span>
+<button class="btn gold sg-prendi" id="sgPrendi" type="button" title="Prende una seggiola dalla pila più piena">Prendi una seggiola</button>
+<button class="btn ghost" id="sgPrendi7" type="button" title="Prende 7 seggiole (una fila da una parte del corridoio)">Prendine 7</button><span class="sg-sep"></span>
 <button class="btn ghost" id="sgCons" type="button">Consegna</button>
-<button class="btn ghost" id="sgGira" type="button" title="Gira la seggiola che avete in mano (tasto R)">Gira</button>
+<button class="btn ghost sg-gomma" id="sgElimina" type="button" aria-pressed="false" title="Gomma: clicca su una seggiola posata per rimetterla nella pila (Esc per smettere)">Elimina</button>
 <button class="btn ghost" id="sgRip" type="button">Riporta alle pile</button>
 <button class="btn gold" id="sgCtrl" type="button">Controlla</button><span class="sg-sep"></span>
 <button class="btn ghost" id="sgEsci" type="button">Torna all'aula</button></div>`;
 function aggDock(){if(!S)return;const c=S.c;const r=$s('sgRiass');if(r)r.textContent=`${c.file} file · ${c.lato} + ${c.lato} · ${c.rel} relatori`;
-  const n=$s('sgCnt');if(n)n.textContent=`Posate ${nPosate()}${S.totaleOk?' di '+c.totale:''}${C.mano.length?' · in mano '+C.mano.length:''}`;
-  const g=$s('sgGira');if(g)g.disabled=!C.mano.length;
-  const bp=$s('sgPile'),bs=$s('sgSala'),bt=$s('sgTav');if(bp&&bs&&bt){bp.setAttribute('aria-pressed',C.vista==='pile'?'true':'false');bs.setAttribute('aria-pressed',C.vista==='sala'?'true':'false');bt.setAttribute('aria-pressed',C.vista==='tavolone'?'true':'false');
-    const porta=C.vista==='pile'&&C.mano.length>0;bs.classList.toggle('sg-porta',porta);bs.textContent=porta?`Porta in sala (${C.mano.length})`:'Sala';}}
-$s('sgPile').onclick=()=>vista('pile');
-$s('sgSala').onclick=()=>vista('sala');
-$s('sgTav').onclick=()=>vista('tavolone');
+  const n=$s('sgCnt');if(n)n.textContent=`Seggiole posate: ${nPosate()}${S.totaleOk?' di '+c.totale:''}${C.mano.length?' · in mano '+C.mano.length:''}`;
+  const g=$s('sgElimina');if(g){g.setAttribute('aria-pressed',C.gomma?'true':'false');g.textContent=C.gomma?'Elimina: attiva':'Elimina';}
+  const p1=$s('sgPrendi'),p7=$s('sgPrendi7');if(p1&&p7){const pieno=C.mano.length>=MAXMANO;p1.disabled=pieno;p7.disabled=pieno;p7.textContent=C.mano.length?`Prendine ${MAXMANO-C.mano.length}`:`Prendine ${MAXMANO}`;}}
+$s('sgPrendi').onclick=()=>prendiN(1);
+$s('sgPrendi7').onclick=()=>prendiN(MAXMANO-C.mano.length||1);
 $s('sgCons').onclick=()=>apriConsegna();
-$s('sgGira').onclick=()=>gira();
+$s('sgElimina').onclick=()=>gomma(!C.gomma);
 $s('sgRip').onclick=()=>riporta();
 $s('sgCtrl').onclick=()=>{controlla();apriConsegna();aggDock();};
 $s('sgEsci').onclick=()=>switchWorld(null);
 
 // pulsante nel pannello dell'aula vuota (#help): visibile solo senza mondo aperto
 const btnApri=document.createElement('button');btnApri.type='button';btnApri.className='btn gold sg-apri';btnApri.id='sgApri';btnApri.innerHTML=ICON+'Prepara la riunione';
-btnApri.title='Attività: disponete le seggiole in file per una riunione';btnApri.onclick=()=>switchWorld('seggiole');
+btnApri.title='Attività: disponi le seggiole in file per una riunione';btnApri.onclick=()=>switchWorld('seggiole');
 {const h=$s('help');if(h)h.appendChild(btnApri);}
 AGG.su('mondo:inizio',id=>{btnApri.hidden=!!id;});
 AGG.su('mondo:aula',()=>{btnApri.hidden=false;});
 
 // ---------------------------------------------------------------- il mondo
-// Si entra nella vista «Tavolone»: il primo gesto è spostare il tavolone
+// vista unica, calcolata all'ingresso secondo il rapporto della finestra
 const W={id:'seggiole',order:9,root,footprint:{x:0.5,z:4.3,w:9.4,d:6},tab:{title:'Prepara la riunione',sub:'Matematica · file',icon:ICON},
-  view:{target:VISTE.tavolone.t,r:VISTE.tavolone.r,theta:VISTE.tavolone.th,phi:VISTE.tavolone.ph},surfaces:[],dock};
-W.build=()=>{costruisciScena();avvia(PQ.get('seed')||nuovoSeme());griglia.visible=grigliaRel.visible=true;fantasma.visible=true;fantasma.position.set(0,-5,0);meshCima.visible=meshSotto.visible=true;if(ombraTav)ombraTav.visible=true;};
-W.enter=()=>{C.dentro=true;C.mano=[];C.giro=0;C.hover=null;C.vista='tavolone';S.pile.fill(PIENA);S.posate.length=0;S.esito=null;S.tav=0;C.tav=0;C.tavT=0;trovaTavolone();posaTavolone(0);ridisegna();mostraSedie(true);manoUI();aggDock();};
+  view:vistaUnica(),surfaces:[],dock};
+W.build=()=>{costruisciScena();avvia(PQ.get('seed')||nuovoSeme());griglia.visible=grigliaRel.visible=true;fantasma.visible=true;fantasma.position.set(0,-5,0);meshCima.visible=meshSotto.visible=meshPosate.visible=true;if(ombraTav)ombraTav.visible=true;};
+W.enter=()=>{W.view=vistaUnica();C.dentro=true;C.mano=[];C.giro=0;C.hover=null;S.pile.fill(PIENA);S.posate.length=0;S.esito=null;S.tav=0;C.tav=0;C.tavT=0;trovaTavolone();posaTavolone(0);ridisegna();mostraSedie(true);manoUI();aggDock();};
 W.entered=()=>{if(C.dentro)apriConsegna();};
 W.exit=()=>{if(S){C.mano=[];S.pile.fill(PIENA);S.posate.length=0;S.esito=null;S.tav=0;ridisegna();}C.dentro=false;C.hover=null;C.tav=0;C.tavT=0;posaTavolone(0);if(ombraTav)ombraTav.visible=false;mostraSedie(false);manoUI();document.body.classList.remove('sg-mano');};
 W.update=dt=>{if(!C.dentro)return;if(C.tavT!==C.tav){C.tavT=Math.min(1,C.tavT+Math.min(dt,0.1)/1.4);const u=C.tavT;posaTavolone(u*u*(3-2*u));}};
 W.pickables=()=>[];
 W.onPointerDown=e=>{try{return pointer(e);}catch(err){console.error(err);return false;}};
 W.onHover=e=>{try{hover(e);}catch(err){console.error(err);}};
-AGG.su('esc',()=>{if(!C.dentro||!C.mano.length)return false;annulla();return true;},20);
-addEventListener('keydown',e=>{if(!C.dentro||!C.mano.length||e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;if(e.key==='r'||e.key==='R'){gira();e.preventDefault();}});
+AGG.su('esc',()=>{if(!C.dentro)return false;if(C.gomma){gomma(false);return true;}if(!C.mano.length)return false;annulla();return true;},20);
 renderer.domElement.addEventListener('dblclick',e=>{if(C.dentro)e.stopImmediatePropagation();},true);
 // collaudi: stato e azioni via API (stesse funzioni del puntatore e dei pulsanti)
 W.stato=()=>S&&{seme:S.seme,consegna:Object.assign({},S.c),pile:S.pile.slice(),posate:S.posate.map(p=>({j:p.j,r:p.r,zona:p.zona,rot:p.rot})),mano:C.mano.map(m=>Object.assign({},m)),
-  totaleOk:S.totaleOk,esito:S.esito&&{ok:S.esito.ok,msgs:S.esito.msgs.slice()},dentro:C.dentro,sedieP05:SEDIE.mesh?SEDIE.mesh.visible:null,vista:C.vista,
+  totaleOk:S.totaleOk,esito:S.esito&&{ok:S.esito.ok,msgs:S.esito.msgs.slice()},dentro:C.dentro,sedieP05:SEDIE.mesh?SEDIE.mesh.visible:null,vista:'unica',
   tavolone:{spostato:!!S.tav,z:TV.g?+TV.g.position.z.toFixed(4):null,z0:TV.z,ost:TV.ost?[+TV.ost.z0.toFixed(4),+TV.ost.z1.toFixed(4)]:null,dz:+DZ.toFixed(4)},
-  istanze:meshCima?[meshCima.count,meshSotto.count,meshCima.visible]:null,griglia:griglia.visible,grigliaRel:grigliaRel.visible,disponibili:TOT};
-W.prova={genera,prendi:prendiPila,posa,riprendi,rimetti:rimettiPila,annulla,gira,riporta,controlla,rispondiTotale,nuova,apri:apriConsegna,sposta,vista,
+  istanze:meshCima?[meshCima.count,meshSotto.count,meshCima.visible,meshPosate.count]:null,codaGambe:G?G.codaGambe:null,griglia:griglia.visible,grigliaRel:grigliaRel.visible,disponibili:TOT};
+W.prova={genera,prendi:prendiPila,posa,riprendi,rimetti:rimettiPila,annulla,gomma,elimina,riporta,controlla,rispondiTotale,nuova,apri:apriConsegna,sposta,prendiN,
   xz:(j,r,zona)=>[xDi(j),zCella(r,zona)],pila:i=>[SEDIE.xs[i],G?Math.max(1,S.pile[i])*G.off[0]*0.5+0.55:0.6,SEDIE.z],tav:()=>[(TAV.x0+TAV.x1)/2,TAV.h,(TAV.z0+TAV.z1)/2+DZ*C.tavT],
   // una disposizione giusta: relatori dietro il tavolone, file del pubblico dalla più vicina al tavolone (r = 10) indietro
   soluzione(){const c=S.c,m=c.corr?2:1,passo=(c.dist||1)/PZ,r0=NR-1,L=[];
