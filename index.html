@@ -773,6 +773,56 @@ body.sg-gomma #c{cursor:not-allowed}
 .sg-liv>span{font-size:13px;color:#7a5a07;margin-right:2px}
 .sg-row .sg-liv .btn{padding:4px 9px;min-width:30px}
 .sg-row .sg-liv .btn[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+/* P33 · La bottega delle storie */
+#tabs .tab[title^="La bottega delle storie"]{display:none}
+.dock.storie{padding:9px 14px}
+.st-row{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.st-row .btn{font-size:14px;padding:6px 11px}
+.st-row .btn:disabled{opacity:.42;cursor:default}
+.st-row .btn[hidden]{display:none}
+.st-t{display:flex;flex-direction:column;line-height:1.15;min-width:150px}
+.st-t b{font-family:var(--head);font-size:13px;font-weight:500;color:#7a5a07}
+.st-t span{font-size:15px;color:var(--greenD);font-weight:700}
+.st-sep{width:1px;height:26px;background:var(--brd)}
+@media (max-width:1180px){.st-row{gap:6px}.st-row .btn{padding:6px 8px;font-size:13.5px}.st-t{min-width:0}.st-t b{display:none}}
+.info .st-ist{font-size:16px;line-height:1.35;margin:0 0 8px;color:#2b2b2b}
+.st-slot{display:flex;gap:5px;margin:0 0 10px}
+.st-slot button{flex:1;min-width:0;border:1.5px dashed #d9c48a;background:#fffdf6;border-radius:9px;padding:4px 3px;font-family:var(--head);font-size:11.5px;line-height:1.15;color:#7a5a07;cursor:pointer;overflow:hidden;text-overflow:ellipsis}
+.st-slot button.fatto{border-style:solid;border-color:var(--green);background:#EAF4EC;color:var(--greenD)}
+.st-slot button.ora{box-shadow:0 0 0 2px rgba(212,160,23,.55)}
+.st-slot button i{display:block;font-style:normal;font-size:10.5px;opacity:.8}
+.st-mazzo{font-family:var(--head);font-size:17px;color:var(--greenD);margin:2px 0 8px}
+.st-carte{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.st-carta{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 5px 9px;border-radius:12px;border:2px solid #e3cf9a;background:linear-gradient(#fffaf0,#fbf1d8);cursor:pointer;font-family:var(--head);color:#3b2c06;box-shadow:0 2px 6px rgba(120,90,10,.12);transition:transform .12s}
+.st-carta:hover{transform:translateY(-2px);border-color:#D4A017}
+.st-carta[aria-pressed="true"]{border-color:var(--green);background:linear-gradient(#f2faf4,#dcefe2);box-shadow:0 0 0 3px rgba(27,109,63,.25)}
+.st-carta svg{width:64px;height:64px}
+.st-carta b{font-size:14.5px;line-height:1.15;text-align:center}
+.st-carta span{font-size:12px;line-height:1.15;color:#6b5a2a;text-align:center}
+.st-az{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.st-az .btn{font-size:14.5px;padding:7px 13px}
+.st-az .btn:disabled{opacity:.45;cursor:default}
+.st-fine{font-family:var(--head);font-size:34px;color:var(--greenD);margin:0 0 4px;letter-spacing:.5px}
+.st-dom{font-size:17px;line-height:1.4;background:var(--goldL);border-radius:10px;padding:8px 12px;color:#4d3a05;margin:0 0 10px}
+.st-ord{display:flex;flex-direction:column;gap:6px;margin:0 0 8px}
+.st-ord button{text-align:left;border:1.5px solid #e3cf9a;background:#fffdf6;border-radius:10px;padding:7px 10px;font-size:14.5px;line-height:1.3;cursor:pointer;color:#2b2b2b}
+.st-ord button:disabled{opacity:.5;cursor:default}
+.st-ord button b{color:var(--greenD);margin-right:6px}
+.st-esito{font-size:15.5px;border-radius:10px;padding:8px 12px;margin:0 0 8px}
+.st-esito:empty{display:none}
+.st-esito.ok{background:#EAF4EC;border:1px solid var(--green);color:var(--greenD)}
+.st-esito.ambra{background:#FFF6E0;border:1px solid #e3c27a;color:#6b4e07}
+.st-strato{position:fixed;inset:0;pointer-events:none;z-index:9}
+.st-bolla{position:absolute;max-width:min(300px,26vw);min-width:120px;background:#fff;border:2.5px solid #2b2b2b;border-radius:18px;padding:8px 12px 9px;font-size:18px;line-height:1.3;color:#1f1f1f;
+  font-family:var(--head),system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.18);transform:translate(-50%,-100%);opacity:0;transition:opacity .25s}
+.st-bolla.on{opacity:1}
+.st-bolla b{display:block;font-size:14px;color:var(--green);margin-bottom:1px}
+.st-bolla::after{content:"";position:absolute;left:var(--coda,50%);bottom:-13px;width:18px;height:18px;background:#fff;border-right:2.5px solid #2b2b2b;border-bottom:2.5px solid #2b2b2b;transform:translateX(-50%) rotate(45deg) skew(8deg,8deg)}
+.st-narra{position:fixed;left:50%;top:76px;transform:translateX(-50%);width:min(820px,calc(100vw - 32px));background:rgba(255,253,246,.96);border:1.5px solid #e3cf9a;border-radius:14px;
+  padding:9px 16px 10px;font-size:18px;line-height:1.38;color:#2b2b2b;box-shadow:var(--shadow);z-index:11;display:none}
+.st-narra.on{display:block}
+.st-narra b{font-family:var(--head);font-weight:600;color:#7a5a07;margin-right:8px}
+@media (max-width:1180px){.st-bolla{font-size:16px;max-width:min(250px,30vw)}.st-narra{font-size:16.5px}}
 /* @slot:css */
 </style>
 </head>
@@ -12464,6 +12514,504 @@ W.prova={genera,prendi:prendiPila,prendiRel,posa,riprendi,rimetti:rimettiPila,an
     for(const [j,r,zona] of L.filter(x=>x[2]==='r')){if(posto(j,r,zona)>=0)continue;if(!prendiRel())break;posa(j,r,null,zona);}
     for(const [j,r,zona] of L.filter(x=>x[2]!=='r')){if(posto(j,r,zona)>=0)continue;const i=S.pile.findIndex(x=>x>0);if(!prendiPila(i))break;posa(j,r,null,zona);}return S.posate.length;}};
 AGG.api.seggiole=W;
+registerWorld(W);return W;})();
+/* ===== P33 · LA BOTTEGA DELLE STORIE: il mondo segreto del teatrino ===== */
+const STORIE=(()=>{
+const PQ=new URLSearchParams(location.search),$s=id=>document.getElementById(id);
+const ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18v4c-2 0-3 1.5-3 3.5V20H6v-8.5C6 9.5 5 8 3 8z"/><path d="M12 8v12"/></svg>';
+function nuovoSeme(){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0].toString(36).slice(0,5);}
+// seme: cyrb53 + mulberry32 (come RACCOLTA_LOGICA e P32): ?seed=parola dà a tutta la classe le stesse carte
+function cyrb53(s,seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<s.length;i++){ch=s.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
+function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const oa=x=>x.g==='f'?'a':'o';   // concordanza: perso/persa, piccolo/piccola…
+
+// ---------------------------------------------------------------- dati (testi scritti a mano, al tu, per bambini di 6-10 anni)
+const EROI=[
+  {id:'lia',sog:'Lia',di:'di Lia',breve:'Lia',g:'f',descr:'una bambina coraggiosa',carta:'bambina coraggiosa',saluto:'Ciao! Sono Lia. Io non ho paura di niente… o quasi!',tesoro:{il:"l'aquilone",mio:'il mio aquilone'}},
+  {id:'tobia',sog:'Tobia',di:'di Tobia',breve:'Tobia',g:'m',descr:'un bambino curioso',carta:'bambino curioso',saluto:'Ciao! Sono Tobia e voglio scoprire tutto!',tesoro:{il:"la lente d'ingrandimento",mio:"la mia lente d'ingrandimento"}},
+  {id:'scintilla',sog:'Scintilla',di:'di Scintilla',breve:'Scintilla',g:'f',descr:'una draghetta gentile',carta:'draghetta gentile',saluto:'Ciao! Sono Scintilla. Sputo solo fiammelle piccole piccole!',tesoro:{il:'la coperta a pois',mio:'la mia coperta a pois'}},
+  {id:'bernardo',sog:'il lupo Bernardo',di:'del lupo Bernardo',breve:'Bernardo',g:'m',descr:'un lupo goloso ma buono',carta:'lupo goloso ma buono',saluto:'Ciao! Sono Bernardo. Sono un lupo, ma mangio solo torte di mele!',tesoro:{il:'il cestino della merenda',mio:'il mio cestino della merenda'}},
+  {id:'gustavo',sog:'re Gustavo',di:'di re Gustavo',breve:'re Gustavo',g:'m',descr:'un re molto distratto',carta:'re distratto',saluto:'Buongiorno! Sono re Gustavo. Ehm… dove ho messo gli occhiali?',tesoro:{il:'la corona',mio:'la mia corona'}},
+  {id:'bubu',sog:"l'orco Bubù",di:"dell'orco Bubù",breve:'Bubù',g:'m',descr:'un orco buffo e allegro',carta:'orco buffo',saluto:'Ciao! Sono Bubù. Sembro un orco cattivo, ma faccio solo il solletico!',tesoro:{il:'il calzino portafortuna',mio:'il mio calzino portafortuna'}}];
+const AIUTANTI=[
+  {id:'fata',sog:'la fata Viola',breve:'fata Viola',g:'f',descr:'che ha una bacchetta luccicante',carta:'bacchetta magica',idea:"Ho un'idea magica!",ballo:'Che bello ballare in punta di piedi!'},
+  {id:'gatto',sog:'il gatto Pepe',breve:'Pepe',g:'m',descr:'che sa parlare e ha un fiuto finissimo',carta:'gatto parlante',idea:"Miao! Ho un'idea!",ballo:'Miao, che ritmo!'},
+  {id:'nonno',sog:'nonno Gino',breve:'nonno Gino',g:'m',descr:'che è saggio e conosce tanti segreti',carta:'nonno saggio',idea:"Ho un'idea: ascoltami bene.",ballo:'Alla mia età ballo ancora benissimo!'},
+  {id:'robot',sog:'il robot Bip',breve:'Bip',g:'m',descr:'che è pieno di bottoni e di lucine',carta:'robot aiutante',idea:"Bip bip! Sto calcolando… ecco un'idea!",ballo:'Bip bop! Modalità ballo attivata!'}];
+// ladro, ostacolo e tempesta dipendono dal luogo: {un, il, a, g}
+const LUOGHI=[
+  {id:'bosco',nome:'Il bosco',carta:'alberi e funghi',in:'nel bosco',va:'cammina fra gli alberi',bello:'Che bello il bosco: profuma di fragole!',
+    tempesta:'un temporale con tuoni e lampi',tB:{il:'il temporale',g:'m'},ost:{un:'un grande albero caduto',il:"l'albero caduto",accanto:"accanto all'albero caduto",g:'m'},
+    ladro:{un:'una gazza dispettosa',il:'la gazza',a:'alla gazza',g:'f'},tesori:'fragole e mirtilli',dopo:'un arcobaleno enorme sopra gli alberi',festa:'in mezzo al bosco'},
+  {id:'castello',nome:'Il castello',carta:'torri e bandiere',in:'in un grande castello',va:'gira per i corridoi del castello',bello:'Che bello il castello: ha cento finestre!',
+    tempesta:'un vento fortissimo che fa sbattere tutte le finestre',tB:{il:'il vento',g:'m'},ost:{un:'un portone chiuso con un lucchetto gigante',il:'il portone',accanto:'accanto al portone',g:'m'},
+    ladro:{un:'un topolino dispettoso',il:'il topolino',a:'al topolino',g:'m'},tesori:'monete di cioccolato',dopo:'un arcobaleno sopra le torri',festa:'nel salone del castello'},
+  {id:'mare',nome:'Il mare',carta:'onde e conchiglie',in:'in una casetta in riva al mare',va:'passeggia lungo la spiaggia',bello:'Che bello il mare: sento le onde!',
+    tempesta:'una tempesta con onde altissime',tB:{il:'la tempesta',g:'f'},ost:{un:'uno scoglio altissimo',il:'lo scoglio',accanto:'accanto allo scoglio',g:'m'},
+    ladro:{un:'un granchio dispettoso',il:'il granchio',a:'al granchio',g:'m'},tesori:'conchiglie colorate',dopo:'un arcobaleno sul mare',festa:'sulla spiaggia'},
+  {id:'citta',nome:'La città',carta:'case e strade',in:'in una città piena di luci',va:'gira per le strade della città',bello:'Che bella la città: è piena di colori!',
+    tempesta:'un temporale che allaga le strade',tB:{il:'il temporale',g:'m'},ost:{un:'un camion fermo in mezzo alla strada',il:'il camion',accanto:'accanto al camion',g:'m'},
+    ladro:{un:'un piccione dispettoso',il:'il piccione',a:'al piccione',g:'m'},tesori:'figurine rarissime',dopo:'un arcobaleno sopra i tetti',festa:'in piazza'},
+  {id:'montagna',nome:'La montagna',carta:'cime e neve',in:'in un villaggio di montagna',va:'sale per i sentieri della montagna',bello:"Che bella la montagna: l'aria è così fresca!",
+    tempesta:'una bufera di neve',tB:{il:'la bufera',g:'f'},ost:{un:'una frana di sassi',il:'la frana',accanto:'accanto alla frana',g:'f'},
+    ladro:{un:'una capra dispettosa',il:'la capra',a:'alla capra',g:'f'},tesori:'cristalli luccicanti',dopo:'un arcobaleno fra le cime',festa:'sul prato della montagna'},
+  {id:'spazio',nome:'Lo spazio',carta:'pianeti e stelle',in:'su un piccolo pianeta nello spazio',va:'vola fra le stelle',bello:'Che bello lo spazio: è pieno di stelle!',
+    tempesta:'una pioggia di meteore',tB:{il:'la pioggia di meteore',g:'f'},ost:{un:'un asteroide grande come una casa',il:"l'asteroide",accanto:"accanto all'asteroide",g:'m'},
+    ladro:{un:'un piccolo alieno dispettoso',il:"l'alieno",a:"all'alieno",g:'m'},tesori:'stelline luminose',dopo:"una cometa con la coda d'arcobaleno",festa:'su un pianeta tutto colorato'}];
+const PROBLEMI=[
+  {id:'perso',nome:'Si perde',carta:'non trova la strada'},
+  {id:'rubato',nome:'Un oggetto rubato',carta:'qualcuno ruba'},
+  {id:'incanto',nome:'Un incantesimo',carta:'una magia sbagliata'},
+  {id:'tempesta',nome:'Una tempesta',carta:'arriva il brutto tempo'},
+  {id:'strada',nome:'La strada sbarrata',carta:'non si può passare'}];
+const FINALI=[
+  {id:'felice',nome:'Felice',carta:'una grande festa'},
+  {id:'sorpresa',nome:'A sorpresa',carta:'nessuno se lo aspetta'},
+  {id:'lezione',nome:'Con una lezione',carta:'si impara qualcosa'},
+  {id:'buffo',nome:'Che ridere!',carta:'un finale buffo'}];
+const MAZZI=[{id:'eroe',nome:'Personaggio',dom:'chi è il protagonista?',L:EROI},{id:'luogo',nome:'Luogo',dom:'dove succede?',L:LUOGHI},{id:'problema',nome:'Problema',dom:'che cosa succede?',L:PROBLEMI},
+  {id:'aiutante',nome:'Aiutante',dom:'chi aiuta?',L:AIUTANTI},{id:'finale',nome:'Finale',dom:'come finisce?',L:FINALI}];
+const QUADRI=["L'inizio",'Il problema',"L'aiuto",'La soluzione','Il finale'];
+
+// soluzioni: aiutante × problema → [narratore, battuta dell'aiutante, battuta del protagonista]
+const SOL={
+  fata:{perso:c=>[`${cap(c.A.sog)} agita la bacchetta: compare una scia di stelline che indica la strada di casa.`,'Segui le stelline!','Eccola! Vedo la mia casa!'],
+    rubato:c=>[`${cap(c.A.sog)} fa una magia: ${c.E.tesoro.il} torna indietro volando, da ${c.E.tesoro.il.startsWith('la ')?'sola':'solo'}!`,'Una magia leggera leggera… ecco fatto!',`${cap(c.E.tesoro.mio)}! Grazie!`],
+    incanto:c=>[`${cap(c.A.sog)} tocca ${c.E.sog} con la bacchetta e… puf! L'incantesimo è sciolto.`,'Le magie sbagliate si possono aggiustare!','Evviva! Sono di nuovo grande!'],
+    tempesta:c=>[`${cap(c.A.sog)} apre un ombrello magico, grande come il tendone di un circo: lì sotto si sta al sicuro.`,"Sotto l'ombrello magico non ci tocca niente!",'Che bello, qui sono al sicuro!'],
+    strada:c=>[`${cap(c.A.sog)} fa una magia: ${c.L.ost.il} diventa legger${oa(c.L.ost)} come una piuma e vola via.`,'Visto? Basta un pizzico di magia.','Ora posso passare!']},
+  gatto:{perso:c=>[`${cap(c.A.sog)} annusa l'aria con il suo fiuto finissimo e trova subito la strada di casa.`,'Da questa parte! Seguimi, miao!','Che naso fantastico hai!'],
+    rubato:c=>[`${cap(c.A.sog)} fa un balzo, raggiunge ${c.L.ladro.il} e ${c.L.ladro.g==='f'?'le':'gli'} chiede gentilmente di restituire ${c.E.tesoro.il}.`,'Le cose degli altri non si prendono!',`Ecco ${c.E.tesoro.mio}! Grazie, ${c.A.breve}!`],
+    incanto:c=>[`${cap(c.A.sog)} conosce la casa del mago pasticcione: ci vanno di corsa e il mago, con la formula giusta, scioglie l'incantesimo.`,'Mago, hai sbagliato formula! Rimedia, per favore.','Evviva! Sono di nuovo grande!'],
+    tempesta:c=>[`${cap(c.A.sog)} conosce una grotta asciutta lì vicino: ci entrano e aspettano insieme che passi ${c.L.tB.il}.`,'Qui siamo al riparo. Aspettiamo insieme!','Che bello aspettare insieme!'],
+    strada:c=>[`${cap(c.A.sog)} trova un passaggio segreto, piccolo piccolo, proprio ${c.L.ost.accanto}.`,'I gatti trovano sempre un buco per passare!',`Che furb${oa(c.A)} che sei!`]},
+  nonno:{perso:c=>[`${cap(c.A.sog)} guarda le stelle e riconosce quella che indica la strada di casa.`,'Le stelle non sbagliano mai strada.','Che bello sapere tante cose!'],
+    rubato:c=>[`${cap(c.A.sog)} prepara una merenda squisita e la offre ${c.L.ladro.a}: ${c.L.ladro.il}, felice, restituisce ${c.E.tesoro.il}.`,'Con le buone maniere si ottiene tutto.',`Ecco ${c.E.tesoro.mio}! Grazie, ${c.A.breve}!`],
+    incanto:c=>[`${cap(c.A.sog)} sfoglia un vecchio libro e trova la formula giusta: «Torna com'eri, piano piano!». L'incantesimo è sciolto.`,'Nei libri ci sono tante soluzioni.','Evviva! Sono di nuovo grande!'],
+    tempesta:c=>[`${cap(c.A.sog)} dice: «Contiamo fino a cento e respiriamo piano». Quando arrivano a cento, ${c.L.tB.il} è passat${oa(c.L.tB)}.`,'La paura passa, se stiamo vicini.',"È vero! Adesso non ho più paura."],
+    strada:c=>[`${cap(c.A.sog)} conosce una vecchia strada: è più lunga, ma porta a casa lo stesso.`,'A volte la strada più lunga è quella giusta.','Che bello sapere tante cose!']},
+  robot:{perso:c=>[`${cap(c.A.sog)} accende il suo radar: bip, bip, bip… e sullo schermo compare la strada di casa.`,'Navigatore acceso. Gira a destra, poi sempre dritto!','Che robot fantastico!'],
+    rubato:c=>[`${cap(c.A.sog)} allunga il suo braccio a molla e recupera ${c.E.tesoro.il} con delicatezza.`,'Braccio a molla: missione compiuta!',`Ecco ${c.E.tesoro.mio}! Grazie, ${c.A.breve}!`],
+    incanto:c=>[`${cap(c.A.sog)} schiaccia il bottone verde: esce un raggio che fa ingrandire. Zoom! L'incantesimo è sciolto.`,'Raggio ingranditore: funziona!','Evviva! Sono di nuovo grande!'],
+    tempesta:c=>[`${cap(c.A.sog)} apre un tetto di metallo sopra tutti e due: ${c.L.tB.il} non fa più paura.`,'Scudo attivato. Siamo al sicuro!','Che bello, qui sono al sicuro!'],
+    strada:c=>[`${cap(c.A.sog)} accende i suoi motori e solleva ${c.L.ost.il} come se fosse una piuma.`,'Peso sollevato: strada libera!','Ora posso passare!']}};
+const LEZIONE={perso:'Ho imparato che, quando esco, devo sempre dire dove vado.',rubato:'Ho imparato che le cose si chiedono, non si prendono.',
+  incanto:'Ho imparato che anche chi è piccolo può fare grandi cose.',tempesta:'Ho imparato che, quando ho paura, posso chiedere aiuto.',strada:'Ho imparato che insieme si trova sempre una strada.'};
+
+// la storia: 5 quadri {titolo, narra, battute:[{chi:'eroe'|'aiutante', testo}]}
+function componi(s){const E=s.eroe,L=s.luogo,P=s.problema,A=s.aiutante,F=s.finale,c={E,L,A},o=oa(E),Q=[];
+  Q.push({narra:`C'era una volta ${E.sog}, ${E.descr}, che viveva ${L.in}.`,battute:[{chi:'eroe',testo:`${E.saluto} ${L.bello}`}]});
+  const pr={perso:[`Un giorno ${E.sog} ${L.va} e non trova più la strada di casa.`,`Oh no! Mi sono pers${o}! Dov'è la mia casa?`,`Mi sono pers${o} e non so più tornare a casa.`],
+    rubato:[`Ma all'improvviso arriva ${L.ladro.un} e ruba ${E.tesoro.il} ${E.di}!`,`Ehi! Ridammi ${E.tesoro.mio}!`,`${cap(L.ladro.il)} ha rubato ${E.tesoro.mio}.`],
+    incanto:[`Un mago pasticcione sbaglia una formula magica e… puf! ${cap(E.sog)} diventa piccol${o} come una formica.`,`Aiuto! Sono diventat${o} piccol${o} piccol${o}!`,`Un mago mi ha fatto diventare piccol${o} così!`],
+    tempesta:[`All'improvviso arriva ${L.tempesta} e ${E.sog} non riesce più a tornare a casa.`,`Che paura! ${cap(L.tB.il)} è troppo forte!`,`Con ${L.tB.il} non riesco a tornare a casa.`],
+    strada:[`Sulla strada di casa, però, c'è ${L.ost.un}: ${E.sog} non può passare.`,'Uffa! Come faccio a passare di qui?',`C'è ${L.ost.un} e non posso passare.`]}[P.id];
+  Q.push({narra:pr[0],battute:[{chi:'eroe',testo:pr[1]}]});
+  Q.push({narra:`Per fortuna arriva ${A.sog}, ${A.descr}.`,battute:[{chi:'aiutante',testo:`Ciao, ${E.breve}! Perché sei così preoccupat${o}?`},{chi:'eroe',testo:pr[2]}]});
+  const so=SOL[A.id][P.id](c);
+  Q.push({narra:so[0],battute:[{chi:'aiutante',testo:so[1]},{chi:'eroe',testo:so[2]}]});
+  const amic=A.g==='f'?"un'amica":'un amico';let f;
+  if(F.id==='felice')f=[`${cap(E.sog)} e ${A.sog} fanno una grande festa ${L.festa}. E vissero tutti felici e contenti.`,`Grazie, ${A.breve}! Sei ${amic} speciale!`,'Evviva! Che festa!'];
+  else if(F.id==='sorpresa')f=[{perso:`Ma ecco la sorpresa: sulla strada di casa trovano un baule pieno di ${L.tesori}!`,
+      rubato:`Ma ecco la sorpresa: ${L.ladro.il} chiede scusa e diventa ${L.ladro.g==='f'?"un'amica":'un amico'} ${E.di}!`,
+      incanto:'Ma ecco la sorpresa: il mago pasticcione arriva con una torta enorme per chiedere scusa!',
+      tempesta:`Ma ecco la sorpresa: quando ${L.tB.il} finisce, compare ${L.dopo}!`,
+      strada:`Ma ecco la sorpresa: dietro ${L.ost.il} c'era un giardino segreto pieno di fiori!`}[P.id],"Che sorpresa! Non me l'aspettavo proprio!",'Le storie sono piene di sorprese!'];
+  else if(F.id==='lezione')f=[`${cap(E.sog)} ringrazia ${A.sog}. Oggi ha imparato una cosa importante.`,LEZIONE[P.id],`Bravissim${o}! È proprio così.`];
+  else f=[`Per festeggiare, ${E.sog} e ${A.sog} ballano una danza buffissima ${L.festa}, e tutti ridono a crepapelle.`,'Guarda come ballo! Un passo avanti e due indietro!',A.ballo];
+  Q.push({narra:f[0],battute:[{chi:'eroe',testo:f[1]},{chi:'aiutante',testo:f[2]}]});
+  Q.forEach((q,i)=>q.titolo=QUADRI[i]);return Q;}
+const domanda=s=>`Chi ha aiutato ${s.eroe.sog}? E tu, che cosa avresti fatto al posto ${s.eroe.di}?`;
+// controllo delle frasi (collaudo e W.prova.verifica): segnaposti, undefined, preposizioni non articolate, spazi, maiuscole
+const MALE=[/undefined|null|NaN|\$\{|[{}]/,/\b(a|di|da|in|su) (il|lo|la|i|gli|le|l')\b/i,/ {2}|\s[,.!?:;]|^\s|\s$/,/[.!?»] [a-zàèéìòù]/,/\bil (lupo|gatto|robot) [a-z]/];
+function difetti(t){const m=[];MALE.forEach((r,i)=>{if(r.test(t))m.push(i);});return m;}
+
+// ---------------------------------------------------------------- illustrazioni delle carte (SVG semplici, viewBox 64)
+const SV=b=>`<svg viewBox="0 0 64 64" aria-hidden="true">${b}</svg>`;
+const testa=(pelle,extra,occ)=>`<circle cx="32" cy="34" r="17" fill="${pelle}"/>${extra||''}<circle cx="26" cy="33" r="2.6" fill="#222"/><circle cx="38" cy="33" r="2.6" fill="#222"/>${occ||''}<path d="M26 41q6 5 12 0" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="21" cy="39" r="2.6" fill="#F29C9C" opacity=".7"/><circle cx="43" cy="39" r="2.6" fill="#F29C9C" opacity=".7"/>`;
+const ILL={
+  lia:SV(testa('#F2C9A0','<path d="M15 32q1-17 17-17t17 17q-6-9-17-9t-17 9z" fill="#7A4524"/><circle cx="13" cy="36" r="6" fill="#7A4524"/><circle cx="51" cy="36" r="6" fill="#7A4524"/>')),
+  tobia:SV(testa('#E9BC90','<path d="M15 31q2-15 17-15t17 15q-8-6-17-6t-17 6z" fill="#2A2522"/><path d="M14 27q18-16 36 0l3 3H11z" fill="#2F78C4"/>')),
+  scintilla:SV(testa('#6DBE5A','<path d="M22 19l3-9 4 8zM42 19l-3-9-4 8z" fill="#F2C43A"/><ellipse cx="32" cy="40" rx="9" ry="6" fill="#8FD47A"/>')),
+  bernardo:SV(testa('#9AA1A8','<path d="M17 24l2-15 9 10zM47 24l-2-15-9 10z" fill="#7C838B"/><ellipse cx="32" cy="41" rx="9" ry="7" fill="#C9CED3"/><circle cx="32" cy="38" r="3.4" fill="#222"/>')),
+  gustavo:SV(testa('#F0C39A','<path d="M17 20l4-11 6 7 5-9 5 9 6-7 4 11z" fill="#E2B53A" stroke="#B8860B" stroke-width="1.2"/><path d="M18 42q14 22 28 0q-2 9-14 10q-12-1-14-10z" fill="#F4F1EA"/>')),
+  bubu:SV(testa('#8FBF6A','<path d="M20 19l-3-8 8 5zM44 19l3-8-8 5z" fill="#F4E7C6"/><circle cx="32" cy="38" r="5" fill="#76A456"/>')),
+  fata:SV(testa('#F2CDA8','<path d="M32 2L20 22h24z" fill="#9B59B6"/><path d="M15 34q0-14 17-14t17 14q-3-6-17-6t-17 6z" fill="#C59BE0"/><circle cx="32" cy="3" r="3" fill="#F2C43A"/>')),
+  gatto:SV(testa('#E9963C','<path d="M16 26l1-15 10 8zM48 26l-1-15-10 8z" fill="#D07F2A"/><circle cx="32" cy="38" r="2.4" fill="#C2566A"/><path d="M18 38h9M18 42l9-2M46 38h-9M46 42l-9-2" stroke="#222" stroke-width="1.2"/>')),
+  nonno:SV(testa('#EFC7A2','<path d="M15 32q0-9 5-12M49 32q0-9-5-12" stroke="#E8E8E8" stroke-width="5" fill="none"/><path d="M19 43q13 20 26 0q-3 10-13 11q-10-1-13-11z" fill="#E8E8E8"/>','<circle cx="26" cy="33" r="5.5" fill="none" stroke="#5a4a3a" stroke-width="1.6"/><circle cx="38" cy="33" r="5.5" fill="none" stroke="#5a4a3a" stroke-width="1.6"/>')),
+  robot:`<svg viewBox="0 0 64 64" aria-hidden="true"><line x1="32" y1="4" x2="32" y2="15" stroke="#5C6F82" stroke-width="2.5"/><circle cx="32" cy="5" r="3.5" fill="#F29A2E"/><rect x="14" y="15" width="36" height="34" rx="9" fill="#B9C4CF" stroke="#5C6F82" stroke-width="2"/><circle cx="25" cy="31" r="5" fill="#3FD0E0"/><circle cx="39" cy="31" r="5" fill="#3FD0E0"/><rect x="24" y="40" width="16" height="4" rx="2" fill="#5C6F82"/></svg>`,
+  bosco:SV('<rect width="64" height="64" rx="8" fill="#CFE8F2"/><rect y="46" width="64" height="18" fill="#7DB15A"/><rect x="14" y="30" width="5" height="20" fill="#7A4E2C"/><circle cx="16.5" cy="26" r="11" fill="#3E8E4B"/><rect x="40" y="26" width="6" height="24" fill="#7A4E2C"/><circle cx="43" cy="21" r="13" fill="#2F7A3E"/><path d="M27 52a5 4 0 0 1 10 0z" fill="#D9473F"/><rect x="31" y="52" width="2" height="4" fill="#F4E7C6"/>'),
+  castello:SV('<rect width="64" height="64" rx="8" fill="#F6D9C4"/><rect y="50" width="64" height="14" fill="#8BC36A"/><rect x="14" y="24" width="36" height="28" fill="#B9B2A8"/><rect x="8" y="16" width="12" height="36" fill="#A39C92"/><rect x="44" y="16" width="12" height="36" fill="#A39C92"/><path d="M8 16l6-9 6 9zM44 16l6-9 6 9z" fill="#3F6FB5"/><path d="M27 52v-10a5 5 0 0 1 10 0v10z" fill="#6B4A2E"/><path d="M50 7V2l7 2.5z" fill="#E2B53A"/>'),
+  mare:SV('<rect width="64" height="64" rx="8" fill="#D7EEF8"/><circle cx="48" cy="16" r="7" fill="#F2C43A"/><path d="M0 36q8-5 16 0t16 0 16 0 16 0v28H0z" fill="#3A8FC7"/><path d="M0 46q8-5 16 0t16 0 16 0 16 0" stroke="#BFE3F5" stroke-width="2.5" fill="none"/><path d="M0 56h64v8H0z" fill="#EBD39A"/><path d="M14 34h16l-3 5H17z" fill="#8A5A33"/><path d="M22 16v18M22 16l8 14h-8z" stroke="#555" stroke-width="1.2" fill="#fff"/>'),
+  citta:SV('<rect width="64" height="64" rx="8" fill="#D8E6F2"/><rect x="6" y="24" width="14" height="32" fill="#E07B39"/><rect x="22" y="12" width="16" height="44" fill="#5BA4D8"/><rect x="40" y="28" width="18" height="28" fill="#8BC36A"/><g fill="#FFF3C4"><rect x="9" y="28" width="3" height="4"/><rect x="14" y="28" width="3" height="4"/><rect x="25" y="17" width="4" height="4"/><rect x="31" y="17" width="4" height="4"/><rect x="25" y="25" width="4" height="4"/><rect x="31" y="25" width="4" height="4"/><rect x="44" y="33" width="4" height="4"/><rect x="51" y="33" width="4" height="4"/></g><rect y="56" width="64" height="8" fill="#6B6F75"/>'),
+  montagna:SV('<rect width="64" height="64" rx="8" fill="#D6EAF6"/><path d="M-2 56L22 16l24 40z" fill="#7C8A99"/><path d="M22 16l-7 12 4-2 3 3 3-3 4 2z" fill="#fff"/><path d="M26 56l18-28 22 28z" fill="#5E6E7E"/><path d="M44 28l-5 8 3-1 2 2 2-2 3 1z" fill="#fff"/><rect y="56" width="64" height="8" fill="#7DB15A"/>'),
+  spazio:SV('<rect width="64" height="64" rx="8" fill="#1D2450"/><g fill="#FFF3C4"><circle cx="10" cy="12" r="1.4"/><circle cx="52" cy="9" r="1.2"/><circle cx="40" cy="52" r="1.3"/><circle cx="8" cy="46" r="1"/><circle cx="58" cy="40" r="1.2"/></g><circle cx="30" cy="32" r="12" fill="#E8A44A"/><ellipse cx="30" cy="32" rx="20" ry="5" fill="none" stroke="#F4D28A" stroke-width="2.5" transform="rotate(-18 30 32)"/><circle cx="50" cy="20" r="5" fill="#9FD3F0"/>'),
+  perso:SV('<rect width="64" height="64" rx="8" fill="#EAF4EC"/><path d="M8 54q10-22 24-14t24-26" stroke="#B8860B" stroke-width="3" stroke-dasharray="4 4" fill="none"/><circle cx="44" cy="24" r="13" fill="#fff" stroke="#1B6D3F" stroke-width="3"/><path d="M39 20q0-5 5-5t5 5q0 4-5 5v3" stroke="#1B6D3F" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="44" cy="32" r="1.8" fill="#1B6D3F"/>'),
+  rubato:SV('<rect width="64" height="64" rx="8" fill="#FFF6E0"/><path d="M14 30h36l-4 24H18z" fill="#C98B3C"/><path d="M22 30q0-12 10-12t10 12" stroke="#8A5A1F" stroke-width="3" fill="none"/><path d="M40 12l12-4-4 12" stroke="#1B6D3F" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 22L52 8" stroke="#1B6D3F" stroke-width="3" stroke-linecap="round"/>'),
+  incanto:SV('<rect width="64" height="64" rx="8" fill="#F1E8FA"/><path d="M12 52L40 24" stroke="#5A3A7A" stroke-width="4" stroke-linecap="round"/><path d="M44 8l3 8 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z" fill="#F2C43A"/><circle cx="20" cy="18" r="2" fill="#9B59B6"/><circle cx="54" cy="40" r="2.4" fill="#9B59B6"/><circle cx="30" cy="12" r="1.6" fill="#9B59B6"/>'),
+  tempesta:SV('<rect width="64" height="64" rx="8" fill="#DCE3EC"/><path d="M16 34a10 10 0 0 1 4-19 13 13 0 0 1 25 2 9 9 0 0 1 3 17z" fill="#6E7F95"/><path d="M33 34l-6 11h6l-4 11 12-15h-7l4-7z" fill="#F2C43A"/><path d="M18 40l-3 7M24 42l-3 7M46 40l-3 7" stroke="#3A8FC7" stroke-width="2.5" stroke-linecap="round"/>'),
+  strada:SV('<rect width="64" height="64" rx="8" fill="#EEF2E6"/><path d="M24 64l6-40h4l6 40z" fill="#B8A88A"/><rect x="10" y="30" width="44" height="9" rx="2" fill="#F2C43A"/><path d="M14 30l8 9M24 30l8 9M34 30l8 9M44 30l8 9" stroke="#2b2b2b" stroke-width="3"/><rect x="13" y="39" width="4" height="12" fill="#6B6F75"/><rect x="47" y="39" width="4" height="12" fill="#6B6F75"/>'),
+  felice:SV('<rect width="64" height="64" rx="8" fill="#FFF6E0"/><path d="M32 54C12 40 8 28 14 20s16-6 18 3c2-9 12-11 18-3s2 20-18 34z" fill="#E8618C"/><circle cx="12" cy="10" r="2" fill="#1B6D3F"/><circle cx="54" cy="12" r="2.4" fill="#B8860B"/><circle cx="50" cy="54" r="2" fill="#1B6D3F"/>'),
+  sorpresa:SV('<rect width="64" height="64" rx="8" fill="#EAF4EC"/><rect x="12" y="28" width="40" height="26" rx="3" fill="#3F6FB5"/><rect x="9" y="21" width="46" height="9" rx="2" fill="#5B8ED8"/><rect x="29" y="21" width="6" height="33" fill="#F2C43A"/><path d="M32 21q-12-14-14-4t14 4q12-14 14-4t-14 4" fill="none" stroke="#F2C43A" stroke-width="3"/>'),
+  lezione:SV('<rect width="64" height="64" rx="8" fill="#FFF6E0"/><path d="M32 18c-6-4-14-5-22-4v34c8-1 16 0 22 4 6-4 14-5 22-4V14c-8-1-16 0-22 4z" fill="#fff" stroke="#1B6D3F" stroke-width="2.5"/><path d="M32 18v34" stroke="#1B6D3F" stroke-width="2"/><path d="M16 24h10M16 30h10M16 36h8M38 24h10M38 30h10M38 36h8" stroke="#B8860B" stroke-width="2"/>'),
+  buffo:SV('<rect width="64" height="64" rx="8" fill="#F1E8FA"/><circle cx="32" cy="34" r="19" fill="#F2C43A"/><path d="M22 30q3-4 6 0M36 30q3-4 6 0" stroke="#222" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M21 38q11 14 22 0z" fill="#7A2E2A"/><path d="M48 10l2 5 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1z" fill="#9B59B6"/>')};
+
+// ---------------------------------------------------------------- geometrie unite con colori per vertice
+const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
+function pz(geo,hex,x=0,y=0,z=0,rx=0,ry=0,rz=0,sx=1,sy=1,sz=1){const g=geo.index?geo.toNonIndexed():geo.clone();
+  g.applyMatrix4(_m.compose(_p.set(x,y,z),_q.setFromEuler(_e.set(rx,ry,rz)),_s.set(sx,sy,sz)));const c=col(hex),n=g.attributes.position.count,C=new Float32Array(n*3);
+  for(let i=0;i<n;i++){C[i*3]=c.r;C[i*3+1]=c.g;C[i*3+2]=c.b;}g.setAttribute('color',new THREE.BufferAttribute(C,3));return g;}
+function unisci(L){let n=0;for(const g of L)n+=g.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3);let o=0;
+  for(const g of L){P.set(g.attributes.position.array,o*3);N.set(g.attributes.normal.array,o*3);C.set(g.attributes.color.array,o*3);o+=g.attributes.position.count;g.dispose();}
+  const r=new THREE.BufferGeometry();r.setAttribute('position',new THREE.BufferAttribute(P,3));r.setAttribute('normal',new THREE.BufferAttribute(N,3));r.setAttribute('color',new THREE.BufferAttribute(C,3));r.computeBoundingSphere();return r;}
+const SF=(r,a=18,b=12)=>new THREE.SphereGeometry(r,a,b),CI=(r0,r1,h,s=16)=>new THREE.CylinderGeometry(r0,r1,h,s),BX=(w,h,d)=>new THREE.BoxGeometry(w,h,d),CO=(r,h,s=12)=>new THREE.ConeGeometry(r,h,s);
+const CAPO=(r)=>new THREE.SphereGeometry(r,20,10,0,Math.PI*2,0,Math.PI*0.55);
+
+// ---------------------------------------------------------------- burattini a guanto (davanti = −z, verso il pubblico)
+// veste che si allarga in basso (nascosta per metà dalla ribalta), testa tonda con occhi, naso e guance, capelli o cappello, due braccine:
+// la destra è una mesh a parte con il perno sulla spalla, per salutare.
+const HT=0.70,HR=0.135,PS=1.45,SU=1.05-0.45;   // PS: scala dei burattini; SU: quota della base quando sono sul palco (testa a circa 1,6 m)
+const SPEC={
+  lia:{pelle:'#F2C9A0',veste:'#E8B33A',collo:'#FFF3D6',capelli:'#7A4524',tipo:'codini'},
+  tobia:{pelle:'#E9BC90',veste:'#2F78C4',collo:'#F4F1EA',capelli:'#2A2522',tipo:'berretto',cappello:'#E07B39'},
+  scintilla:{pelle:'#6DBE5A',veste:'#3E9A4B',collo:'#F2C43A',naso:0.045,nasoC:'#8FD47A',tipo:'drago'},
+  bernardo:{pelle:'#9AA1A8',veste:'#9A6B3F',collo:'#E8D8B8',naso:0.05,nasoC:'#C9CED3',tipo:'lupo'},
+  gustavo:{pelle:'#F0C39A',veste:'#6A3FA0',collo:'#F4F1EA',tipo:'re'},
+  bubu:{pelle:'#8FBF6A',veste:'#E07B39',collo:'#7A4E2C',naso:0.05,nasoC:'#76A456',tipo:'orco'},
+  fata:{pelle:'#F2CDA8',veste:'#9B59B6',collo:'#F1E8FA',capelli:'#C59BE0',tipo:'fata'},
+  gatto:{pelle:'#E9963C',veste:'#2E6FB0',collo:'#F4F1EA',naso:0.022,nasoC:'#C2566A',tipo:'gatto'},
+  nonno:{pelle:'#EFC7A2',veste:'#6E7F4E',collo:'#D8C9A8',capelli:'#E8E8E8',tipo:'nonno'},
+  robot:{pelle:'#B9C4CF',veste:'#5C7A99',collo:'#8FA0B2',naso:0.02,nasoC:'#5C6F82',tipo:'robot'}};
+function geoBurattino(sp){const L=[],R=[];
+  L.push(pz(CI(0.11,0.23,0.58,18),sp.veste,0,0.29,0));L.push(pz(SF(0.125,16,8),sp.collo,0,0.575,0,0,0,0,1,0.32,1));
+  if(sp.tipo==='robot')L.push(pz(BX(0.25,0.23,0.23),sp.pelle,0,HT,0));else L.push(pz(SF(HR,20,14),sp.pelle,0,HT,0));
+  const zf=sp.tipo==='robot'?-0.117:-0.118;
+  for(const s of [-1,1]){L.push(pz(SF(0.032,10,8),sp.tipo==='robot'?'#3FD0E0':'#FFFFFF',s*0.047,HT+0.03,zf));L.push(pz(SF(0.017,8,6),'#1d1d1d',s*0.047,HT+0.03,zf-0.026));
+    if(sp.tipo!=='robot')L.push(pz(SF(0.024,8,6),'#EE9A9A',s*0.08,HT-0.03,-0.105,0,0,0,1,0.7,0.5));}
+  L.push(pz(SF(sp.naso||0.028,12,8),sp.nasoC||'#E8967A',0,HT-0.01,-0.135,0,0,0,1,0.85,sp.naso>0.04?1.5:1));
+  L.push(pz(BX(0.05,0.012,0.01),'#5a2a22',0,HT-0.065,-0.128));   // bocca
+  // braccio sinistro fisso e braccio destro (mesh a parte, perno sulla spalla)
+  const pelleMani=sp.tipo==='robot'?'#8FA0B2':sp.pelle;
+  L.push(pz(CI(0.038,0.044,0.2,8),sp.veste,-0.17,0.45,0,0,0,-0.8));L.push(pz(SF(0.048,10,8),pelleMani,-0.25,0.38,-0.01));
+  R.push(pz(CI(0.038,0.044,0.2,8),sp.veste,0.07,-0.07,0,0,0,0.785));R.push(pz(SF(0.048,10,8),pelleMani,0.145,-0.145,-0.01));
+  const t=sp.tipo,cp=sp.capelli;
+  if(t==='codini'){L.push(pz(CAPO(0.145),cp,0,HT+0.005,0.012,0.35));L.push(pz(SF(0.055,12,8),cp,-0.15,HT-0.02,0.02));L.push(pz(SF(0.055,12,8),cp,0.15,HT-0.02,0.02));
+    L.push(pz(SF(0.03,8,6),'#E8618C',-0.12,HT+0.04,0.02));L.push(pz(SF(0.03,8,6),'#E8618C',0.12,HT+0.04,0.02));}
+  if(t==='berretto'){L.push(pz(CAPO(0.143),cp,0,HT+0.005,0.01,0.3));L.push(pz(CAPO(0.15),sp.cappello,0,HT+0.05,0.0,0.1,0,0,1,0.7,1));L.push(pz(CI(0.09,0.09,0.012,16),sp.cappello,0,HT+0.07,-0.13,-0.25,0,0,1,1,0.8));}
+  if(t==='drago'){for(const s of [-1,1]){L.push(pz(CO(0.028,0.09,10),'#F2C43A',s*0.07,HT+0.13,0.02,0,0,-s*0.35));L.push(pz(BX(0.012,0.14,0.11),'#2F7A3E',s*0.14,0.5,0.06,0,s*0.5,s*0.4));}
+    L.push(pz(SF(0.08,12,8),'#F2C43A',0,0.33,-0.15,0,0,0,1,1.6,0.35));}
+  if(t==='lupo'){for(const s of [-1,1])L.push(pz(CO(0.045,0.12,4),'#7C838B',s*0.08,HT+0.13,0.0,0,0.78,-s*0.3));L.push(pz(SF(0.022,8,6),'#1d1d1d',0,HT-0.005,-0.205));}
+  if(t==='re'){L.push(pz(CI(0.1,0.095,0.07,14,1),'#E2B53A',0,HT+0.135,0));for(let i=0;i<6;i++){const a=i/6*Math.PI*2;L.push(pz(CO(0.022,0.06,6),'#E2B53A',Math.sin(a)*0.092,HT+0.19,Math.cos(a)*0.092));}
+    L.push(pz(SF(0.02,8,6),'#C8323A',0,HT+0.14,-0.1));L.push(pz(SF(0.11,14,10),'#F4F1EA',0,HT-0.085,-0.04,0,0,0,1,0.8,0.8));}
+  if(t==='orco'){for(const s of [-1,1]){L.push(pz(CO(0.03,0.1,8),'#F4E7C6',s*0.08,HT+0.13,0,0,0,-s*0.4));L.push(pz(SF(0.04,10,8),sp.pelle,s*0.14,HT,0,0,0,0,0.6,1,1));}}
+  if(t==='fata'){L.push(pz(CAPO(0.145),cp,0,HT+0.005,0.012,0.35));L.push(pz(CO(0.11,0.32,16),'#B07BD0',0,HT+0.25,0.01,-0.1));L.push(pz(SF(0.03,8,6),'#F2C43A',0,HT+0.42,0.03));
+    R.push(pz(CI(0.007,0.007,0.22,6),'#F4F1EA',0.16,-0.04,-0.03,0,0,-0.3));R.push(pz(SF(0.03,8,6),'#F2C43A',0.195,0.07,-0.03));}
+  if(t==='gatto'){for(const s of [-1,1]){L.push(pz(CO(0.045,0.1,4),'#D07F2A',s*0.08,HT+0.125,0.0,0,0.78,-s*0.3));for(const k of [-1,1])L.push(pz(BX(0.08,0.005,0.005),'#2b2b2b',s*0.1,HT-0.015+k*0.012,-0.12,0,0,k*s*0.15));}}
+  if(t==='nonno'){L.push(pz(SF(0.12,14,10),cp,0,HT-0.075,-0.035,0,0,0,1,0.85,0.8));for(const s of [-1,1]){L.push(pz(SF(0.05,10,8),cp,s*0.12,HT+0.03,0.02));
+      L.push(pz(new THREE.TorusGeometry(0.033,0.006,6,16),'#5a4a3a',s*0.047,HT+0.03,-0.142));}L.push(pz(CAPO(0.14),sp.pelle,0,HT+0.01,0.005,0.2));}
+  if(t==='robot'){L.push(pz(CI(0.008,0.008,0.12,6),'#5C6F82',0,HT+0.17,0));L.push(pz(SF(0.03,10,8),'#F29A2E',0,HT+0.24,0));
+    for(let i=0;i<3;i++)L.push(pz(SF(0.02,8,6),['#F2C43A','#3FD0E0','#8BC36A'][i],0,0.47-i*0.07,-0.15+i*0.012));}
+  return {corpo:unisci(L),braccio:unisci(R)};}
+
+// ---------------------------------------------------------------- teatro sul pavimento dell'aula (fronte a z 4, pubblico verso −z)
+const SZ=4.0,BOARD=1.05,TOPO=2.40,HALF=2.2,ZB=4.45;   // ribalta (bordo del parapetto), architrave, metà larghezza del boccascena, piano dei burattini
+const root=new THREE.Group();root.name='storie';
+const matV=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.72,metalness:0.0});matV.name='storie-teatro';
+const matP=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.8,metalness:0.0,emissive:new THREE.Color(0x000000)});matP.name='storie-burattini';
+const cvF=document.createElement('canvas');cvF.width=1024;cvF.height=448;const texF=new THREE.CanvasTexture(cvF);texF.encoding=THREE.sRGBEncoding;texF.anisotropy=4;
+const cvI=document.createElement('canvas');cvI.width=1024;cvI.height=512;const texI=new THREE.CanvasTexture(cvI);texI.encoding=THREE.sRGBEncoding;texI.anisotropy=4;
+const matF=new THREE.MeshBasicMaterial({map:texF});matF.name='storie-fondale';
+const matI=new THREE.MeshBasicMaterial({map:texI});matI.name='storie-insegna';
+const matL=new THREE.MeshBasicMaterial({color:col('#FFD58A'),transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});matL.name='storie-luci';
+const PUP={};let sipL=null,sipR=null,coni=null,fondale=null;
+function insegna(){const g=cvI.getContext('2d');
+  // parte alta (0-160): frontone; parte bassa (160-512): parapetto dipinto
+  g.fillStyle='#1F4E4A';g.fillRect(0,0,1024,512);g.strokeStyle='#D4A017';g.lineWidth=6;g.strokeRect(10,10,1004,140);
+  g.fillStyle='#F2C43A';g.font='700 76px Lexend, sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('La bottega delle storie',512,84);
+  for(const x of [60,964]){g.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?12:28;g.lineTo(x+Math.cos(a)*r,80+Math.sin(a)*r);}g.closePath();g.fill();}
+  const gr=g.createLinearGradient(0,160,0,512);gr.addColorStop(0,'#24564F');gr.addColorStop(1,'#163B37');g.fillStyle=gr;g.fillRect(0,160,1024,352);
+  g.strokeStyle='#D4A017';g.lineWidth=8;g.strokeRect(26,186,972,300);g.lineWidth=3;g.strokeRect(44,204,936,264);
+  g.fillStyle='#F2C43A';g.font='600 46px Lexend, sans-serif';g.fillText('Teatro dei burattini',512,330);
+  g.fillStyle='rgba(242,196,58,.85)';for(let i=0;i<9;i++){const x=120+i*98;g.beginPath();g.arc(x,420,7,0,7);g.fill();}
+  for(const [x,s] of [[150,1],[874,-1]]){g.save();g.translate(x,322);g.scale(s,1);g.fillStyle='#F4F1EA';g.beginPath();g.ellipse(0,0,46,56,0,0,7);g.fill();g.fillStyle='#163B37';
+    g.beginPath();g.ellipse(-16,-10,9,12,0,0,7);g.ellipse(16,-10,9,12,0,0,7);g.fill();g.lineWidth=5;g.strokeStyle='#163B37';g.beginPath();g.arc(0,14,20,0.2,Math.PI-0.2);g.stroke();g.restore();}
+  texI.needsUpdate=true;}
+function piano(w,h,v0,v1){const g=new THREE.PlaneGeometry(w,h),uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setY(i,v0+uv.getY(i)*(v1-v0));return g;}
+function geoSipario(w,h,lato){const g=new THREE.PlaneGeometry(w,h,28,1),P=g.attributes.position;
+  for(let i=0;i<P.count;i++){const x=P.getX(i)+w/2;P.setX(i,lato*x);P.setZ(i,Math.sin(x/w*28*Math.PI/2)*0.025);}
+  g.computeVertexNormals();const n=P.count,C=new Float32Array(n*3),a=col('#B3232E'),b=col('#7E1620');
+  for(let i=0;i<n;i++){const k=0.5+0.5*Math.sin(Math.abs(P.getX(i))/w*28*Math.PI/2),c=new THREE.Color().copy(b).lerp(a,k);C[i*3]=c.r;C[i*3+1]=c.g;C[i*3+2]=c.b;}
+  g.setAttribute('color',new THREE.BufferAttribute(C,3));return g;}
+function costruisciTeatro(){const L=[],TE='#2C5E57',TS='#1F4E4A',OR='#D4A017',LE='#8A5A33';
+  L.push(pz(BX(5.7,0.1,2.2),LE,0,0.05,SZ+0.85));                                     // pedana sul pavimento
+  L.push(pz(BX(2*HALF+0.1,BOARD,0.09),TS,0,BOARD/2,SZ));                              // parapetto (davanti c'è l'insegna dipinta)
+  for(const s of [-1,1]){L.push(pz(BX(0.46,2.9,0.32),TE,s*(HALF+0.23),1.45,SZ));          // pilastri
+    L.push(pz(BX(0.05,2.9,0.05),OR,s*(HALF+0.48),1.45,SZ-0.17));L.push(pz(BX(0.05,2.9,0.05),OR,s*(HALF+0.01),1.45,SZ-0.17));
+    L.push(pz(BX(0.06,2.95,1.7),TS,s*(HALF+0.43),1.47,SZ+0.95));                         // fianchi del retropalco
+    for(const k of [0,1])L.push(pz(BX(0.55,1.45,0.03),k?'#24423F':'#2E5A54',s*(HALF-0.12-k*0.1),BOARD+0.7,SZ+0.35+k*0.5));}   // quinte
+  L.push(pz(BX(2*HALF+1.0,0.5,0.32),TE,0,TOPO+0.25+0.02,SZ));                          // frontone
+  L.push(pz(BX(2*HALF+1.0,0.06,1.7),TS,0,2.95,SZ+0.95));                               // tetto del retropalco
+  L.push(pz(BX(2*HALF+0.08,0.06,0.07),OR,0,TOPO,SZ-0.17));L.push(pz(BX(2*HALF+0.2,0.07,0.16),OR,0,BOARD+0.01,SZ-0.06));   // boccascena dorato
+  for(const s of [-1,1])L.push(pz(BX(0.07,TOPO-BOARD,0.07),OR,s*HALF,(TOPO+BOARD)/2,SZ-0.17));
+  // mantovana rossa a festoni con la frangia d'oro
+  for(let i=0;i<8;i++){const x=-HALF+0.275+i*0.55;L.push(pz(new THREE.CylinderGeometry(0.28,0.28,0.04,20,1,false,Math.PI/2,Math.PI),'#A8202A',x,TOPO-0.02,SZ-0.1,-Math.PI/2,0,0,1,1,0.55));
+    L.push(pz(SF(0.03,8,6),OR,x,TOPO-0.17,SZ-0.12));}
+  L.push(pz(BX(2*HALF,0.16,0.03),'#A8202A',0,TOPO-0.06,SZ-0.1));
+  L.push(pz(BX(2*HALF+0.2,0.04,1.0),'#3A2A1E',0,BOARD-0.02,SZ+0.5));                     // piano dietro la ribalta (non si vede il buio)
+  const m=new THREE.Mesh(unisci(L),matV);m.name='storie-teatro';root.add(m);
+  // insegna (frontone) e parapetto dipinto: una tela, due piani
+  const fr=new THREE.Mesh(piano(2*HALF+0.9,0.42,1-160/512,1),matI);fr.position.set(0,TOPO+0.27,SZ-0.165);fr.rotation.y=Math.PI;root.add(fr);
+  const pa=new THREE.Mesh(piano(2*HALF,BOARD-0.08,0,1-160/512),matI);pa.position.set(0,(BOARD-0.08)/2+0.06,SZ-0.05);pa.rotation.y=Math.PI;root.add(pa);
+  fondale=new THREE.Mesh(new THREE.PlaneGeometry(2*HALF+0.6,1.95),matF);fondale.position.set(0,BOARD+0.85,SZ+1.55);fondale.rotation.y=Math.PI;root.add(fondale);
+  // sipario: due teli con le pieghe, perno sul bordo esterno; aperto = scala x 0,22
+  const hS=TOPO-BOARD-0.12;sipL=new THREE.Mesh(geoSipario(HALF,hS,1),matV);sipL.position.set(-HALF,BOARD+0.02+hS/2,SZ-0.06);
+  sipR=new THREE.Mesh(sipL.geometry,matV);sipR.position.set(HALF,BOARD+0.02+hS/2,SZ-0.06);
+  // davanti = −z: il telo «sinistro» dal pubblico sta a x+; ruotati di π attorno a y come tutto ciò che guarda il pubblico
+  for(const s of [sipL,sipR]){s.rotation.y=Math.PI;s.name='storie-sipario';root.add(s);}sipL.position.x=HALF;sipR.position.x=-HALF;
+  // luci di scena finte: due coni additivi dall'alto e una lama calda sulla ribalta
+  const G=[];for(const s of [-1,1]){const c=new THREE.CylinderGeometry(0.04,0.75,2.1,20,1,true);c.applyMatrix4(_m.compose(_p.set(s*1.2,BOARD+0.55,SZ+1.1),_q.setFromEuler(_e.set(0.12,0,-s*0.42)),_s.set(1,1,1)));G.push(c.toNonIndexed());}
+  const lama=new THREE.PlaneGeometry(2*HALF,0.3);lama.applyMatrix4(_m.compose(_p.set(0,BOARD+0.14,SZ+0.02),_q.setFromEuler(_e.set(0,Math.PI,0)),_s.set(1,1,1)));G.push(lama.toNonIndexed());
+  let n=0;for(const g of G)n+=g.attributes.position.count;const P=new Float32Array(n*3);let o=0;for(const g of G){P.set(g.attributes.position.array,o*3);o+=g.attributes.position.count;}
+  const gc=new THREE.BufferGeometry();gc.setAttribute('position',new THREE.BufferAttribute(P,3));gc.computeBoundingSphere();coni=new THREE.Mesh(gc,matL);coni.renderOrder=3;coni.name='storie-luci';root.add(coni);
+  // burattini: tutti visibili (sotto la ribalta) fin dal build: un solo programma, compilato all'ingresso
+  for(const id in SPEC){const g=geoBurattino(SPEC[id]),gr=new THREE.Group();gr.name='burattino-'+id;const c=new THREE.Mesh(g.corpo,matP),b=new THREE.Mesh(g.braccio,matP);
+    b.position.set(0.11,0.5,0);gr.add(c,b);gr.rotation.y=0;gr.position.set(0,-0.75,ZB);c.userData.pick=()=>saluta(id);root.add(gr);
+    PUP[id]={g:gr,braccio:b,corpo:c,x:0,xT:0,y:-0.75,yT:-0.75,sc:1,scT:1,onda:0,parla:0,fase:Math.random()*6};}
+  insegna();dipingi('titolo');}
+
+// ---------------------------------------------------------------- fondali dipinti (una tela, ridisegnata quando cambia il luogo)
+let fondaleDi=null;
+function dipingi(id){if(fondaleDi===id)return;fondaleDi=id;const g=cvF.getContext('2d'),W=1024,H=448;g.save();g.clearRect(0,0,W,H);
+  const cielo=(a,b)=>{const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,a);gr.addColorStop(1,b);g.fillStyle=gr;g.fillRect(0,0,W,H);};
+  const cerchio=(x,y,r,c)=>{g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill();};
+  const colline=(y,a,c)=>{g.fillStyle=c;g.beginPath();g.moveTo(0,H);for(let x=0;x<=W;x+=16)g.lineTo(x,y+Math.sin(x/W*Math.PI*a)*28);g.lineTo(W,H);g.fill();};
+  if(id==='titolo'){cielo('#20365F','#3B2A55');g.fillStyle='rgba(255,236,180,.9)';for(let i=0;i<60;i++){const x=(i*173)%W,y=(i*97)%(H-120);cerchio(x,y,1.5+(i%3),'rgba(255,236,180,.85)');}
+    g.fillStyle='#F2C43A';g.font='700 64px Lexend, sans-serif';g.textAlign='center';g.fillText("C'era una volta…",W/2,H/2+8);g.font='500 30px Lexend, sans-serif';g.fillStyle='#F4E7C6';g.fillText('scegli le carte e la storia va in scena',W/2,H/2+62);}
+  else if(id==='bosco'){cielo('#BFE2F2','#E8F4E0');cerchio(860,80,44,'#F6D365');colline(300,3,'#8BC36A');colline(350,5,'#6AA84F');
+    for(let i=0;i<9;i++){const x=40+i*120+(i%2)*30,h=150+(i%3)*30;g.fillStyle='#7A4E2C';g.fillRect(x-9,H-60-h*0.5,18,h*0.5+20);cerchio(x,H-70-h*0.55,56+(i%3)*8,i%2?'#2F7A3E':'#3E8E4B');}
+    for(const x of [220,560,780]){g.fillStyle='#D9473F';g.beginPath();g.ellipse(x,H-40,22,14,0,Math.PI,0);g.fill();g.fillStyle='#F4E7C6';g.fillRect(x-5,H-40,10,16);}}
+  else if(id==='castello'){cielo('#F6C9B0','#FBE7D6');colline(330,2,'#8BC36A');g.fillStyle='#B9B2A8';g.fillRect(330,150,364,230);g.fillStyle='#A39C92';g.fillRect(290,90,90,290);g.fillRect(644,90,90,290);g.fillRect(470,60,84,120);
+    g.fillStyle='#3F6FB5';for(const [x,w] of [[290,90],[644,90],[470,84]]){g.beginPath();g.moveTo(x-8,x===470?60:90);g.lineTo(x+w/2,x===470?0:30);g.lineTo(x+w+8,x===470?60:90);g.fill();}
+    g.fillStyle='#6B4A2E';g.beginPath();g.moveTo(470,380);g.lineTo(470,300);g.arc(512,300,42,Math.PI,0);g.lineTo(554,380);g.fill();g.fillStyle='#FFF3C4';for(const [x,y] of [[320,150],[674,150],[400,220],[600,220],[500,110]])g.fillRect(x,y,24,34);}
+  else if(id==='mare'){cielo('#BFE6F6','#E8F6FB');cerchio(820,90,50,'#F6D365');g.fillStyle='#3A8FC7';g.fillRect(0,230,W,H);g.strokeStyle='#BFE3F5';g.lineWidth=5;
+    for(let r=0;r<4;r++){g.beginPath();for(let x=0;x<=W;x+=10)g.lineTo(x,260+r*36+Math.sin(x/40+r)*6);g.stroke();}g.fillStyle='#EBD39A';g.beginPath();g.moveTo(0,H);g.lineTo(0,380);g.quadraticCurveTo(W/2,350,W,390);g.lineTo(W,H);g.fill();
+    g.fillStyle='#8A5A33';g.beginPath();g.moveTo(180,236);g.lineTo(320,236);g.lineTo(296,268);g.lineTo(204,268);g.fill();g.fillStyle='#fff';g.beginPath();g.moveTo(250,232);g.lineTo(250,120);g.lineTo(316,222);g.fill();
+    for(const [x,c] of [[640,'#F29C9C'],[720,'#F4E7C6'],[880,'#E8A44A']]){g.fillStyle=c;g.beginPath();g.arc(x,410,16,Math.PI,0);g.fill();}}
+  else if(id==='citta'){cielo('#C9DDF0','#EEF3F8');const C=['#E07B39','#5BA4D8','#8BC36A','#E8B33A','#C36AB4','#4FA39A','#E8618C'];
+    for(let i=0;i<9;i++){const x=i*118-10,w=104,h=150+((i*53)%120);g.fillStyle=C[i%C.length];g.fillRect(x,H-50-h,w,h);g.fillStyle='#FFF3C4';
+      for(let r=0;r<Math.floor(h/42);r++)for(let k=0;k<3;k++)g.fillRect(x+14+k*30,H-40-h+14+r*42,16,22);}g.fillStyle='#6B6F75';g.fillRect(0,H-50,W,50);g.fillStyle='#F4F1EA';for(let x=20;x<W;x+=90)g.fillRect(x,H-28,46,6);}
+  else if(id==='montagna'){cielo('#BFDDF2','#EAF3FA');g.fillStyle='#8B98A8';g.beginPath();g.moveTo(-40,H);g.lineTo(260,60);g.lineTo(560,H);g.fill();g.fillStyle='#6E7E90';g.beginPath();g.moveTo(380,H);g.lineTo(700,110);g.lineTo(1060,H);g.fill();
+    g.fillStyle='#fff';g.beginPath();g.moveTo(260,60);g.lineTo(212,140);g.lineTo(240,128);g.lineTo(262,150);g.lineTo(284,126);g.lineTo(312,140);g.fill();g.beginPath();g.moveTo(700,110);g.lineTo(650,186);g.lineTo(680,174);g.lineTo(702,196);g.lineTo(726,172);g.lineTo(752,186);g.fill();
+    colline(380,4,'#7DB15A');for(let i=0;i<7;i++){const x=70+i*150;g.fillStyle='#2F6B3A';g.beginPath();g.moveTo(x,250+(i%2)*40);g.lineTo(x-40,370);g.lineTo(x+40,370);g.fill();}}
+  else if(id==='spazio'){cielo('#141A3E','#2A2160');for(let i=0;i<120;i++)cerchio((i*211)%W,(i*137)%H,0.8+(i%3)*0.9,'rgba(255,243,196,.9)');
+    cerchio(300,220,90,'#E8A44A');g.strokeStyle='#F4D28A';g.lineWidth=12;g.beginPath();g.ellipse(300,220,160,36,-0.3,0,7);g.stroke();cerchio(780,120,50,'#9FD3F0');cerchio(860,330,30,'#C59BE0');
+    g.fillStyle='#E8E4F0';g.beginPath();g.ellipse(W/2,H+60,560,140,0,Math.PI,0);g.fill();}
+  g.restore();texF.needsUpdate=true;}
+
+// ---------------------------------------------------------------- stato
+let S=null;
+const C={dentro:false,fase:'carte',q:0,mazzo:0,t:0,sip:0,sipT:0,luce:[1,1,1],luce0:null,luceT:[0.34,0.32,0.38],tinta:[1,1,1],tintaT:[1,1,1],coni:0.12,coniT:0.12,
+  voce:0,applausi:0,ordine:null,ordEsito:null,parlante:0,tParla:0,anim:null,fronte:null};
+function pesca(seme){seme=String(seme==null||seme===''?nuovoSeme():seme).trim().toLowerCase().slice(0,24);const r=mulberry32(cyrb53(seme));
+  const mani=MAZZI.map(M=>{const a=M.L.map((x,i)=>i);for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a.slice(0,3);});
+  S={seme,mani,scelte:[null,null,null,null,null],storia:null};C.fase='carte';C.q=0;C.mazzo=0;C.ordine=null;C.ordEsito=null;return S;}
+pesca(PQ.get('seed')||nuovoSeme());   // le carte esistono già prima del build (stato() e collaudi)
+const carta=(m,i)=>MAZZI[m].L[i];
+const scelta=()=>S&&S.scelte.every(x=>x!=null)?{eroe:EROI[S.scelte[0]],luogo:LUOGHI[S.scelte[1]],problema:PROBLEMI[S.scelte[2]],aiutante:AIUTANTI[S.scelte[3]],finale:FINALI[S.scelte[4]]}:null;
+function scegli(m,k){if(!S||m<0||m>4||k<0||k>2)return false;S.scelte[m]=S.mani[m][k];S.storia=null;suona('tic');
+  const nx=S.scelte.findIndex(x=>x==null);C.mazzo=nx<0?m:nx;if(C.dentro&&C.fase==='carte'){posaCarte();apriCarte();aggDock();}return true;}
+
+// ---------------------------------------------------------------- suoni e voce (morbidi; mai in automatico)
+const suoni=()=>typeof SUONI!=='undefined'&&SUONI.attivo&&SUONI.attivo();
+function suona(n,o){try{if(suoni())SUONI.play(n,o);}catch(e){console.error(e);}}
+// applauso discreto: una ventina di battiti di mani piccoli e sparsi (clic di SUONI a volume basso), solo con i suoni attivi
+function applauso(){C.applausi++;if(!suoni())return;for(let i=0;i<22;i++)setTimeout(()=>{if(C.dentro)suona('clic',{vol:0.18+Math.random()*0.12});},Math.random()*1700);}
+const sintesi=()=>typeof speechSynthesis!=='undefined'&&typeof SpeechSynthesisUtterance!=='undefined'?speechSynthesis:null;
+let voceIt=null;
+function cercaVoce(){const s=sintesi();if(!s)return null;try{const v=s.getVoices().filter(v=>/^it/i.test(v.lang));voceIt=v.find(x=>/IT/.test(x.lang))||v[0]||null;}catch(e){voceIt=null;}
+  const b=$s('stLeggi');if(b)b.hidden=!voceIt;return voceIt;}
+function taci(){const s=sintesi();if(s&&C.voce){try{s.cancel();}catch(e){}}}
+function leggi(){const s=sintesi();if(!s||!voceIt||!S||!S.storia)return false;taci();const q=S.storia[C.q],E=scelta();
+  const t=[q.narra,...q.battute.map(b=>(b.chi==='eroe'?E.eroe.breve:E.aiutante.breve)+' dice: '+b.testo)].join(' ');
+  try{const u=new SpeechSynthesisUtterance(t);u.lang='it-IT';u.voice=voceIt;u.rate=0.95;s.speak(u);C.voce++;}catch(e){console.error(e);}return true;}
+
+// ---------------------------------------------------------------- regia dei burattini
+function posaCarte(){const E=S&&S.scelte[0]!=null?EROI[S.scelte[0]].id:null,A=S&&S.scelte[3]!=null?AIUTANTI[S.scelte[3]].id:null;
+  for(const id in PUP){const p=PUP[id];p.yT=-0.75;p.scT=1;}
+  if(E){Object.assign(PUP[E],{xT:A?-0.9:-0.3,yT:SU});}if(A){Object.assign(PUP[A],{xT:E?0.9:0.3,yT:SU});}
+  dipingi(S&&S.scelte[1]!=null?LUOGHI[S.scelte[1]].id:'titolo');umore(-1);}
+function posaQuadro(){const s=scelta();if(!s)return;const E=PUP[s.eroe.id],A=PUP[s.aiutante.id],q=C.q;
+  for(const id in PUP){if(id!==s.eroe.id&&id!==s.aiutante.id)PUP[id].yT=-0.75;}
+  E.yT=SU;E.xT=q<2?-0.35:-0.9;E.scT=s.problema.id==='incanto'&&(q===1||q===2)?0.62:1;
+  A.yT=q>=2?SU:-0.75;A.xT=0.9;A.scT=1;dipingi(s.luogo.id);umore(q);
+  const p=q===0||q===1?E:(S.storia[q].battute[0].chi==='eroe'?E:A);p.onda=q===2&&p===A||q===0?1.6:p.onda;C.parlante=0;C.tParla=0;}
+// luci di scena per quadro: tinta del fondale e dei burattini, coni; problema più freddo (tempesta più scura), finale dorato
+function umore(q){const s=scelta(),T=[[1,0.97,0.92],[0.78,0.8,0.95],[0.94,0.92,0.88],[1,1,0.97],[1,0.93,0.78]];
+  let t=q<0?[1,0.97,0.92]:T[q];if(q===1&&s&&s.problema.id==='tempesta')t=[0.56,0.6,0.8];C.tintaT=t.slice();C.coniT=q===4?0.17:q===1?0.06:0.12;}
+function saluta(id){const p=PUP[id];if(p&&p.yT>0)p.onda=1.6;suona('fruscio',{vol:0.4});}
+function animaBurattini(dt){const k=1-Math.exp(-dt*5),ks=1-Math.exp(-dt*4);C.tParla+=dt;
+  const s=C.fase==='scena'?scelta():null,parlano=s&&S.storia?S.storia[C.q].battute.map(b=>b.chi==='eroe'?s.eroe.id:s.aiutante.id):[];
+  if(parlano.length&&C.tParla>2.6){C.tParla=0;C.parlante=(C.parlante+1)%parlano.length;}
+  const chi=parlano[C.parlante];
+  for(const id in PUP){const p=PUP[id];p.x+=(p.xT-p.x)*k;p.y+=(p.yT-p.y)*k;p.sc+=(p.scT-p.sc)*ks;p.fase+=dt;
+    const su=p.y>0.3,parla=su&&id===chi,bob=parla?Math.abs(Math.sin(p.fase*7))*0.035:Math.sin(p.fase*1.6)*0.008;
+    p.g.position.set(p.x,p.y+bob,ZB+(id===chi?-0.02:0));p.g.rotation.z=parla?Math.sin(p.fase*3.5)*0.07:Math.sin(p.fase*1.1)*0.025;p.g.scale.setScalar(p.sc*PS);
+    if(p.onda>0){p.onda=Math.max(0,p.onda-dt);p.braccio.rotation.z=1.7+Math.sin(p.onda*14)*0.45;}else p.braccio.rotation.z+=((parla?0.5+Math.sin(p.fase*5)*0.25:0)-p.braccio.rotation.z)*k;
+    if(s&&s.finale.id==='buffo'&&C.q===4&&su){p.g.rotation.z=Math.sin(p.fase*4)*0.22;p.g.position.y+=Math.abs(Math.sin(p.fase*4))*0.06;}}}
+function luci(dt){const k=1-Math.exp(-dt*2.5);for(let i=0;i<3;i++)C.tinta[i]+=(C.tintaT[i]-C.tinta[i])*k;C.coni+=(C.coniT-C.coni)*k;
+  matF.color.setRGB(C.tinta[0],C.tinta[1],C.tinta[2]);matP.color.setRGB(0.8*C.tinta[0],0.8*C.tinta[1],0.8*C.tinta[2]);matP.emissive.setRGB(0.02*C.tinta[0],0.014*C.tinta[1],0.006*C.tinta[2]);matL.opacity=C.coni;
+  if(C.dentro&&typeof RESA!=='undefined'&&RESA.U&&RESA.U.uAulaLuce){const v=RESA.U.uAulaLuce.value;for(let i=0;i<3;i++)C.luce[i]+=(C.luceT[i]-C.luce[i])*k;v.set(C.luce[0],C.luce[1],C.luce[2]);}}
+function sipario(dt){if(C.sip!==C.sipT){const d=Math.min(dt,0.1)/1.3;C.sip=C.sipT>C.sip?Math.min(C.sipT,C.sip+d):Math.max(C.sipT,C.sip-d);}
+  const u=C.sip*C.sip*(3-2*C.sip),sx=1-0.8*u;if(sipL){sipL.scale.x=sx;sipR.scale.x=-sx;}}
+
+// ---------------------------------------------------------------- nuvolette e narratore (HTML proiettato sui burattini)
+const strato=document.createElement('div');strato.className='st-strato';strato.setAttribute('aria-live','polite');document.body.appendChild(strato);
+const bolle=[0,1].map(()=>{const b=document.createElement('div');b.className='st-bolla';strato.appendChild(b);return b;});
+const narra=document.createElement('div');narra.className='st-narra';narra.setAttribute('role','status');document.body.appendChild(narra);
+const _v=new THREE.Vector3();
+function scriviScena(){const s=scelta();if(C.fase!=='scena'||!s||!S.storia){narra.classList.remove('on');bolle.forEach(b=>{b.classList.remove('on');b.dataset.chi='';});return;}
+  const q=S.storia[C.q];narra.innerHTML=`<b>Quadro ${C.q+1} di 5 · ${esc(q.titolo)}</b>${esc(q.narra)}`;narra.classList.add('on');
+  bolle.forEach((b,i)=>{const bt=q.battute[i];if(!bt){b.classList.remove('on');b.dataset.chi='';return;}const P=bt.chi==='eroe'?s.eroe:s.aiutante;
+    b.innerHTML=`<b>${esc(cap(P.breve))}</b>${esc(bt.testo)}`;b.dataset.chi=P.id;b.classList.add('on');});}
+function posaBolle(){if(C.fase!=='scena'||!C.dentro)return;const occ=[];
+  for(const b of bolle){const id=b.dataset.chi;if(!id||!PUP[id])continue;const p=PUP[id];_v.set(p.g.position.x,p.g.position.y+(HT+0.27)*p.sc*PS,ZB);_v.project(camera);
+    let x=(_v.x*0.5+0.5)*innerWidth,y=(-_v.y*0.5+0.5)*innerHeight;const w=b.offsetWidth||220,h=b.offsetHeight||70,top=(narra.getBoundingClientRect().bottom||140)+12+h;
+    // la nuvoletta resta nella finestra e sotto il narratore; due nuvolette dello stesso lato non si sovrappongono
+    const xs=Math.max(w/2+12,Math.min(innerWidth-w/2-12,x));y=Math.max(top,y);for(const o of occ)if(Math.abs(o[0]-xs)<(w+o[2])/2&&Math.abs(o[1]-y)<h)y=o[1]-o[3]-14;
+    b.style.left=xs+'px';b.style.top=y+'px';b.style.setProperty('--coda',Math.max(18,Math.min(w-18,w/2+(x-xs)))+'px');occ.push([xs,y,w,h]);}}
+
+// ---------------------------------------------------------------- pannello (carte, fine, metti in ordine)
+const _anc=new THREE.Vector3();
+const ancora=()=>{const pw=info.offsetWidth||380;return _anc.set(((innerWidth-pw-84)/innerWidth)*2-1,0.1,0.5).unproject(camera);};
+function apriCarte(){if(!S||!C.dentro)return;const m=C.mazzo,M=MAZZI[m],tutte=S.scelte.every(x=>x!=null);
+  const slot=MAZZI.map((X,i)=>{const v=S.scelte[i];return `<button type="button" data-slot="${i}" class="${v!=null?'fatto':''}${i===m?' ora':''}" title="Mazzo ${X.nome}"><i>${['Chi','Dove','Problema','Aiuto','Finale'][i]}</i>${v!=null?esc(X.L[v].nome||cap(X.L[v].breve||X.L[v].sog)):'?'}</button>`;}).join('');
+  const carte=S.mani[m].map((k,j)=>{const c=M.L[k],nome=c.nome||cap(c.sog);return `<button type="button" class="st-carta" data-carta="${j}" aria-pressed="${S.scelte[m]===k}"><span>${ILL[c.id]||''}</span><b>${esc(nome)}</b><span>${esc(c.carta)}</span></button>`;}).join('');
+  openPanel({title:'La bottega delle storie',badges:[['Italiano · inventa una fiaba','gold'],[`Carte «${S.seme}»`,'']],
+    after:`<p class="st-ist">Scegli una carta per ogni mazzo. Quando hai scelto tutte e cinque le carte, la storia va in scena!</p><div class="st-slot">${slot}</div>
+      <p class="st-mazzo">Mazzo ${m+1} di 5 · ${M.nome}: ${M.dom}</p><div class="st-carte">${carte}</div>
+      <div class="st-az"><button class="btn gold" type="button" data-st="scena"${tutte?'':' disabled'}>Va in scena!</button><button class="btn ghost" type="button" data-st="pesca">Pesca altre carte</button></div>`},ancora);
+  info.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{C.mazzo=+b.dataset.slot;apriCarte();});
+  info.querySelectorAll('[data-carta]').forEach(b=>b.onclick=()=>scegli(C.mazzo,+b.dataset.carta));
+  info.querySelector('[data-st="scena"]').onclick=()=>inScena();info.querySelector('[data-st="pesca"]').onclick=()=>nuova();}
+function inScena(){const s=scelta();if(!s||!C.dentro)return false;S.storia=componi(s);C.fase='scena';C.q=0;C.ordine=null;C.ordEsito=null;closePanel();
+  C.sipT=0;C.sip=Math.min(C.sip,0.35);setTimeout(()=>{if(C.dentro)C.sipT=1;},350);suona('stoffa');posaQuadro();scriviScena();aggDock();return true;}
+function vai(n){if(C.fase!=='scena'&&C.fase!=='fine')return false;n=Math.max(0,Math.min(4,n|0));taci();if(C.fase==='fine'){C.fase='scena';closePanel();}C.q=n;posaQuadro();scriviScena();aggDock();return true;}
+function fine(){if(!S||!S.storia)return false;taci();C.fase='fine';scriviScena();applauso();for(const id in PUP)if(PUP[id].yT>0)PUP[id].onda=1.8;umore(4);apriFine();aggDock();return true;}
+function apriFine(){if(!S||!S.storia||!C.dentro)return;const s=scelta(),O=C.ordine;
+  let ord='';if(O){const scelti=O.sel.map(i=>`<li>${esc(S.storia[i].narra)}</li>`).join('');
+    ord=`<p class="st-mazzo">Metti in ordine la storia</p><p class="st-ist">Clicca i quadri dal primo all'ultimo: inizio, problema, aiuto, soluzione, finale.</p>
+      <div class="st-ord">${O.mix.map(i=>`<button type="button" data-ord="${i}"${O.sel.includes(i)?' disabled':''}><b>${O.sel.includes(i)?O.sel.indexOf(i)+1:'·'}</b>${esc(S.storia[i].narra)}</button>`).join('')}</div>
+      <div class="st-esito${C.ordEsito?(C.ordEsito.ok?' ok':' ambra'):''}" role="status">${C.ordEsito?esc(C.ordEsito.msg):''}</div>`;}
+  openPanel({title:'La bottega delle storie',badges:[['Fine dello spettacolo','gold'],[`Carte «${S.seme}»`,'']],
+    after:`<p class="st-fine">Fine!</p><p class="st-dom">${esc(domanda(s))}</p>${ord}
+      <div class="st-az"><button class="btn gold" type="button" data-st="ordina">${O?'Ricomincia a ordinare':'Metti in ordine la storia'}</button><button class="btn ghost" type="button" data-st="rivedi">Rivedi</button><button class="btn ghost" type="button" data-st="nuova">Nuova storia</button></div>`},ancora);
+  info.querySelectorAll('[data-ord]').forEach(b=>b.onclick=()=>ordina(+b.dataset.ord));
+  info.querySelector('[data-st="ordina"]').onclick=()=>avviaOrdine();info.querySelector('[data-st="rivedi"]').onclick=()=>rivedi();info.querySelector('[data-st="nuova"]').onclick=()=>nuova();}
+function avviaOrdine(){const r=mulberry32(cyrb53(S.seme+'|ordine|'+(C.ordine?C.ordine.giro+1:0)));let a=[0,1,2,3,4];
+  do{for(let i=4;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}while(a.every((x,i)=>x===i));
+  C.ordine={mix:a,sel:[],giro:C.ordine?C.ordine.giro+1:0};C.ordEsito=null;if(C.dentro)apriFine();return a.slice();}
+function ordina(i){const O=C.ordine;if(!O||O.sel.includes(i)||O.sel.length>=5)return null;O.sel.push(i);
+  if(O.sel.length===5){const ok=O.sel.every((x,k)=>x===k);C.ordEsito=ok?{ok,msg:'Giusto! Ogni storia ha un inizio, un problema, un aiuto, una soluzione e un finale.'}
+      :{ok,msg:`Non ancora: il quadro ${O.sel.findIndex((x,k)=>x!==k)+1} non è al suo posto. Pensa: che cosa succede prima? Clicca «Ricomincia a ordinare».`};suona(ok?'conferma':'neutro');}
+  if(C.dentro)apriFine();return C.ordEsito;}
+function rivedi(){if(!S||!S.storia)return false;C.fase='scena';closePanel();C.sipT=0;C.sip=0.3;setTimeout(()=>{if(C.dentro)C.sipT=1;},300);return vai(0);}
+function nuova(seme){taci();pesca(seme==null?nuovoSeme():seme);if(C.dentro){C.sipT=1;scriviScena();posaCarte();apriCarte();aggDock();}return S;}
+
+// ---------------------------------------------------------------- dock
+const dock=document.createElement('div');dock.className='dock storie';document.body.appendChild(dock);
+dock.innerHTML=`<div class="st-row"><div class="st-t"><b>La bottega delle storie</b><span id="stQuadro"></span></div><span class="st-sep"></span>
+<button class="btn ghost" id="stCarte" type="button" title="Torna alle carte della storia">Carte</button>
+<button class="btn ghost" id="stInd" type="button">Indietro</button><button class="btn gold" id="stAv" type="button">Avanti</button>
+<button class="btn ghost" id="stRiv" type="button" title="La storia ricomincia dal primo quadro">Rivedi</button>
+<button class="btn ghost" id="stLeggi" type="button" title="Una voce del computer legge il quadro (nessun servizio esterno)" hidden>Leggi ad alta voce</button>
+<button class="btn ghost" id="stNuova" type="button" title="Pesca nuove carte">Nuova storia</button><span class="st-sep"></span>
+<button class="btn ghost" id="stEsci" type="button">Torna all'aula</button></div>`;
+function aggDock(){const sc=C.fase!=='carte',q=$s('stQuadro');
+  if(q)q.textContent=C.fase==='carte'?`Scegli le carte · ${S?S.scelte.filter(x=>x!=null).length:0} di 5`:C.fase==='fine'?'Fine!':`Quadro ${C.q+1} di 5 · ${QUADRI[C.q]}`;
+  $s('stInd').disabled=!sc||C.fase==='scena'&&C.q===0;$s('stAv').disabled=!sc||C.fase==='fine';$s('stAv').textContent=C.fase==='scena'&&C.q===4?'Fine!':'Avanti';
+  $s('stRiv').disabled=!sc;$s('stLeggi').disabled=C.fase!=='scena';}
+$s('stCarte').onclick=()=>{taci();C.fase='carte';scriviScena();posaCarte();apriCarte();aggDock();};
+$s('stInd').onclick=()=>{if(C.fase==='fine')vai(4);else vai(C.q-1);};
+$s('stAv').onclick=()=>{if(C.fase==='scena'&&C.q===4)fine();else vai(C.q+1);};
+$s('stRiv').onclick=()=>rivedi();$s('stLeggi').onclick=()=>leggi();$s('stNuova').onclick=()=>nuova();$s('stEsci').onclick=()=>switchWorld(null);
+{const s=sintesi();if(s){try{s.addEventListener('voiceschanged',cercaVoce);}catch(e){}}}
+
+// ---------------------------------------------------------------- ingresso dall'aula: sipario del teatrino che si apre
+// La facciata del teatrino è una tela 384×512 (sipario a strisce in alto, boccascena nero 268×180 a (58,70)): la si cerca fra le texture
+// della scena dal suo disegno e si ridisegna il boccascena (sipario chiuso che si apre su una luce calda). Copia dell'originale per il ripristino.
+const TEA={x:-4.55,z:ROOM.z1-0.35-0.301};   // centro e piano della facciata (costruttore del teatrino, nucleo)
+function fronte(){if(C.fronte!==null)return C.fronte;C.fronte=false;
+  scene.traverse(o=>{if(C.fronte||!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){const t=m&&m.map,im=t&&t.image;
+    if(!im||im.width!==384||im.height!==512||!im.getContext)continue;try{const g=im.getContext('2d'),a=g.getImageData(150,150,1,1).data,b=g.getImageData(192,20,1,1).data;
+      if(a[0]<30&&a[1]<30&&b[0]>140&&b[1]<80){const copia=document.createElement('canvas');copia.width=384;copia.height=512;copia.getContext('2d').drawImage(im,0,0);C.fronte={t,im,copia,mod:false};return;}}catch(e){}}});
+  return C.fronte;}
+function disegnaTeatrino(u){const F=fronte();if(!F)return;const g=F.im.getContext('2d'),x0=58,y0=70,W=268,H=180;
+  const gr=g.createLinearGradient(0,y0,0,y0+H);gr.addColorStop(0,'#FFE7A8');gr.addColorStop(1,'#E89B3C');g.fillStyle=gr;g.fillRect(x0,y0,W,H);
+  g.fillStyle='#E8B33A';g.beginPath();g.arc(x0+90,y0+118,22,0,7);g.fill();g.fillRect(x0+74,y0+132,32,48);g.fillStyle='#6DBE5A';g.beginPath();g.arc(x0+180,y0+112,24,0,7);g.fill();g.fillRect(x0+163,y0+128,34,52);
+  const w=W/2*(1-0.82*u);for(const s of [0,1]){const xa=s?x0+W-w:x0;for(let i=0;i<8;i++){g.fillStyle=i%2?'#9E1B22':'#C62E38';g.fillRect(xa+i*w/8,y0,w/8+1,H);}}
+  F.t.needsUpdate=true;F.mod=true;}
+function ripristinaTeatrino(){const F=C.fronte;if(!F||!F.mod)return;F.im.getContext('2d').drawImage(F.copia,0,0);F.t.needsUpdate=true;F.mod=false;}
+const introOn=()=>{try{return typeof intro!=='undefined'&&!!intro.on;}catch(_){return false;}};
+function apriSipario(){if(C.anim||current||switching||introOn())return false;closePanel();
+  if(!EXP.on)flyTo(new THREE.Vector3(TEA.x,1.25,TEA.z-0.1),2.4,Math.PI-0.12,1.47);
+  C.anim={t:0,fase:0};disegnaTeatrino(0);suona('stoffa');return true;}
+function animaIngresso(dt){const A=C.anim;if(!A)return;A.t+=Math.min(dt,0.1);
+  if(A.fase===0&&A.t>0.9){const u=Math.min(1,(A.t-0.9)/1.2);disegnaTeatrino(u);if(u>=1)A.fase=1;}
+  else if(A.fase===1){const v=Math.min(1,(A.t-2.1)/0.5);velo('dip',v);if(v>=1){A.fase=2;switchWorld('storie').then(()=>{if(C.anim===A)C.anim=null;});}}
+  else if(A.fase===3){A.u=Math.max(0,(A.u==null?1:A.u)-Math.min(dt,0.1)/0.7);velo('dip',A.u);if(A.u<=0){velo(null);C.anim=null;}}}
+function velo(k,v){if(typeof VELO==='undefined')return;try{if(k)VELO.set('storie',{[k]:v});else VELO.libera('storie');}catch(e){console.error(e);}}
+AGG.su('mondo:emerge',w=>{if(w&&w.id==='storie'&&C.anim&&C.anim.fase===2)C.anim.fase=3;});
+AGG.su('frame:inizio',dt=>{if(C.anim)animaIngresso(dt);});
+AGG.su('frame:dopoEtichette',()=>{try{posaBolle();}catch(e){console.error(e);}});
+AGG.su('riposo:veto',()=>C.dentro||!!C.anim);
+// pick dedicato del sipario: nella vista orbitale (aula vuota, senza Cammina, a film finito) è l'unico oggetto cliccabile dell'aula;
+// in Cammina la stessa scatola sta in AULA_PUNTI (davanti alla scatola del teatrino: si colpisce per prima)
+const matPick=new THREE.MeshBasicMaterial({visible:false});
+function scatolaSip(){const m=new THREE.Mesh(new THREE.BoxGeometry(1.36,1.06,0.08),matPick);m.position.set(TEA.x,1.52,TEA.z-0.03);m.name='Il sipario del teatrino';
+  m.userData.nome='Il sipario: clicca per aprirlo';m.userData.pick=()=>apriSipario();m.updateMatrixWorld(true);return m;}
+const PICK=new THREE.Group();PICK.add(scatolaSip());PICK.updateMatrixWorld(true);const LISTA_SIP=[PICK];
+{const prima=AGG.pickAula;AGG.pickAula=()=>{const l=prima();if(l)return l;return !current&&!EXP.on&&!C.anim&&!introOn()?LISTA_SIP:null;};}
+if(typeof AULA_PUNTI!=='undefined'&&AULA_PUNTI.gruppo){const b=scatolaSip();AULA_PUNTI.gruppo.add(b);b.updateMatrixWorld(true);
+  // scheda del teatrino (oggetti parlanti di P21): stessa scheda con il pulsante «Apri il sipario»
+  const i=AULA_PUNTI.dati.findIndex(d=>/Gran Teatro/.test(d.titolo)),m=AULA_PUNTI.punti[i];
+  if(m){const d=AULA_PUNTI.dati[i],a=new THREE.Vector3(m.position.x,Math.min(m.position.y+m.scale.y/2,2.3),m.position.z);
+    m.userData.pick=()=>openPanel({title:d.titolo,badges:[['Aula magna','gold']],facts:[['Misure',d.misure]],text:d.righe.concat(['Dietro il sipario si nasconde una sorpresa…']),note:d.osserva?'Osserva: '+d.osserva:null,
+      actions:[{label:'Apri il sipario',cls:'gold',fn:()=>apriSipario()}]},()=>a);}}
+// cursore a mano sul sipario nella vista orbitale (un raggio contro una scatola sola, solo a tasti alzati)
+{const rc=new THREE.Raycaster(),nd=new THREE.Vector2(),cv=renderer.domElement;let su=false;
+  cv.addEventListener('pointermove',e=>{if(e.buttons||current||EXP.on){if(su){cv.style.cursor='';su=false;}return;}nd.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(nd,camera);
+    const h=rc.intersectObjects(LISTA_SIP,true).length>0&&!introOn();if(h!==su){su=h;cv.style.cursor=h?'pointer':'';}});}
+
+// ---------------------------------------------------------------- il mondo
+const W={id:'storie',order:9.5,root,footprint:{x:0,z:SZ+0.85,w:5.9,d:2.4},tab:{title:'La bottega delle storie',sub:'Italiano · fiabe',icon:ICON},
+  view:{target:new THREE.Vector3(0,1.5,SZ+0.6),r:4.7,theta:Math.PI,phi:1.5},surfaces:[],dock};
+W.build=()=>{costruisciTeatro();if(!S)pesca(PQ.get('seed')||nuovoSeme());};
+W.enter=()=>{C.dentro=true;C.fase='carte';C.mazzo=Math.max(0,S.scelte.findIndex(x=>x==null));if(S.scelte.every(x=>x!=null))C.mazzo=0;
+  if(typeof RESA!=='undefined'&&RESA.U&&RESA.U.uAulaLuce){const v=RESA.U.uAulaLuce.value;C.luce0=[v.x,v.y,v.z];C.luce=C.luce0.slice();}
+  C.sip=0;C.sipT=0;posaCarte();for(const id in PUP){const p=PUP[id];p.x=p.xT;p.y=p.yT;p.sc=1;}scriviScena();cercaVoce();aggDock();};
+W.entered=()=>{if(!C.dentro)return;C.sipT=1;suona('stoffa');apriCarte();};
+W.exit=()=>{taci();C.dentro=false;C.fase='carte';scriviScena();if(C.luce0&&typeof RESA!=='undefined'&&RESA.U&&RESA.U.uAulaLuce)RESA.U.uAulaLuce.value.set(C.luce0[0],C.luce0[1],C.luce0[2]);
+  C.luce0=null;velo(null);C.anim=null;ripristinaTeatrino();C.sip=C.sipT=0;sipario(0);for(const id in PUP){const p=PUP[id];p.yT=p.y=-0.75;p.onda=0;}if(S){S.storia=null;}};
+W.update=dt=>{if(!C.dentro)return;dt=Math.min(dt,0.1);C.t+=dt;sipario(dt);animaBurattini(dt);luci(dt);};
+W.pickables=()=>{const L=[];for(const id in PUP)if(PUP[id].yT>0)L.push(PUP[id].g);return L;};
+// collaudi: stato e azioni via API (le stesse funzioni dei pulsanti)
+W.stato=()=>S&&{seme:S.seme,mani:S.mani.map((h,m)=>h.map(k=>MAZZI[m].L[k].id)),scelte:S.scelte.map((k,m)=>k==null?null:MAZZI[m].L[k].id),fase:C.fase,quadro:C.q,mazzo:C.mazzo,dentro:C.dentro,
+  storia:S.storia?S.storia.map(q=>({titolo:q.titolo,narra:q.narra,battute:q.battute.map(b=>b.chi+': '+b.testo)})):null,
+  burattini:Object.fromEntries(Object.entries(PUP).map(([id,p])=>[id,{su:p.y>0.3,y:+p.y.toFixed(3),x:+p.x.toFixed(3),sc:+p.sc.toFixed(3)}])),
+  sipario:+C.sip.toFixed(3),fondale:fondaleDi,luce:C.luce.map(x=>+x.toFixed(3)),voce:C.voce,applausi:C.applausi,anim:C.anim?C.anim.fase:null,teatrino:C.fronte?C.fronte.mod:null,
+  ordine:C.ordine&&{mix:C.ordine.mix.slice(),sel:C.ordine.sel.slice()},ordEsito:C.ordEsito,bolle:bolle.filter(b=>b.classList.contains('on')).map(b=>b.textContent),narra:narra.classList.contains('on')?narra.textContent:''};
+W.prova={pesca,scegli,inScena,vai,fine,rivedi,nuova,avviaOrdine,ordina,apriSipario,componi,domanda,difetti,leggi,
+  sceltaVia:(ids)=>{ids.forEach((id,m)=>{const k=MAZZI[m].L.findIndex(x=>x.id===id);let j=S.mani[m].indexOf(k);if(j<0){S.mani[m][0]=k;j=0;}scegli(m,j);});return W.stato().scelte;},
+  // tutte le combinazioni: testi senza difetti, nessun segnaposto
+  verifica(){let n=0,frasi=0;const err=[];for(const eroe of EROI)for(const luogo of LUOGHI)for(const problema of PROBLEMI)for(const aiutante of AIUTANTI)for(const finale of FINALI){n++;
+      const s={eroe,luogo,problema,aiutante,finale},Q=componi(s),T=[...Q.flatMap(q=>[q.narra,...q.battute.map(b=>b.testo)]),domanda(s)];
+      for(const t of T){frasi++;const d=difetti(t);if(d.length&&err.length<20)err.push([eroe.id,luogo.id,problema.id,aiutante.id,finale.id,d.join(','),t]);}}
+    return {combinazioni:n,frasi,errori:err};},
+  bolle:()=>bolle.filter(b=>b.classList.contains('on')).map(b=>{const r=b.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom].map(Math.round);}),
+  sip:()=>[TEA.x,1.52,TEA.z-0.05]};
+AGG.api.storie=W;
 registerWorld(W);return W;})();
 // @slot:P16
 /* ===== P17 · INTRO: regia del film d'avvio ===== */
